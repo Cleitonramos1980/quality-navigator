@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { mockGarantias } from "@/data/mockData";
 import { PLANTA_LABELS } from "@/types/sgq";
 
 const GarantiasPage = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
   const filtered = mockGarantias.filter(
@@ -23,7 +25,7 @@ const GarantiasPage = () => {
           <h1 className="text-2xl font-bold text-foreground">Garantias</h1>
           <p className="text-sm text-muted-foreground mt-1">Gestão de casos de garantia de produtos</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => navigate("/garantias/nova")}>
           <Plus className="w-4 h-4" />
           Nova Garantia
         </Button>
