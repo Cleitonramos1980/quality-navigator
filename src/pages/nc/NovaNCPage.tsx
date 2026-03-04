@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,14 +16,16 @@ const gravidades = ["BAIXA", "MEDIA", "ALTA", "CRITICA"] as const;
 
 const NovaNCPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const sacData = location.state as Record<string, string> | null;
 
   const [form, setForm] = useState({
-    tipoNc: "",
+    tipoNc: sacData?.tipoContato === "RECLAMACAO" ? "CLIENTE" : "",
     gravidade: "",
-    planta: "",
+    planta: sacData?.plantaResp || "",
     motivoId: "",
-    descricao: "",
+    descricao: sacData?.descricao || "",
     responsavel: "",
     prazo: "",
     causaRaiz: "",

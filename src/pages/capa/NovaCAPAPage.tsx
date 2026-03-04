@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,16 +13,18 @@ const origemTipos = ["NC", "GARANTIA", "AUDITORIA"] as const;
 
 const NovaCAPAPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const sacData = location.state as Record<string, string> | null;
 
   const [form, setForm] = useState({
-    origemTipo: "",
+    origemTipo: sacData ? "NC" : "",
     origemId: "",
-    descricaoProblema: "",
+    descricaoProblema: sacData?.descricao || "",
     causaRaiz: "",
     planoAcao: "",
     responsavel: "",
-    dataInicio: "",
+    dataInicio: new Date().toISOString().slice(0, 10),
     dataPrazo: "",
     criterioEficacia: "",
   });
