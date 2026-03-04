@@ -5,14 +5,14 @@ import SectionCard from "@/components/forms/SectionCard";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const perfis = [
-  { nome: "ADMIN", desc: "Acesso total ao sistema", perms: ["garantias", "nc", "capa", "auditorias", "admin", "dashboard"] },
-  { nome: "SAC", desc: "Atendimento ao cliente e garantias", perms: ["garantias", "nc", "dashboard"] },
-  { nome: "QUALIDADE", desc: "Gestão de qualidade e NC", perms: ["nc", "capa", "auditorias", "dashboard"] },
-  { nome: "AUDITOR", desc: "Execução de auditorias", perms: ["auditorias", "dashboard"] },
-  { nome: "DIRETORIA", desc: "Visão executiva", perms: ["dashboard", "garantias", "nc", "capa", "auditorias"] },
+  { nome: "ADMIN", desc: "Acesso total ao sistema", perms: ["dashboard", "sac", "garantias", "nc", "capa", "auditorias", "admin"] },
+  { nome: "SAC", desc: "Atendimento ao cliente e garantias", perms: ["dashboard", "sac", "garantias", "nc"] },
+  { nome: "QUALIDADE", desc: "Gestão de qualidade e NC", perms: ["dashboard", "nc", "capa", "auditorias"] },
+  { nome: "AUDITOR", desc: "Execução de auditorias", perms: ["dashboard", "auditorias"] },
+  { nome: "DIRETORIA", desc: "Visão executiva", perms: ["dashboard", "sac", "garantias", "nc", "capa", "auditorias"] },
 ];
 
-const modulos = ["dashboard", "garantias", "nc", "capa", "auditorias", "admin"];
+const modulos = ["dashboard", "sac", "garantias", "nc", "capa", "auditorias", "admin"];
 
 const PerfisPage = () => {
   const navigate = useNavigate();
