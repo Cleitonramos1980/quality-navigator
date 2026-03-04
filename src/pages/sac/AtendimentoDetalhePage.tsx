@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,6 +19,20 @@ const AtendimentoDetalhePage = () => {
   const atendimento = mockAtendimentos.find((a) => a.id === id);
 
   const [novoStatus, setNovoStatus] = useState<string>("");
+
+  const sacPayload = atendimento ? {
+    sacId: atendimento.id,
+    codcli: atendimento.codcli,
+    clienteNome: atendimento.clienteNome,
+    cgcent: atendimento.cgcent,
+    telefone: atendimento.telefone,
+    numPedido: atendimento.numPedido || "",
+    numNfVenda: atendimento.numNfVenda || "",
+    descricao: atendimento.descricao,
+    plantaResp: atendimento.plantaResp,
+    tipoContato: atendimento.tipoContato,
+    canal: atendimento.canal,
+  } : {};
 
   if (!atendimento) {
     return (
@@ -139,15 +153,15 @@ const AtendimentoDetalhePage = () => {
 
               <div className="border-t border-border pt-3 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">Criar a partir deste chamado</p>
-                <Link to="/garantias/nova">
-                  <Button variant="outline" size="sm" className="w-full justify-start"><ShieldCheck className="w-4 h-4 mr-2" /> Criar Garantia</Button>
-                </Link>
-                <Link to="/nao-conformidades/nova">
-                  <Button variant="outline" size="sm" className="w-full justify-start"><AlertTriangle className="w-4 h-4 mr-2" /> Criar NC</Button>
-                </Link>
-                <Link to="/capa/nova">
-                  <Button variant="outline" size="sm" className="w-full justify-start"><FileSearch className="w-4 h-4 mr-2" /> Criar CAPA</Button>
-                </Link>
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => navigate("/garantias/nova", { state: sacPayload })}>
+                  <ShieldCheck className="w-4 h-4 mr-2" /> Criar Garantia
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => navigate("/nao-conformidades/nova", { state: sacPayload })}>
+                  <AlertTriangle className="w-4 h-4 mr-2" /> Criar NC
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => navigate("/capa/nova", { state: sacPayload })}>
+                  <FileSearch className="w-4 h-4 mr-2" /> Criar CAPA
+                </Button>
               </div>
             </CardContent>
           </Card>
