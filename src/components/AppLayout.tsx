@@ -12,6 +12,7 @@ import {
   Factory,
   LogOut,
   ChevronDown,
+  Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
@@ -26,6 +27,15 @@ const navItems = [
   { path: "/nao-conformidades", label: "Não Conformidades", icon: AlertTriangle },
   { path: "/capa", label: "CAPA", icon: FileSearch },
   { path: "/auditorias", label: "Auditorias", icon: ClipboardCheck },
+  {
+    path: "/sac/dashboard", label: "SAC", icon: Headphones,
+    children: [
+      { path: "/sac/dashboard", label: "Dashboard" },
+      { path: "/sac/atendimentos", label: "Atendimentos" },
+      { path: "/sac/pesquisa", label: "Pesquisa" },
+      { path: "/sac/novo", label: "Novo Atendimento" },
+    ],
+  },
   { path: "/admin", label: "Administração", icon: Settings },
 ];
 
@@ -102,24 +112,44 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 space-y-0.5">
+        <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path || (item.children && item.children.some((c) => location.pathname === c.path));
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
-                  isActive
-                    ? "bg-sidebar-primary/15 text-sidebar-primary font-medium"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+              <div key={item.path}>
+                <Link
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
+                    isActive
+                      ? "bg-sidebar-primary/15 text-sidebar-primary font-medium"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                  )}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </Link>
+                {item.children && isActive && (
+                  <div className="ml-7 mt-0.5 space-y-0.5">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.path}
+                        to={child.path}
+                        onClick={() => setSidebarOpen(false)}
+                        className={cn(
+                          "block px-3 py-1.5 rounded-md text-xs transition-colors",
+                          location.pathname === child.path
+                            ? "text-sidebar-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground/80"
+                        )}
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
                 )}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-              </Link>
+              </div>
             );
           })}
         </nav>
