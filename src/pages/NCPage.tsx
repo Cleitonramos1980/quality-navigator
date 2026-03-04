@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { mockNCs } from "@/data/mockData";
 
 const NCPage = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
   const filtered = mockNCs.filter(
@@ -22,7 +24,7 @@ const NCPage = () => {
           <h1 className="text-2xl font-bold text-foreground">Não Conformidades</h1>
           <p className="text-sm text-muted-foreground mt-1">Registro e acompanhamento de não conformidades</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => navigate("/nao-conformidades/nova")}>
           <Plus className="w-4 h-4" />
           Nova NC
         </Button>

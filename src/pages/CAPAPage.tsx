@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import StatusBadge from "@/components/StatusBadge";
 import { mockCAPAs } from "@/data/mockData";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const CAPAPage = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
   const filtered = mockCAPAs.filter(
@@ -21,7 +23,7 @@ const CAPAPage = () => {
           <h1 className="text-2xl font-bold text-foreground">CAPA</h1>
           <p className="text-sm text-muted-foreground mt-1">Ações Corretivas e Preventivas</p>
         </div>
-        <Button className="gap-2"><Plus className="w-4 h-4" />Nova CAPA</Button>
+        <Button className="gap-2" onClick={() => navigate("/capa/nova")}><Plus className="w-4 h-4" />Nova CAPA</Button>
       </div>
 
       <div className="relative max-w-sm">

@@ -2,8 +2,10 @@ import StatusBadge from "@/components/StatusBadge";
 import { mockAuditorias } from "@/data/mockData";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const AuditoriasPage = () => {
+  const navigate = useNavigate();
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -11,7 +13,7 @@ const AuditoriasPage = () => {
           <h1 className="text-2xl font-bold text-foreground">Auditorias</h1>
           <p className="text-sm text-muted-foreground mt-1">Planejamento e execução de auditorias internas</p>
         </div>
-        <Button className="gap-2"><Plus className="w-4 h-4" />Nova Auditoria</Button>
+        <Button className="gap-2" onClick={() => navigate("/auditorias/nova")}><Plus className="w-4 h-4" />Nova Auditoria</Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
