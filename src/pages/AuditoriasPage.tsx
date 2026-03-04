@@ -1,0 +1,37 @@
+import StatusBadge from "@/components/StatusBadge";
+import { mockAuditorias } from "@/data/mockData";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const AuditoriasPage = () => {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Auditorias</h1>
+          <p className="text-sm text-muted-foreground mt-1">Planejamento e execução de auditorias internas</p>
+        </div>
+        <Button className="gap-2"><Plus className="w-4 h-4" />Nova Auditoria</Button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {mockAuditorias.map((a) => (
+          <div key={a.id} className="glass-card rounded-lg p-5 hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-start justify-between mb-2">
+              <span className="font-mono text-xs font-medium text-primary">{a.id}</span>
+              <StatusBadge status={a.status} />
+            </div>
+            <h3 className="font-medium text-foreground mb-1">{a.tplNome}</h3>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <div>Planta: <span className="font-mono">{a.planta}</span> · Local: {a.local}</div>
+              <div>Auditor: <strong className="text-foreground">{a.auditor}</strong></div>
+              <div>Início: {a.startedAt}{a.finishedAt && ` · Fim: ${a.finishedAt}`}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default AuditoriasPage;
