@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Save, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,17 +13,19 @@ import { useToast } from "@/hooks/use-toast";
 
 const NovaGarantiaPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const sacData = location.state as Record<string, string> | null;
 
   const [form, setForm] = useState({
-    codcli: "",
-    clienteNome: "",
-    numPedido: "",
-    numNfVenda: "",
+    codcli: sacData?.codcli || "",
+    clienteNome: sacData?.clienteNome || "",
+    numPedido: sacData?.numPedido || "",
+    numNfVenda: sacData?.numNfVenda || "",
     numNfTroca: "",
     defeito: "",
-    descricao: "",
-    plantaResp: "" as Planta | "",
+    descricao: sacData?.descricao || "",
+    plantaResp: (sacData?.plantaResp || "") as Planta | "",
     custoEstimado: "",
     obs: "",
   });

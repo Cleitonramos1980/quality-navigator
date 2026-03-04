@@ -87,6 +87,20 @@ const NovoAtendimentoPage = () => {
     }
   };
 
+  const buildStatePayload = () => ({
+    codcli: form.codcli,
+    clienteNome: form.clienteNome,
+    cgcent: form.cgcent,
+    telefone: form.telefone,
+    numPedido: form.numPedido,
+    numNfVenda: form.numNfVenda,
+    produtoRelacionado: form.produtoRelacionado,
+    descricao: form.descricao,
+    plantaResp: form.plantaResp,
+    canal: form.canal,
+    tipoContato: form.tipoContato,
+  });
+
   // === Save ===
   const handleSave = () => {
     if (!form.clienteNome || !form.descricao || !form.canal || !form.tipoContato || !form.plantaResp) {
@@ -271,13 +285,13 @@ const NovoAtendimentoPage = () => {
       {/* Botões de Ação */}
       <div className="flex flex-wrap justify-end gap-3 pb-6">
         <Button variant="outline" onClick={() => navigate(-1)}><X className="w-4 h-4 mr-1" /> Cancelar</Button>
-        <Button variant="outline" onClick={() => { handleSave(); navigate("/garantias/nova"); }}>
+        <Button variant="outline" onClick={() => { handleSave(); navigate("/garantias/nova", { state: buildStatePayload() }); }}>
           <Shield className="w-4 h-4 mr-1" /> Criar Garantia
         </Button>
-        <Button variant="outline" onClick={() => { handleSave(); navigate("/nao-conformidades/nova"); }}>
+        <Button variant="outline" onClick={() => { handleSave(); navigate("/nao-conformidades/nova", { state: buildStatePayload() }); }}>
           <FileWarning className="w-4 h-4 mr-1" /> Criar NC
         </Button>
-        <Button variant="outline" onClick={() => { handleSave(); navigate("/capa/nova"); }}>
+        <Button variant="outline" onClick={() => { handleSave(); navigate("/capa/nova", { state: buildStatePayload() }); }}>
           <ClipboardList className="w-4 h-4 mr-1" /> Criar CAPA
         </Button>
         <Button onClick={handleSave}><Save className="w-4 h-4 mr-1" /> Salvar Atendimento</Button>
