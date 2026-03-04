@@ -16,6 +16,7 @@ import NovaGarantiaPage from "@/pages/garantias/NovaGarantiaPage";
 import NovaNCPage from "@/pages/nc/NovaNCPage";
 import NovaCAPAPage from "@/pages/capa/NovaCAPAPage";
 import NovaAuditoriaPage from "@/pages/auditorias/NovaAuditoriaPage";
+import CalendarioAuditoriasPage from "@/pages/auditorias/CalendarioAuditoriasPage";
 import UsuariosPage from "@/pages/admin/UsuariosPage";
 import PerfisPage from "@/pages/admin/PerfisPage";
 import LogAuditoriaPage from "@/pages/admin/LogAuditoriaPage";
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/capa/nova" element={<AppLayout><NovaCAPAPage /></AppLayout>} />
           <Route path="/auditorias" element={<AppLayout><AuditoriasPage /></AppLayout>} />
           <Route path="/auditorias/nova" element={<AppLayout><NovaAuditoriaPage /></AppLayout>} />
+          <Route path="/auditorias/calendario" element={<AppLayout><CalendarioAuditoriasPage /></AppLayout>} />
           <Route path="/sac/dashboard" element={<AppLayout><SACDashboardPage /></AppLayout>} />
           <Route path="/sac/atendimentos" element={<AppLayout><AtendimentosPage /></AppLayout>} />
           <Route path="/sac/novo" element={<AppLayout><NovoAtendimentoPage /></AppLayout>} />
