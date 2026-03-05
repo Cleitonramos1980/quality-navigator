@@ -3,17 +3,32 @@ import { Factory } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { setCurrentPerfil, type PerfilNome } from "@/lib/rbac";
+import { getDefaultRouteForPerfil } from "@/lib/workflowOs";
+
+const PERFIL_OPTIONS: { value: PerfilNome; label: string }[] = [
+  { value: "ADMIN", label: "Administrador" },
+  { value: "SAC", label: "SAC" },
+  { value: "ASSISTENCIA", label: "Assistência Técnica" },
+  { value: "QUALIDADE", label: "Qualidade / Inspeção" },
+  { value: "TECNICO", label: "Técnico / Reparo" },
+  { value: "ALMOX", label: "Almoxarifado / CD" },
+  { value: "DIRETORIA", label: "Diretoria" },
+  { value: "AUDITOR", label: "Auditor" },
+];
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedPerfil, setSelectedPerfil] = useState<PerfilNome>("ADMIN");
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login – will be replaced with real auth
-    navigate("/");
+    setCurrentPerfil(selectedPerfil);
+    navigate(getDefaultRouteForPerfil(selectedPerfil));
   };
 
   return (
@@ -48,6 +63,19 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="perfil">Perfil (simulação)</Label>
+            <Select value={selectedPerfil} onValueChange={(v) => setSelectedPerfil(v as PerfilNome)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PERFIL_OPTIONS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Button type="submit" className="w-full">
             Entrar

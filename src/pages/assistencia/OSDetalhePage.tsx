@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Wrench, Package, FileText, Clock, User, MapPin, Plus, Trash2, Search, Warehouse, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Wrench, Package, FileText, Clock, User, MapPin, Plus, Trash2, Search, Warehouse, AlertTriangle, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { buscarOS, atualizarStatusOS, listarReqAssistencia, listarConsumosPorOS, criarReqAssistencia, listarEstoque } from "@/services/assistencia";
 import { registrarAuditoria } from "@/services/auditoria";
-import { hasPermission } from "@/lib/rbac";
+import { hasPermission, getCurrentPerfil } from "@/lib/rbac";
+import { canTransitionOS, getCurrentPapel, STATUS_RESPONSAVEL, PAPEL_LABELS } from "@/lib/workflowOs";
 import { OS_STATUS_LABELS, OS_STATUS_COLORS, OS_PRIORIDADE_LABELS, OS_PRIORIDADE_COLORS, OS_TIPO_LABELS, REQ_ASSIST_STATUS_LABELS, REQ_ASSIST_STATUS_COLORS } from "@/types/assistencia";
 import type { OrdemServico, OSStatus, RequisicaoAssistencia, ConsumoMaterial, ItemReqAssist } from "@/types/assistencia";
 import { PLANTA_LABELS, Planta } from "@/types/sgq";
@@ -34,6 +36,12 @@ const OSDetalhePage = () => {
   const [laudo, setLaudo] = useState("");
   const [decisao, setDecisao] = useState("");
 
+  // Gate fields
+  const [recebimentoConfirmado, setRecebimentoConfirmado] = useState(false);
+  const [relatorioReparo, setRelatorioReparo] = useState("");
+  const [validacaoAprovada, setValidacaoAprovada] = useState(false);
+  const [mensagemEncerramento, setMensagemEncerramento] = useState("");
+
   // Nova Requisição modal state
   const [showNovaReq, setShowNovaReq] = useState(false);
   const [reqCdResponsavel, setReqCdResponsavel] = useState<Planta>("MAO");
@@ -45,10 +53,8 @@ const OSDetalhePage = () => {
   const [estoqueFilter, setEstoqueFilter] = useState("");
   const [showEstoque, setShowEstoque] = useState(false);
 
-  // RBAC
-  const canChangeStatus = hasPermission("ASSIST_OS_CHANGE_STATUS");
-  const canCreateReq = hasPermission("ASSIST_REQ_CREATE");
-  const canConsumo = hasPermission("ASSIST_CONSUMO_CREATE");
+  const papel = getCurrentPapel();
+  const isDiretoria = papel === "DIRETORIA";
 
   useEffect(() => {
     if (!id) return;
@@ -58,6 +64,10 @@ const OSDetalhePage = () => {
         setLaudo(data.laudoInspecao || "");
         setDecisao(data.decisaoTecnica || "");
         setReqPlantaDestino(data.planta);
+        setRecebimentoConfirmado(data.recebimentoConfirmado || false);
+        setRelatorioReparo(data.relatorioReparo || "");
+        setValidacaoAprovada(data.validacaoAprovada || false);
+        setMensagemEncerramento(data.mensagemEncerramento || "");
       }
     });
     listarReqAssistencia().then((all) => setReqs(all.filter((r) => r.osId === id)));
@@ -66,23 +76,53 @@ const OSDetalhePage = () => {
 
   if (!os) return <div className="p-8 text-muted-foreground">Carregando...</div>;
 
+  // Build current OS with live gate fields for validation
+  const osWithGates: OrdemServico = {
+    ...os,
+    laudoInspecao: laudo || undefined,
+    decisaoTecnica: decisao || undefined,
+    recebimentoConfirmado,
+    relatorioReparo: relatorioReparo || undefined,
+    validacaoAprovada,
+    mensagemEncerramento: mensagemEncerramento || undefined,
+  };
+
   const currentIdx = OS_STATUS_FLOW.indexOf(os.status);
   const nextStatus = currentIdx >= 0 && currentIdx < OS_STATUS_FLOW.length - 1 ? OS_STATUS_FLOW[currentIdx + 1] : null;
   const prevStatus = currentIdx > 0 ? OS_STATUS_FLOW[currentIdx - 1] : null;
+
+  const forwardResult = nextStatus ? canTransitionOS(osWithGates, nextStatus, "forward", reqs) : null;
+  const backResult = prevStatus ? canTransitionOS(osWithGates, prevStatus, "back", reqs) : null;
+  const cancelResult = canTransitionOS(osWithGates, "CANCELADA", "forward", reqs);
 
   const reqsEmTransferencia = reqs.filter((r) => r.status === "EM_TRANSFERENCIA");
   const reqsRecebidas = reqs.filter((r) => r.status === "RECEBIDA_ASSISTENCIA");
   const consumoLiberado = reqsRecebidas.length > 0;
 
-  const handleChangeStatus = async (status: OSStatus) => {
-    if (!canChangeStatus) {
-      toast({ title: "Sem permissão", variant: "destructive" });
+  const responsavelAtual = STATUS_RESPONSAVEL[os.status];
+
+  const handleChangeStatus = async (status: OSStatus, direction: "forward" | "back") => {
+    const result = canTransitionOS(osWithGates, status, direction, reqs);
+    if (!result.allowed) {
+      // Log denied attempt
+      registrarAuditoria("OS_TRANSICAO_NEGADA", "OS", os.id, `Tentativa: ${OS_STATUS_LABELS[os.status]} → ${OS_STATUS_LABELS[status]}. Motivo: ${result.reason}. Perfil: ${getCurrentPerfil()}`);
+      toast({ title: "Transição negada", description: result.reason, variant: "destructive" });
       return;
     }
+
+    // Persist gate fields on the OS mock before transitioning
+    const osRef = os as any;
+    if (laudo) osRef.laudoInspecao = laudo;
+    if (decisao) osRef.decisaoTecnica = decisao;
+    if (recebimentoConfirmado) osRef.recebimentoConfirmado = true;
+    if (relatorioReparo) osRef.relatorioReparo = relatorioReparo;
+    if (validacaoAprovada) osRef.validacaoAprovada = true;
+    if (mensagemEncerramento) osRef.mensagemEncerramento = mensagemEncerramento;
+
     const statusAnterior = os.status;
     await atualizarStatusOS(os.id, status);
     setOs({ ...os, status });
-    registrarAuditoria("ALTERAR_STATUS", "OS", os.id, `Status: ${OS_STATUS_LABELS[statusAnterior]} → ${OS_STATUS_LABELS[status]}`);
+    registrarAuditoria("OS_TRANSICAO", "OS", os.id, `Status: ${OS_STATUS_LABELS[statusAnterior]} → ${OS_STATUS_LABELS[status]}. Perfil: ${getCurrentPerfil()}`);
     toast({ title: "Status atualizado", description: `OS movida para ${OS_STATUS_LABELS[status]}` });
   };
 
@@ -148,16 +188,46 @@ const OSDetalhePage = () => {
     !estoqueFilter || e.descricao.toLowerCase().includes(estoqueFilter.toLowerCase()) || e.codMaterial.toLowerCase().includes(estoqueFilter.toLowerCase())
   );
 
-  const RbacButton = ({ perm, children, ...props }: { perm: string; children: React.ReactNode } & React.ComponentProps<typeof Button>) => {
-    const allowed = hasPermission(perm as any);
-    if (allowed) return <Button {...props}>{children}</Button>;
+  const TransitionButton = ({ targetStatus, direction, label, variant = "default", ...props }: {
+    targetStatus: OSStatus;
+    direction: "forward" | "back";
+    label: string;
+    variant?: "default" | "outline" | "destructive";
+  } & Omit<React.ComponentProps<typeof Button>, "onClick" | "variant">) => {
+    const result = direction === "forward" ? forwardResult : direction === "back" ? backResult : cancelResult;
+    const transResult = canTransitionOS(osWithGates, targetStatus, direction, reqs);
+    const allowed = transResult.allowed;
+
+    if (isDiretoria) return null;
+
+    if (!allowed) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>
+              <Button variant={variant} disabled {...props}>
+                {label}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs text-xs">{transResult.reason}</TooltipContent>
+        </Tooltip>
+      );
+    }
+
     return (
-      <Tooltip>
-        <TooltipTrigger asChild><span><Button {...props} disabled>{children}</Button></span></TooltipTrigger>
-        <TooltipContent>Sem permissão</TooltipContent>
-      </Tooltip>
+      <Button variant={variant} onClick={() => handleChangeStatus(targetStatus, direction)} {...props}>
+        {label}
+      </Button>
     );
   };
+
+  // Determine which sections to highlight based on papel
+  const showInspecaoSection = ["INSPECAO", "ADMIN"].includes(papel) || os.status === "EM_INSPECAO";
+  const showReparoSection = ["REPARO", "ADMIN"].includes(papel) || os.status === "EM_REPARO";
+  const showRecebimentoSection = ["ASSISTENCIA", "ADMIN"].includes(papel) || os.status === "RECEBIDO" || os.status === "AGUARDANDO_RECEBIMENTO";
+  const showValidacaoSection = ["VALIDACAO", "ADMIN"].includes(papel) || os.status === "AGUARDANDO_VALIDACAO";
+  const showEncerramentoSection = ["SAC", "ADMIN"].includes(papel) || os.status === "CONCLUIDA";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -173,19 +243,23 @@ const OSDetalhePage = () => {
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{OS_TIPO_LABELS[os.tipoOs]} — {os.clienteNome}</p>
         </div>
+
         {prevStatus && os.status !== "CANCELADA" && (
-          <RbacButton perm="ASSIST_OS_CHANGE_STATUS" variant="outline" onClick={() => handleChangeStatus(prevStatus)} className="gap-2">
-            ← Retroceder para {OS_STATUS_LABELS[prevStatus]}
-          </RbacButton>
+          <TransitionButton targetStatus={prevStatus} direction="back" label={`← ${OS_STATUS_LABELS[prevStatus]}`} variant="outline" className="gap-2" />
         )}
         {nextStatus && os.status !== "CANCELADA" && (
-          <RbacButton perm="ASSIST_OS_CHANGE_STATUS" onClick={() => handleChangeStatus(nextStatus)} className="gap-2">
-            Avançar → {OS_STATUS_LABELS[nextStatus]}
-          </RbacButton>
+          <TransitionButton targetStatus={nextStatus} direction="forward" label={`Avançar → ${OS_STATUS_LABELS[nextStatus]}`} className="gap-2" />
         )}
         {os.status !== "CANCELADA" && os.status !== "ENCERRADA" && (
-          <RbacButton perm="ASSIST_OS_CHANGE_STATUS" variant="destructive" size="sm" onClick={() => handleChangeStatus("CANCELADA")}>Cancelar OS</RbacButton>
+          <TransitionButton targetStatus={"CANCELADA"} direction="forward" label="Cancelar OS" variant="destructive" size="sm" />
         )}
+      </div>
+
+      {/* Responsável atual */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <ShieldAlert className="w-3.5 h-3.5" />
+        <span>Responsável pela etapa atual: <strong className="text-foreground">{PAPEL_LABELS[responsavelAtual]}</strong></span>
+        {isDiretoria && <Badge variant="outline" className="text-[10px] ml-2">Somente leitura</Badge>}
       </div>
 
       {/* Timeline mini */}
@@ -252,25 +326,94 @@ const OSDetalhePage = () => {
               <label className="text-xs font-medium text-muted-foreground">Descrição do Problema</label>
               <p className="text-sm text-foreground mt-1 bg-muted/50 p-3 rounded-md">{os.descricaoProblema}</p>
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">Laudo de Inspeção</label>
-              <Textarea value={laudo} onChange={(e) => setLaudo(e.target.value)} placeholder="Registrar laudo de inspeção..." className="mt-1" rows={3} />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">Decisão Técnica</label>
-              <Textarea value={decisao} onChange={(e) => setDecisao(e.target.value)} placeholder="Registrar decisão técnica..." className="mt-1" rows={3} />
-            </div>
+            {showInspecaoSection && (
+              <>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Laudo de Inspeção {os.status === "EM_INSPECAO" && <span className="text-destructive">*</span>}</label>
+                  <Textarea value={laudo} onChange={(e) => setLaudo(e.target.value)} placeholder="Registrar laudo de inspeção..." className="mt-1" rows={3} disabled={isDiretoria} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Decisão Técnica {os.status === "EM_INSPECAO" && <span className="text-destructive">*</span>}</label>
+                  <Textarea value={decisao} onChange={(e) => setDecisao(e.target.value)} placeholder="Registrar decisão técnica..." className="mt-1" rows={3} disabled={isDiretoria} />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Gate: Recebimento do produto */}
+      {showRecebimentoSection && (
+        <Card className="glass-card">
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Confirmação de Recebimento do Produto</CardTitle></CardHeader>
+          <CardContent>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox checked={recebimentoConfirmado} onCheckedChange={(v) => setRecebimentoConfirmado(!!v)} disabled={isDiretoria} />
+              <span className={recebimentoConfirmado ? "text-foreground" : "text-muted-foreground"}>
+                Produto recebido na base de assistência {os.status === "RECEBIDO" && <span className="text-destructive">*</span>}
+              </span>
+              {recebimentoConfirmado && <CheckCircle2 className="w-4 h-4 text-success" />}
+            </label>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Gate: Relatório de Reparo */}
+      {showReparoSection && (
+        <Card className="glass-card">
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Execução do Reparo</CardTitle></CardHeader>
+          <CardContent>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Relatório de Reparo {os.status === "EM_REPARO" && <span className="text-destructive">*</span>}</label>
+              <Textarea value={relatorioReparo} onChange={(e) => setRelatorioReparo(e.target.value)} placeholder="Descrever a execução do reparo, procedimentos realizados..." className="mt-1" rows={3} disabled={isDiretoria} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Gate: Validação */}
+      {showValidacaoSection && (
+        <Card className="glass-card">
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Validação Final</CardTitle></CardHeader>
+          <CardContent>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox checked={validacaoAprovada} onCheckedChange={(v) => setValidacaoAprovada(!!v)} disabled={isDiretoria} />
+              <span className={validacaoAprovada ? "text-foreground" : "text-muted-foreground"}>
+                Validação aprovada {os.status === "AGUARDANDO_VALIDACAO" && <span className="text-destructive">*</span>}
+              </span>
+              {validacaoAprovada && <CheckCircle2 className="w-4 h-4 text-success" />}
+            </label>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Gate: Encerramento */}
+      {showEncerramentoSection && (
+        <Card className="glass-card">
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Encerramento</CardTitle></CardHeader>
+          <CardContent>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Mensagem de encerramento / comunicação ao cliente {os.status === "CONCLUIDA" && <span className="text-destructive">*</span>}</label>
+              <Textarea value={mensagemEncerramento} onChange={(e) => setMensagemEncerramento(e.target.value)} placeholder="Registrar comunicação ao cliente, canal utilizado..." className="mt-1" rows={3} disabled={isDiretoria} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Requisições */}
       <Card className="glass-card">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-sm text-muted-foreground">Requisições de Material</CardTitle>
-          <RbacButton perm="ASSIST_REQ_CREATE" variant="outline" size="sm" onClick={openNovaReq} className="text-xs gap-1">
-            <Package className="w-3 h-3" /> Nova Requisição
-          </RbacButton>
+          {!isDiretoria && hasPermission("ASSIST_REQ_CREATE") ? (
+            <Button variant="outline" size="sm" onClick={openNovaReq} className="text-xs gap-1">
+              <Package className="w-3 h-3" /> Nova Requisição
+            </Button>
+          ) : !isDiretoria ? (
+            <Tooltip>
+              <TooltipTrigger asChild><span><Button variant="outline" size="sm" disabled className="text-xs gap-1"><Package className="w-3 h-3" /> Nova Requisição</Button></span></TooltipTrigger>
+              <TooltipContent>Sem permissão</TooltipContent>
+            </Tooltip>
+          ) : null}
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -293,7 +436,7 @@ const OSDetalhePage = () => {
                   <TableCell className="text-xs">{r.itens.length} item(ns)</TableCell>
                   <TableCell><Badge className={`text-[10px] ${REQ_ASSIST_STATUS_COLORS[r.status]}`}>{REQ_ASSIST_STATUS_LABELS[r.status]}</Badge></TableCell>
                   <TableCell>
-                    {r.status === "EM_TRANSFERENCIA" && (
+                    {r.status === "EM_TRANSFERENCIA" && !isDiretoria && (
                       <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => navigate(`/assistencia/requisicoes/${r.id}/receber`)}>
                         Receber
                       </Button>
@@ -310,11 +453,11 @@ const OSDetalhePage = () => {
       <Card className="glass-card">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-sm text-muted-foreground">Consumo de Materiais</CardTitle>
-          {consumoLiberado ? (
-            <RbacButton perm="ASSIST_CONSUMO_CREATE" variant="outline" size="sm" onClick={() => navigate(`/assistencia/os/${os.id}/consumo`)} className="text-xs gap-1">
+          {!isDiretoria && consumoLiberado && hasPermission("ASSIST_CONSUMO_CREATE") ? (
+            <Button variant="outline" size="sm" onClick={() => navigate(`/assistencia/os/${os.id}/consumo`)} className="text-xs gap-1">
               <Plus className="w-3 h-3" /> Registrar Consumo
-            </RbacButton>
-          ) : (
+            </Button>
+          ) : !isDiretoria ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
@@ -323,9 +466,13 @@ const OSDetalhePage = () => {
                   </Button>
                 </span>
               </TooltipTrigger>
-              <TooltipContent className="max-w-xs">Consumo liberado somente após recebimento da requisição na assistência.</TooltipContent>
+              <TooltipContent className="max-w-xs">
+                {!consumoLiberado
+                  ? "Consumo liberado somente após recebimento da requisição na assistência."
+                  : "Sem permissão para registrar consumo."}
+              </TooltipContent>
             </Tooltip>
-          )}
+          ) : null}
         </CardHeader>
         <CardContent className="p-0">
           <Table>
