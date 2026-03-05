@@ -1,6 +1,6 @@
 // Workflow governance — controle de transição de status por papel operacional
 import type { OSStatus, OrdemServico, RequisicaoAssistencia } from "@/types/assistencia";
-import { getCurrentPerfil, type PerfilNome } from "@/lib/rbac";
+import { getCurrentPerfil, hasPermission, type PerfilNome } from "@/lib/rbac";
 
 // ── Papéis operacionais ──
 export type PapelOperacional = "SAC" | "ASSISTENCIA" | "INSPECAO" | "REPARO" | "ALMOX_CD" | "VALIDACAO" | "DIRETORIA" | "ADMIN";
@@ -131,9 +131,8 @@ export function canTransitionOS(
   const perfil = getCurrentPerfil();
   const papel = PERFIL_TO_PAPEL[perfil];
 
-  // ADMIN override total
+  // ADMIN override total (still validates gates for forward)
   if (papel === "ADMIN") {
-    // Still validate gates for forward
     if (direction === "forward") {
       const gate = validateGate(os, os.status, targetStatus, reqs);
       if (!gate.ok) {
@@ -146,6 +145,11 @@ export function canTransitionOS(
   // DIRETORIA = somente leitura
   if (papel === "DIRETORIA") {
     return { allowed: false, reason: "Perfil Diretoria: somente leitura" };
+  }
+
+  // Check granular permission ASSIST_OS_CHANGE_STATUS
+  if (!hasPermission("ASSIST_OS_CHANGE_STATUS")) {
+    return { allowed: false, reason: "Sem permissão: ASSIST_OS_CHANGE_STATUS" };
   }
 
   // Check: o papel do usuário é o responsável pelo status atual?
@@ -176,7 +180,7 @@ export function getCurrentPapel(): PapelOperacional {
 // Helper: can current user create OS?
 export function canCreateOS(): boolean {
   const papel = getCurrentPapel();
-  return PAPEIS_PODEM_CRIAR_OS.includes(papel);
+  return PAPEIS_PODEM_CRIAR_OS.includes(papel) && hasPermission("ASSIST_OS_CREATE");
 }
 
 // Helper: get default route for perfil
@@ -193,4 +197,35 @@ export function getDefaultRouteForPerfil(perfil: PerfilNome): string {
     case "ADMIN": return "/";
     default: return "/";
   }
+}
+
+// ── Visibilidade de módulos no menu ──
+export type NavModulo = "dashboard" | "sac" | "assistencia" | "garantias" | "nc" | "capa" | "auditorias" | "admin";
+
+const MODULO_PAPEIS: Record<NavModulo, PapelOperacional[]> = {
+  dashboard: ["SAC", "ASSISTENCIA", "INSPECAO", "REPARO", "ALMOX_CD", "VALIDACAO", "DIRETORIA", "ADMIN"],
+  sac: ["SAC", "ADMIN", "DIRETORIA"],
+  assistencia: ["ASSISTENCIA", "INSPECAO", "REPARO", "VALIDACAO", "ALMOX_CD", "ADMIN", "DIRETORIA"],
+  garantias: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
+  nc: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
+  capa: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
+  auditorias: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
+  admin: ["ADMIN"],
+};
+
+export function canSeeModulo(modulo: NavModulo): boolean {
+  const papel = getCurrentPapel();
+  return MODULO_PAPEIS[modulo].includes(papel);
+}
+
+// Submenu visibility for assistencia children
+export function canSeeAssistSubmenu(path: string): boolean {
+  const papel = getCurrentPapel();
+  if (papel === "ADMIN" || papel === "DIRETORIA") return true;
+
+  if (path === "/assistencia/dashboard") return hasPermission("ASSIST_DASH_VIEW");
+  if (path === "/assistencia/os") return hasPermission("ASSIST_OS_VIEW");
+  if (path === "/assistencia/requisicoes") return hasPermission("ASSIST_REQ_VIEW");
+  if (path === "/assistencia/estoque") return hasPermission("ASSIST_ESTOQUE_VIEW");
+  return true;
 }

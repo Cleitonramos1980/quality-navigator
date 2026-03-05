@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -18,20 +18,28 @@ import {
 import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
 import { getCurrentPerfil, getCurrentUserName, setCurrentPerfil } from "@/lib/rbac";
-import { getCurrentPapel, PAPEL_LABELS } from "@/lib/workflowOs";
+import { getCurrentPapel, PAPEL_LABELS, canSeeModulo, canSeeAssistSubmenu, type NavModulo } from "@/lib/workflowOs";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/garantias", label: "Garantias", icon: ShieldCheck },
-  { path: "/nao-conformidades", label: "Não Conformidades", icon: AlertTriangle },
-  { path: "/capa", label: "CAPA", icon: FileSearch },
-  { path: "/auditorias", label: "Auditorias", icon: ClipboardCheck },
+interface NavItem {
+  path: string;
+  label: string;
+  icon: any;
+  modulo: NavModulo;
+  children?: { path: string; label: string }[];
+}
+
+const allNavItems: NavItem[] = [
+  { path: "/", label: "Dashboard", icon: LayoutDashboard, modulo: "dashboard" },
+  { path: "/garantias", label: "Garantias", icon: ShieldCheck, modulo: "garantias" },
+  { path: "/nao-conformidades", label: "Não Conformidades", icon: AlertTriangle, modulo: "nc" },
+  { path: "/capa", label: "CAPA", icon: FileSearch, modulo: "capa" },
+  { path: "/auditorias", label: "Auditorias", icon: ClipboardCheck, modulo: "auditorias" },
   {
-    path: "/sac/dashboard", label: "SAC", icon: Headphones,
+    path: "/sac/dashboard", label: "SAC", icon: Headphones, modulo: "sac",
     children: [
       { path: "/sac/dashboard", label: "Dashboard" },
       { path: "/sac/atendimentos", label: "Atendimentos" },
@@ -41,7 +49,7 @@ const navItems = [
     ],
   },
   {
-    path: "/assistencia/dashboard", label: "Assistência Técnica", icon: Wrench,
+    path: "/assistencia/dashboard", label: "Assistência Técnica", icon: Wrench, modulo: "assistencia",
     children: [
       { path: "/assistencia/dashboard", label: "Dashboard" },
       { path: "/assistencia/os", label: "Ordens de Serviço" },
@@ -49,7 +57,7 @@ const navItems = [
       { path: "/assistencia/estoque", label: "Estoque" },
     ],
   },
-  { path: "/admin", label: "Administração", icon: Settings },
+  { path: "/admin", label: "Administração", icon: Settings, modulo: "admin" },
 ];
 
 const AppLayout = ({ children }: AppLayoutProps) => {
@@ -62,6 +70,21 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const papel = getCurrentPapel();
   const userName = getCurrentUserName();
   const initials = userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+
+  // Filter nav items by role/permission
+  const navItems = useMemo(() => {
+    return allNavItems
+      .filter((item) => canSeeModulo(item.modulo))
+      .map((item) => {
+        if (item.modulo === "assistencia" && item.children) {
+          return {
+            ...item,
+            children: item.children.filter((child) => canSeeAssistSubmenu(child.path)),
+          };
+        }
+        return item;
+      });
+  }, [perfil]);
 
   return (
     <div className="min-h-screen flex">

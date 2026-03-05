@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
+import { RequirePermission, RequireRole } from "@/components/RequireAuthz";
 import Dashboard from "@/pages/Dashboard";
 import GarantiasPage from "@/pages/GarantiasPage";
 import NCPage from "@/pages/NCPage";
@@ -58,28 +59,35 @@ const App = () => (
           <Route path="/auditorias" element={<AppLayout><AuditoriasPage /></AppLayout>} />
           <Route path="/auditorias/nova" element={<AppLayout><NovaAuditoriaPage /></AppLayout>} />
           <Route path="/auditorias/calendario" element={<AppLayout><CalendarioAuditoriasPage /></AppLayout>} />
-          <Route path="/sac/dashboard" element={<AppLayout><SACDashboardPage /></AppLayout>} />
-          <Route path="/sac/atendimentos" element={<AppLayout><AtendimentosPage /></AppLayout>} />
-          <Route path="/sac/novo" element={<AppLayout><NovoAtendimentoPage /></AppLayout>} />
-          <Route path="/sac/pesquisa" element={<AppLayout><PesquisaSACPage /></AppLayout>} />
-          <Route path="/sac/requisicoes" element={<AppLayout><RequisicaoListPage /></AppLayout>} />
-          <Route path="/sac/requisicoes/nova" element={<AppLayout><NovaRequisicaoPage /></AppLayout>} />
-          <Route path="/sac/requisicoes/:id" element={<AppLayout><RequisicaoDetalhePage /></AppLayout>} />
-          <Route path="/sac/requisicoes/:id/atender" element={<AppLayout><AtenderRequisicaoPage /></AppLayout>} />
-          <Route path="/sac/:id" element={<AppLayout><AtendimentoDetalhePage /></AppLayout>} />
-          <Route path="/admin" element={<AppLayout><AdminPage /></AppLayout>} />
-          <Route path="/administracao/usuarios" element={<AppLayout><UsuariosPage /></AppLayout>} />
-          <Route path="/administracao/perfis" element={<AppLayout><PerfisPage /></AppLayout>} />
-          <Route path="/administracao/log-auditoria" element={<AppLayout><LogAuditoriaPage /></AppLayout>} />
-          <Route path="/administracao/parametros" element={<AppLayout><ParametrosPage /></AppLayout>} />
-          <Route path="/assistencia/dashboard" element={<AppLayout><AssistenciaDashboardPage /></AppLayout>} />
-          <Route path="/assistencia/os" element={<AppLayout><OSListPage /></AppLayout>} />
-          <Route path="/assistencia/os/nova" element={<AppLayout><NovaOSPage /></AppLayout>} />
-          <Route path="/assistencia/os/:id" element={<AppLayout><OSDetalhePage /></AppLayout>} />
-          <Route path="/assistencia/os/:id/consumo" element={<AppLayout><ConsumoOSPage /></AppLayout>} />
-          <Route path="/assistencia/requisicoes/:id/receber" element={<AppLayout><ReceberRequisicaoPage /></AppLayout>} />
-          <Route path="/assistencia/requisicoes" element={<AppLayout><ReqAssistListPage /></AppLayout>} />
-          <Route path="/assistencia/estoque" element={<AppLayout><EstoquePage /></AppLayout>} />
+
+          {/* SAC — restricted by role */}
+          <Route path="/sac/dashboard" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><SACDashboardPage /></RequireRole></AppLayout>} />
+          <Route path="/sac/atendimentos" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><AtendimentosPage /></RequireRole></AppLayout>} />
+          <Route path="/sac/novo" element={<AppLayout><RequireRole roles={["SAC"]}><NovoAtendimentoPage /></RequireRole></AppLayout>} />
+          <Route path="/sac/pesquisa" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><PesquisaSACPage /></RequireRole></AppLayout>} />
+          <Route path="/sac/requisicoes" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><RequisicaoListPage /></RequireRole></AppLayout>} />
+          <Route path="/sac/requisicoes/nova" element={<AppLayout><RequireRole roles={["SAC"]}><NovaRequisicaoPage /></RequireRole></AppLayout>} />
+          <Route path="/sac/requisicoes/:id" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><RequisicaoDetalhePage /></RequireRole></AppLayout>} />
+          <Route path="/sac/requisicoes/:id/atender" element={<AppLayout><RequireRole roles={["SAC"]}><AtenderRequisicaoPage /></RequireRole></AppLayout>} />
+          <Route path="/sac/:id" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><AtendimentoDetalhePage /></RequireRole></AppLayout>} />
+
+          {/* Admin — restricted */}
+          <Route path="/admin" element={<AppLayout><RequireRole roles={["ADMIN"]}><AdminPage /></RequireRole></AppLayout>} />
+          <Route path="/administracao/usuarios" element={<AppLayout><RequireRole roles={["ADMIN"]}><UsuariosPage /></RequireRole></AppLayout>} />
+          <Route path="/administracao/perfis" element={<AppLayout><RequireRole roles={["ADMIN"]}><PerfisPage /></RequireRole></AppLayout>} />
+          <Route path="/administracao/log-auditoria" element={<AppLayout><RequireRole roles={["ADMIN"]}><LogAuditoriaPage /></RequireRole></AppLayout>} />
+          <Route path="/administracao/parametros" element={<AppLayout><RequireRole roles={["ADMIN"]}><ParametrosPage /></RequireRole></AppLayout>} />
+
+          {/* Assistência Técnica — permission-guarded */}
+          <Route path="/assistencia/dashboard" element={<AppLayout><RequirePermission perm="ASSIST_DASH_VIEW"><AssistenciaDashboardPage /></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/os" element={<AppLayout><RequirePermission perm="ASSIST_OS_VIEW"><OSListPage /></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/os/nova" element={<AppLayout><RequirePermission perm="ASSIST_OS_CREATE"><NovaOSPage /></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/os/:id" element={<AppLayout><RequirePermission perm="ASSIST_OS_VIEW"><OSDetalhePage /></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/os/:id/consumo" element={<AppLayout><RequirePermission perm="ASSIST_CONSUMO_CREATE"><ConsumoOSPage /></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/requisicoes/:id/receber" element={<AppLayout><RequirePermission perm="ASSIST_REQ_RECEBER"><ReceberRequisicaoPage /></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/requisicoes" element={<AppLayout><RequirePermission perm="ASSIST_REQ_VIEW"><ReqAssistListPage /></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/estoque" element={<AppLayout><RequirePermission perm="ASSIST_ESTOQUE_VIEW"><EstoquePage /></RequirePermission></AppLayout>} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
