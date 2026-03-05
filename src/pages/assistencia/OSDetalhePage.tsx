@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Wrench, Package, FileText, Clock, User, MapPin } from "lucide-react";
+import { ArrowLeft, Wrench, Package, FileText, Clock, User, MapPin, Plus, Trash2, Search, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { buscarOS, atualizarStatusOS, listarReqAssistencia, listarConsumos } from "@/services/assistencia";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { buscarOS, atualizarStatusOS, listarReqAssistencia, listarConsumos, criarReqAssistencia, listarEstoque } from "@/services/assistencia";
 import { OS_STATUS_LABELS, OS_STATUS_COLORS, OS_PRIORIDADE_LABELS, OS_PRIORIDADE_COLORS, OS_TIPO_LABELS, REQ_ASSIST_STATUS_LABELS, REQ_ASSIST_STATUS_COLORS } from "@/types/assistencia";
-import type { OrdemServico, OSStatus, RequisicaoAssistencia, ConsumoMaterial } from "@/types/assistencia";
+import type { OrdemServico, OSStatus, RequisicaoAssistencia, ConsumoMaterial, ItemReqAssist } from "@/types/assistencia";
+import { PLANTA_LABELS, Planta } from "@/types/sgq";
+import { EstoqueItem } from "@/data/mockAssistenciaData";
 import { toast } from "@/hooks/use-toast";
 
 const OS_STATUS_FLOW: OSStatus[] = [
@@ -27,6 +30,17 @@ const OSDetalhePage = () => {
   const [laudo, setLaudo] = useState("");
   const [decisao, setDecisao] = useState("");
 
+  // Nova Requisição modal state
+  const [showNovaReq, setShowNovaReq] = useState(false);
+  const [reqCdResponsavel, setReqCdResponsavel] = useState<Planta>("MAO");
+  const [reqPlantaDestino, setReqPlantaDestino] = useState<Planta>("MAO");
+  const [reqItens, setReqItens] = useState<ItemReqAssist[]>([]);
+
+  // Estoque browser
+  const [estoque, setEstoque] = useState<EstoqueItem[]>([]);
+  const [estoqueFilter, setEstoqueFilter] = useState("");
+  const [showEstoque, setShowEstoque] = useState(false);
+
   useEffect(() => {
     if (!id) return;
     buscarOS(id).then((data) => {
@@ -34,6 +48,7 @@ const OSDetalhePage = () => {
         setOs(data);
         setLaudo(data.laudoInspecao || "");
         setDecisao(data.decisaoTecnica || "");
+        setReqPlantaDestino(data.planta);
       }
     });
     listarReqAssistencia().then((all) => setReqs(all.filter((r) => r.osId === id)));
@@ -52,14 +67,75 @@ const OSDetalhePage = () => {
     toast({ title: "Status atualizado", description: `OS movida para ${OS_STATUS_LABELS[status]}` });
   };
 
+  // === Nova Requisição ===
+  const openNovaReq = async () => {
+    const est = await listarEstoque();
+    setEstoque(est);
+    setReqCdResponsavel("MAO");
+    setReqPlantaDestino(os.planta);
+    setReqItens([]);
+    setShowNovaReq(true);
+  };
+
+  const addMaterialToReq = (item: EstoqueItem) => {
+    if (reqItens.some((i) => i.codMaterial === item.codMaterial)) {
+      toast({ title: "Material já adicionado", variant: "destructive" });
+      return;
+    }
+    setReqItens((prev) => [...prev, {
+      codMaterial: item.codMaterial,
+      descricao: item.descricao,
+      un: item.un,
+      qtdSolicitada: 1,
+    }]);
+    setShowEstoque(false);
+  };
+
+  const updateQtdItem = (codMaterial: string, qtd: number) => {
+    setReqItens((prev) => prev.map((i) => i.codMaterial === codMaterial ? { ...i, qtdSolicitada: qtd } : i));
+  };
+
+  const removeItemFromReq = (codMaterial: string) => {
+    setReqItens((prev) => prev.filter((i) => i.codMaterial !== codMaterial));
+  };
+
+  const handleSalvarReq = async () => {
+    if (reqItens.length === 0) {
+      toast({ title: "Adicione ao menos um material", variant: "destructive" });
+      return;
+    }
+    const novaReq = await criarReqAssistencia({
+      osId: os.id,
+      cdResponsavel: reqCdResponsavel,
+      plantaDestino: reqPlantaDestino,
+      status: "PENDENTE",
+      itens: reqItens,
+      criadoAt: new Date().toISOString().slice(0, 10),
+      atualizadoAt: new Date().toISOString().slice(0, 10),
+    });
+    setReqs((prev) => [...prev, novaReq]);
+    setShowNovaReq(false);
+    toast({ title: "Requisição criada", description: `${novaReq.id} vinculada à ${os.id}` });
+  };
+
+  const getEstoquePlanta = (item: EstoqueItem, planta: Planta) => {
+    if (planta === "MAO") return item.estoqueMAO;
+    if (planta === "BEL") return item.estoqueBEL;
+    return item.estoqueAGR;
+  };
+
+  const filteredEstoque = estoque.filter((e) =>
+    !estoqueFilter || e.descricao.toLowerCase().includes(estoqueFilter.toLowerCase()) || e.codMaterial.toLowerCase().includes(estoqueFilter.toLowerCase())
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" size="icon" onClick={() => navigate("/assistencia/os")}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-foreground">{os.id}</h1>
             <Badge className={OS_STATUS_COLORS[os.status]}>{OS_STATUS_LABELS[os.status]}</Badge>
             <Badge className={OS_PRIORIDADE_COLORS[os.prioridade]}>{OS_PRIORIDADE_LABELS[os.prioridade]}</Badge>
@@ -148,7 +224,7 @@ const OSDetalhePage = () => {
       <Card className="glass-card">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-sm text-muted-foreground">Requisições de Material</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => navigate("/assistencia/requisicoes")} className="text-xs gap-1">
+          <Button variant="outline" size="sm" onClick={openNovaReq} className="text-xs gap-1">
             <Package className="w-3 h-3" /> Nova Requisição
           </Button>
         </CardHeader>
@@ -210,6 +286,188 @@ const OSDetalhePage = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* ============ MODAL NOVA REQUISIÇÃO ============ */}
+      <Dialog open={showNovaReq} onOpenChange={setShowNovaReq}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Requisição de Material — {os.id}</DialogTitle>
+            <DialogDescription>Selecione o CD de origem, a planta destino e os materiais necessários. Consulte o estoque disponível em cada planta.</DialogDescription>
+          </DialogHeader>
+
+          {/* CD e Planta */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">CD Responsável (origem)</label>
+              <Select value={reqCdResponsavel} onValueChange={(v) => setReqCdResponsavel(v as Planta)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PLANTA_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{k} – {v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Planta Destino</label>
+              <Select value={reqPlantaDestino} onValueChange={(v) => setReqPlantaDestino(v as Planta)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PLANTA_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{k} – {v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Itens selecionados */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground">Itens da Requisição</label>
+              <Button variant="outline" size="sm" onClick={() => setShowEstoque(true)} className="gap-1 text-xs">
+                <Warehouse className="w-3.5 h-3.5" /> Consultar Estoque / Adicionar Material
+              </Button>
+            </div>
+
+            {reqItens.length > 0 ? (
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40">
+                      <TableHead className="text-xs">Código</TableHead>
+                      <TableHead className="text-xs">Descrição</TableHead>
+                      <TableHead className="text-xs">UN</TableHead>
+                      <TableHead className="text-xs w-28">Qtd Solicitada</TableHead>
+                      <TableHead className="text-xs w-16"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reqItens.map((item) => (
+                      <TableRow key={item.codMaterial}>
+                        <TableCell className="font-mono text-xs">{item.codMaterial}</TableCell>
+                        <TableCell className="text-xs">{item.descricao}</TableCell>
+                        <TableCell className="text-xs">{item.un}</TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={item.qtdSolicitada}
+                            onChange={(e) => updateQtdItem(item.codMaterial, Number(e.target.value))}
+                            className="h-8 w-24 text-xs"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeItemFromReq(item.codMaterial)}>
+                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-6 text-muted-foreground text-sm border rounded-lg border-dashed">
+                Nenhum material adicionado. Clique em "Consultar Estoque" para buscar.
+              </div>
+            )}
+          </div>
+
+          {/* Ações */}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => setShowNovaReq(false)}>Cancelar</Button>
+            <Button onClick={handleSalvarReq} className="gap-2">
+              <Package className="w-4 h-4" /> Criar Requisição
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ MODAL CONSULTAR ESTOQUE ============ */}
+      <Dialog open={showEstoque} onOpenChange={setShowEstoque}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Warehouse className="w-5 h-5" /> Estoque por Planta</DialogTitle>
+            <DialogDescription>Consulte a disponibilidade de materiais nas três plantas e adicione à requisição.</DialogDescription>
+          </DialogHeader>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por código ou descrição..."
+              value={estoqueFilter}
+              onChange={(e) => setEstoqueFilter(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead className="text-xs">Código</TableHead>
+                  <TableHead className="text-xs">Descrição</TableHead>
+                  <TableHead className="text-xs">UN</TableHead>
+                  <TableHead className="text-xs">Categoria</TableHead>
+                  <TableHead className="text-xs text-center">
+                    <span className={reqCdResponsavel === "MAO" ? "text-primary font-bold" : ""}>MAO</span>
+                  </TableHead>
+                  <TableHead className="text-xs text-center">
+                    <span className={reqCdResponsavel === "BEL" ? "text-primary font-bold" : ""}>BEL</span>
+                  </TableHead>
+                  <TableHead className="text-xs text-center">
+                    <span className={reqCdResponsavel === "AGR" ? "text-primary font-bold" : ""}>AGR</span>
+                  </TableHead>
+                  <TableHead className="text-xs w-20"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredEstoque.map((item) => {
+                  const jaAdicionado = reqItens.some((i) => i.codMaterial === item.codMaterial);
+                  const estoqueCD = getEstoquePlanta(item, reqCdResponsavel);
+                  return (
+                    <TableRow key={item.codMaterial} className={jaAdicionado ? "bg-primary/5" : "hover:bg-muted/30"}>
+                      <TableCell className="font-mono text-xs">{item.codMaterial}</TableCell>
+                      <TableCell className="text-xs">{item.descricao}</TableCell>
+                      <TableCell className="text-xs">{item.un}</TableCell>
+                      <TableCell className="text-xs">{item.categoria}</TableCell>
+                      <TableCell className={`text-xs text-center font-medium ${item.estoqueMAO === 0 ? "text-destructive" : item.estoqueMAO <= 10 ? "text-warning" : "text-success"}`}>
+                        {item.estoqueMAO}
+                      </TableCell>
+                      <TableCell className={`text-xs text-center font-medium ${item.estoqueBEL === 0 ? "text-destructive" : item.estoqueBEL <= 10 ? "text-warning" : "text-success"}`}>
+                        {item.estoqueBEL}
+                      </TableCell>
+                      <TableCell className={`text-xs text-center font-medium ${item.estoqueAGR === 0 ? "text-destructive" : item.estoqueAGR <= 10 ? "text-warning" : "text-success"}`}>
+                        {item.estoqueAGR}
+                      </TableCell>
+                      <TableCell>
+                        {jaAdicionado ? (
+                          <Badge variant="outline" className="text-[10px]">Adicionado</Badge>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant={estoqueCD > 0 ? "default" : "outline"}
+                            className="h-7 text-xs gap-1"
+                            onClick={() => addMaterialToReq(item)}
+                          >
+                            <Plus className="w-3 h-3" /> Add
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {filteredEstoque.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-6 text-muted-foreground text-sm">Nenhum material encontrado.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
