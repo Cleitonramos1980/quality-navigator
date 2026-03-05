@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SectionCard from "@/components/forms/SectionCard";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ASSIST_PERMISSION_LABELS, ASSIST_PERMISSION_GROUPS, PERFIL_ASSIST_PERMISSIONS, PerfilNome } from "@/lib/rbac";
+import type { AssistPermission } from "@/types/assistencia";
 
-const perfis = [
+const perfis: { nome: PerfilNome; desc: string; perms: string[] }[] = [
   { nome: "ADMIN", desc: "Acesso total ao sistema", perms: ["dashboard", "sac", "garantias", "nc", "capa", "auditorias", "assistencia", "admin"] },
   { nome: "SAC", desc: "Atendimento ao cliente e garantias", perms: ["dashboard", "sac", "garantias", "nc", "assistencia"] },
   { nome: "QUALIDADE", desc: "Gestão de qualidade e NC", perms: ["dashboard", "nc", "capa", "auditorias"] },
@@ -19,6 +22,7 @@ const modulos = ["dashboard", "sac", "garantias", "nc", "capa", "auditorias", "a
 
 const PerfisPage = () => {
   const navigate = useNavigate();
+  const [expandedPerfil, setExpandedPerfil] = useState<PerfilNome | null>(null);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -30,6 +34,7 @@ const PerfisPage = () => {
         </div>
       </div>
 
+      {/* Módulos */}
       <div className="glass-card rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -43,7 +48,11 @@ const PerfisPage = () => {
             </thead>
             <tbody>
               {perfis.map((p) => (
-                <tr key={p.nome} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                <tr
+                  key={p.nome}
+                  className={`border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer ${expandedPerfil === p.nome ? "bg-muted/40" : ""}`}
+                  onClick={() => setExpandedPerfil(expandedPerfil === p.nome ? null : p.nome)}
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-primary" />
@@ -65,8 +74,32 @@ const PerfisPage = () => {
         </div>
       </div>
 
+      {/* Permissões Avançadas (expandido) */}
+      {expandedPerfil && (
+        <SectionCard title={`Permissões Avançadas — ${expandedPerfil}`} description="Permissões granulares do módulo Assistência Técnica">
+          <div className="space-y-4">
+            {ASSIST_PERMISSION_GROUPS.map((group) => (
+              <div key={group.label}>
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{group.label}</h4>
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {group.perms.map((perm) => {
+                    const checked = PERFIL_ASSIST_PERMISSIONS[expandedPerfil]?.includes(perm) ?? false;
+                    return (
+                      <label key={perm} className="flex items-center gap-2 text-sm cursor-default">
+                        <Checkbox checked={checked} disabled />
+                        <span className={checked ? "text-foreground" : "text-muted-foreground"}>{ASSIST_PERMISSION_LABELS[perm]}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      )}
+
       <p className="text-xs text-muted-foreground">
-        * A edição de permissões será habilitada após integração com o backend.
+        * Clique em um perfil para ver as permissões avançadas. A edição será habilitada após integração com o backend.
       </p>
     </div>
   );

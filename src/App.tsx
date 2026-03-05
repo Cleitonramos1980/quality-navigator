@@ -36,7 +36,8 @@ import OSDetalhePage from "@/pages/assistencia/OSDetalhePage";
 import ReqAssistListPage from "@/pages/assistencia/ReqAssistListPage";
 import EstoquePage from "@/pages/assistencia/EstoquePage";
 import NovaOSPage from "@/pages/assistencia/NovaOSPage";
-
+import ReceberRequisicaoPage from "@/pages/assistencia/ReceberRequisicaoPage";
+import ConsumoOSPage from "@/pages/assistencia/ConsumoOSPage";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -75,6 +76,8 @@ const App = () => (
           <Route path="/assistencia/os" element={<AppLayout><OSListPage /></AppLayout>} />
           <Route path="/assistencia/os/nova" element={<AppLayout><NovaOSPage /></AppLayout>} />
           <Route path="/assistencia/os/:id" element={<AppLayout><OSDetalhePage /></AppLayout>} />
+          <Route path="/assistencia/os/:id/consumo" element={<AppLayout><ConsumoOSPage /></AppLayout>} />
+          <Route path="/assistencia/requisicoes/:id/receber" element={<AppLayout><ReceberRequisicaoPage /></AppLayout>} />
           <Route path="/assistencia/requisicoes" element={<AppLayout><ReqAssistListPage /></AppLayout>} />
           <Route path="/assistencia/estoque" element={<AppLayout><EstoquePage /></AppLayout>} />
           <Route path="*" element={<NotFound />} />

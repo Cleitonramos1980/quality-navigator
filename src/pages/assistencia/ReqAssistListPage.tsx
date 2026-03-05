@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Filter } from "lucide-react";
+import { ArrowLeft, Search, Filter, PackageCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -53,11 +53,12 @@ const ReqAssistListPage = () => {
           <TableHead className="text-xs">Itens</TableHead>
           <TableHead className="text-xs">Status</TableHead>
           <TableHead className="text-xs">Data</TableHead>
+          <TableHead className="text-xs w-24"></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {list.length === 0 ? (
-          <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhuma requisição encontrada</TableCell></TableRow>
+          <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma requisição encontrada</TableCell></TableRow>
         ) : list.map((r) => {
           const os = osMap[r.osId];
           return (
@@ -69,6 +70,16 @@ const ReqAssistListPage = () => {
               <TableCell className="text-xs">{r.itens.length}</TableCell>
               <TableCell><Badge className={`text-[10px] ${REQ_ASSIST_STATUS_COLORS[r.status]}`}>{REQ_ASSIST_STATUS_LABELS[r.status]}</Badge></TableCell>
               <TableCell className="text-xs text-muted-foreground">{r.criadoAt}</TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                {r.status === "EM_TRANSFERENCIA" && (
+                  <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => navigate(`/assistencia/requisicoes/${r.id}/receber`)}>
+                    <PackageCheck className="w-3 h-3" /> Receber
+                  </Button>
+                )}
+                {r.status === "RECEBIDA_ASSISTENCIA" && (
+                  <Badge variant="outline" className="text-[10px] bg-success/10 text-success border-success/30">Recebida</Badge>
+                )}
+              </TableCell>
             </TableRow>
           );
         })}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Wrench, Package, FileText, Clock, User, MapPin, Plus, Trash2, Search, Warehouse } from "lucide-react";
+import { ArrowLeft, Wrench, Package, FileText, Clock, User, MapPin, Plus, Trash2, Search, Warehouse, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { buscarOS, atualizarStatusOS, listarReqAssistencia, listarConsumos, criarReqAssistencia, listarEstoque } from "@/services/assistencia";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { buscarOS, atualizarStatusOS, listarReqAssistencia, listarConsumosPorOS, criarReqAssistencia, listarEstoque } from "@/services/assistencia";
+import { registrarAuditoria } from "@/services/auditoria";
+import { hasPermission } from "@/lib/rbac";
 import { OS_STATUS_LABELS, OS_STATUS_COLORS, OS_PRIORIDADE_LABELS, OS_PRIORIDADE_COLORS, OS_TIPO_LABELS, REQ_ASSIST_STATUS_LABELS, REQ_ASSIST_STATUS_COLORS } from "@/types/assistencia";
 import type { OrdemServico, OSStatus, RequisicaoAssistencia, ConsumoMaterial, ItemReqAssist } from "@/types/assistencia";
 import { PLANTA_LABELS, Planta } from "@/types/sgq";
@@ -41,6 +45,11 @@ const OSDetalhePage = () => {
   const [estoqueFilter, setEstoqueFilter] = useState("");
   const [showEstoque, setShowEstoque] = useState(false);
 
+  // RBAC
+  const canChangeStatus = hasPermission("ASSIST_OS_CHANGE_STATUS");
+  const canCreateReq = hasPermission("ASSIST_REQ_CREATE");
+  const canConsumo = hasPermission("ASSIST_CONSUMO_CREATE");
+
   useEffect(() => {
     if (!id) return;
     buscarOS(id).then((data) => {
@@ -52,7 +61,7 @@ const OSDetalhePage = () => {
       }
     });
     listarReqAssistencia().then((all) => setReqs(all.filter((r) => r.osId === id)));
-    listarConsumos().then((all) => setConsumos(all.filter((c) => c.osId === id)));
+    listarConsumosPorOS(id!).then(setConsumos);
   }, [id]);
 
   if (!os) return <div className="p-8 text-muted-foreground">Carregando...</div>;
@@ -61,9 +70,19 @@ const OSDetalhePage = () => {
   const nextStatus = currentIdx >= 0 && currentIdx < OS_STATUS_FLOW.length - 1 ? OS_STATUS_FLOW[currentIdx + 1] : null;
   const prevStatus = currentIdx > 0 ? OS_STATUS_FLOW[currentIdx - 1] : null;
 
+  const reqsEmTransferencia = reqs.filter((r) => r.status === "EM_TRANSFERENCIA");
+  const reqsRecebidas = reqs.filter((r) => r.status === "RECEBIDA_ASSISTENCIA");
+  const consumoLiberado = reqsRecebidas.length > 0;
+
   const handleChangeStatus = async (status: OSStatus) => {
+    if (!canChangeStatus) {
+      toast({ title: "Sem permissão", variant: "destructive" });
+      return;
+    }
+    const statusAnterior = os.status;
     await atualizarStatusOS(os.id, status);
     setOs({ ...os, status });
+    registrarAuditoria("ALTERAR_STATUS", "OS", os.id, `Status: ${OS_STATUS_LABELS[statusAnterior]} → ${OS_STATUS_LABELS[status]}`);
     toast({ title: "Status atualizado", description: `OS movida para ${OS_STATUS_LABELS[status]}` });
   };
 
@@ -115,6 +134,7 @@ const OSDetalhePage = () => {
     });
     setReqs((prev) => [...prev, novaReq]);
     setShowNovaReq(false);
+    registrarAuditoria("CRIAR", "REQUISICAO", novaReq.id, `Requisição criada vinculada à ${os.id}. ${reqItens.length} item(ns).`);
     toast({ title: "Requisição criada", description: `${novaReq.id} vinculada à ${os.id}` });
   };
 
@@ -127,6 +147,17 @@ const OSDetalhePage = () => {
   const filteredEstoque = estoque.filter((e) =>
     !estoqueFilter || e.descricao.toLowerCase().includes(estoqueFilter.toLowerCase()) || e.codMaterial.toLowerCase().includes(estoqueFilter.toLowerCase())
   );
+
+  const RbacButton = ({ perm, children, ...props }: { perm: string; children: React.ReactNode } & React.ComponentProps<typeof Button>) => {
+    const allowed = hasPermission(perm as any);
+    if (allowed) return <Button {...props}>{children}</Button>;
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild><span><Button {...props} disabled>{children}</Button></span></TooltipTrigger>
+        <TooltipContent>Sem permissão</TooltipContent>
+      </Tooltip>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -143,17 +174,17 @@ const OSDetalhePage = () => {
           <p className="text-sm text-muted-foreground mt-0.5">{OS_TIPO_LABELS[os.tipoOs]} — {os.clienteNome}</p>
         </div>
         {prevStatus && os.status !== "CANCELADA" && (
-          <Button variant="outline" onClick={() => handleChangeStatus(prevStatus)} className="gap-2">
+          <RbacButton perm="ASSIST_OS_CHANGE_STATUS" variant="outline" onClick={() => handleChangeStatus(prevStatus)} className="gap-2">
             ← Retroceder para {OS_STATUS_LABELS[prevStatus]}
-          </Button>
+          </RbacButton>
         )}
         {nextStatus && os.status !== "CANCELADA" && (
-          <Button onClick={() => handleChangeStatus(nextStatus)} className="gap-2">
+          <RbacButton perm="ASSIST_OS_CHANGE_STATUS" onClick={() => handleChangeStatus(nextStatus)} className="gap-2">
             Avançar → {OS_STATUS_LABELS[nextStatus]}
-          </Button>
+          </RbacButton>
         )}
         {os.status !== "CANCELADA" && os.status !== "ENCERRADA" && (
-          <Button variant="destructive" size="sm" onClick={() => handleChangeStatus("CANCELADA")}>Cancelar OS</Button>
+          <RbacButton perm="ASSIST_OS_CHANGE_STATUS" variant="destructive" size="sm" onClick={() => handleChangeStatus("CANCELADA")}>Cancelar OS</RbacButton>
         )}
       </div>
 
@@ -176,6 +207,19 @@ const OSDetalhePage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Aguardando Recebimento alert */}
+      {reqsEmTransferencia.length > 0 && (
+        <Alert>
+          <AlertTriangle className="w-4 h-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span><strong>Aguardando Recebimento:</strong> {reqsEmTransferencia.length} requisição(ões) em transferência para esta planta.</span>
+            <Button size="sm" variant="outline" onClick={() => navigate(`/assistencia/requisicoes/${reqsEmTransferencia[0].id}/receber`)} className="ml-2 text-xs">
+              Receber
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Dados */}
@@ -224,9 +268,9 @@ const OSDetalhePage = () => {
       <Card className="glass-card">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-sm text-muted-foreground">Requisições de Material</CardTitle>
-          <Button variant="outline" size="sm" onClick={openNovaReq} className="text-xs gap-1">
+          <RbacButton perm="ASSIST_REQ_CREATE" variant="outline" size="sm" onClick={openNovaReq} className="text-xs gap-1">
             <Package className="w-3 h-3" /> Nova Requisição
-          </Button>
+          </RbacButton>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -236,17 +280,25 @@ const OSDetalhePage = () => {
                 <TableHead className="text-xs">CD → Destino</TableHead>
                 <TableHead className="text-xs">Itens</TableHead>
                 <TableHead className="text-xs">Status</TableHead>
+                <TableHead className="text-xs w-24"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {reqs.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground text-xs py-4">Nenhuma requisição</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground text-xs py-4">Nenhuma requisição</TableCell></TableRow>
               ) : reqs.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-xs">{r.id}</TableCell>
                   <TableCell className="text-xs">{r.cdResponsavel} → {r.plantaDestino}</TableCell>
                   <TableCell className="text-xs">{r.itens.length} item(ns)</TableCell>
                   <TableCell><Badge className={`text-[10px] ${REQ_ASSIST_STATUS_COLORS[r.status]}`}>{REQ_ASSIST_STATUS_LABELS[r.status]}</Badge></TableCell>
+                  <TableCell>
+                    {r.status === "EM_TRANSFERENCIA" && (
+                      <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => navigate(`/assistencia/requisicoes/${r.id}/receber`)}>
+                        Receber
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -256,8 +308,24 @@ const OSDetalhePage = () => {
 
       {/* Consumos */}
       <Card className="glass-card">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-sm text-muted-foreground">Consumo de Materiais</CardTitle>
+          {consumoLiberado ? (
+            <RbacButton perm="ASSIST_CONSUMO_CREATE" variant="outline" size="sm" onClick={() => navigate(`/assistencia/os/${os.id}/consumo`)} className="text-xs gap-1">
+              <Plus className="w-3 h-3" /> Registrar Consumo
+            </RbacButton>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button variant="outline" size="sm" disabled className="text-xs gap-1">
+                    <Plus className="w-3 h-3" /> Registrar Consumo
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">Consumo liberado somente após recebimento da requisição na assistência.</TooltipContent>
+            </Tooltip>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -292,10 +360,9 @@ const OSDetalhePage = () => {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nova Requisição de Material — {os.id}</DialogTitle>
-            <DialogDescription>Selecione o CD de origem, a planta destino e os materiais necessários. Consulte o estoque disponível em cada planta.</DialogDescription>
+            <DialogDescription>Selecione o CD de origem, a planta destino e os materiais necessários.</DialogDescription>
           </DialogHeader>
 
-          {/* CD e Planta */}
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">CD Responsável (origem)</label>
@@ -321,7 +388,6 @@ const OSDetalhePage = () => {
             </div>
           </div>
 
-          {/* Itens selecionados */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">Itens da Requisição</label>
@@ -349,13 +415,7 @@ const OSDetalhePage = () => {
                         <TableCell className="text-xs">{item.descricao}</TableCell>
                         <TableCell className="text-xs">{item.un}</TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            min={1}
-                            value={item.qtdSolicitada}
-                            onChange={(e) => updateQtdItem(item.codMaterial, Number(e.target.value))}
-                            className="h-8 w-24 text-xs"
-                          />
+                          <Input type="number" min={1} value={item.qtdSolicitada} onChange={(e) => updateQtdItem(item.codMaterial, Number(e.target.value))} className="h-8 w-24 text-xs" />
                         </TableCell>
                         <TableCell>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeItemFromReq(item.codMaterial)}>
@@ -374,7 +434,6 @@ const OSDetalhePage = () => {
             )}
           </div>
 
-          {/* Ações */}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => setShowNovaReq(false)}>Cancelar</Button>
             <Button onClick={handleSalvarReq} className="gap-2">
@@ -394,12 +453,7 @@ const OSDetalhePage = () => {
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por código ou descrição..."
-              value={estoqueFilter}
-              onChange={(e) => setEstoqueFilter(e.target.value)}
-              className="pl-9"
-            />
+            <Input placeholder="Buscar por código ou descrição..." value={estoqueFilter} onChange={(e) => setEstoqueFilter(e.target.value)} className="pl-9" />
           </div>
 
           <div className="border rounded-lg overflow-hidden">
@@ -445,12 +499,7 @@ const OSDetalhePage = () => {
                         {jaAdicionado ? (
                           <Badge variant="outline" className="text-[10px]">Adicionado</Badge>
                         ) : (
-                          <Button
-                            size="sm"
-                            variant={estoqueCD > 0 ? "default" : "outline"}
-                            className="h-7 text-xs gap-1"
-                            onClick={() => addMaterialToReq(item)}
-                          >
+                          <Button size="sm" variant={estoqueCD > 0 ? "default" : "outline"} className="h-7 text-xs gap-1" onClick={() => addMaterialToReq(item)}>
                             <Plus className="w-3 h-3" /> Add
                           </Button>
                         )}
@@ -459,9 +508,7 @@ const OSDetalhePage = () => {
                   );
                 })}
                 {filteredEstoque.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-6 text-muted-foreground text-sm">Nenhum material encontrado.</TableCell>
-                  </TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground text-sm">Nenhum material encontrado.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
