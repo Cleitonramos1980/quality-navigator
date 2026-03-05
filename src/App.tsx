@@ -81,7 +81,7 @@ const App = () => (
           {/* Assistência Técnica — permission-guarded */}
           <Route path="/assistencia/dashboard" element={<AppLayout><RequirePermission perm="ASSIST_DASH_VIEW"><AssistenciaDashboardPage /></RequirePermission></AppLayout>} />
           <Route path="/assistencia/os" element={<AppLayout><RequirePermission perm="ASSIST_OS_VIEW"><OSListPage /></RequirePermission></AppLayout>} />
-          <Route path="/assistencia/os/nova" element={<AppLayout><RequirePermission perm="ASSIST_OS_CREATE"><NovaOSPage /></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/os/nova" element={<AppLayout><RequireRole roles={["SAC"]}><NovaOSPage /></RequireRole></AppLayout>} />
           <Route path="/assistencia/os/:id" element={<AppLayout><RequirePermission perm="ASSIST_OS_VIEW"><OSDetalhePage /></RequirePermission></AppLayout>} />
           <Route path="/assistencia/os/:id/consumo" element={<AppLayout><RequirePermission perm="ASSIST_CONSUMO_CREATE"><ConsumoOSPage /></RequirePermission></AppLayout>} />
           <Route path="/assistencia/requisicoes/:id/receber" element={<AppLayout><RequirePermission perm="ASSIST_REQ_RECEBER"><ReceberRequisicaoPage /></RequirePermission></AppLayout>} />

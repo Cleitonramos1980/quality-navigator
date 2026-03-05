@@ -26,6 +26,7 @@ export const PERFIL_TO_PAPEL: Record<PerfilNome, PapelOperacional> = {
   ALMOX: "ALMOX_CD",
   TECNICO: "REPARO",
   DIRETORIA: "DIRETORIA",
+  VALIDACAO: "VALIDACAO",
 };
 
 // ── Responsável por status ──
