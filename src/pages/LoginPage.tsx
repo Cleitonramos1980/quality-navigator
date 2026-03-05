@@ -17,6 +17,7 @@ const PERFIL_OPTIONS: { value: PerfilNome; label: string }[] = [
   { value: "ALMOX", label: "Almoxarifado / CD" },
   { value: "DIRETORIA", label: "Diretoria" },
   { value: "AUDITOR", label: "Auditor" },
+  { value: "VALIDACAO", label: "Validação Final" },
 ];
 
 const LoginPage = () => {
