@@ -44,8 +44,9 @@ const OSDetalhePage = () => {
 
   const currentIdx = OS_STATUS_FLOW.indexOf(os.status);
   const nextStatus = currentIdx >= 0 && currentIdx < OS_STATUS_FLOW.length - 1 ? OS_STATUS_FLOW[currentIdx + 1] : null;
+  const prevStatus = currentIdx > 0 ? OS_STATUS_FLOW[currentIdx - 1] : null;
 
-  const handleAdvance = async (status: OSStatus) => {
+  const handleChangeStatus = async (status: OSStatus) => {
     await atualizarStatusOS(os.id, status);
     setOs({ ...os, status });
     toast({ title: "Status atualizado", description: `OS movida para ${OS_STATUS_LABELS[status]}` });
@@ -65,13 +66,18 @@ const OSDetalhePage = () => {
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{OS_TIPO_LABELS[os.tipoOs]} — {os.clienteNome}</p>
         </div>
+        {prevStatus && os.status !== "CANCELADA" && (
+          <Button variant="outline" onClick={() => handleChangeStatus(prevStatus)} className="gap-2">
+            ← Retroceder para {OS_STATUS_LABELS[prevStatus]}
+          </Button>
+        )}
         {nextStatus && os.status !== "CANCELADA" && (
-          <Button onClick={() => handleAdvance(nextStatus)} className="gap-2">
+          <Button onClick={() => handleChangeStatus(nextStatus)} className="gap-2">
             Avançar → {OS_STATUS_LABELS[nextStatus]}
           </Button>
         )}
         {os.status !== "CANCELADA" && os.status !== "ENCERRADA" && (
-          <Button variant="destructive" size="sm" onClick={() => handleAdvance("CANCELADA")}>Cancelar OS</Button>
+          <Button variant="destructive" size="sm" onClick={() => handleChangeStatus("CANCELADA")}>Cancelar OS</Button>
         )}
       </div>
 
