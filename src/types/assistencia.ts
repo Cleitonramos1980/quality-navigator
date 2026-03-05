@@ -14,7 +14,7 @@ export type OSStatus =
   | "ENCERRADA"
   | "CANCELADA";
 
-export type OSTipo = "GARANTIA" | "ASSISTENCIA" | "CONSERTO" | "INSTALACAO";
+export type OSTipo = "GARANTIA_DEFEITO" | "DESISTENCIA_DEVOLUCAO" | "LOGISTICA_TRANSFERENCIA" | "TROCA_COMERCIAL" | "ASSISTENCIA_EXTERNA" | "OUTROS";
 
 export type OSPrioridade = "BAIXA" | "MEDIA" | "ALTA" | "CRITICA";
 
@@ -47,10 +47,12 @@ export const OS_STATUS_COLORS: Record<OSStatus, string> = {
 };
 
 export const OS_TIPO_LABELS: Record<OSTipo, string> = {
-  GARANTIA: "Garantia",
-  ASSISTENCIA: "Assistência",
-  CONSERTO: "Conserto",
-  INSTALACAO: "Instalação",
+  GARANTIA_DEFEITO: "Garantia / Defeito",
+  DESISTENCIA_DEVOLUCAO: "Desistência / Devolução",
+  LOGISTICA_TRANSFERENCIA: "Logística / Transferência",
+  TROCA_COMERCIAL: "Troca Comercial",
+  ASSISTENCIA_EXTERNA: "Assistência Externa",
+  OUTROS: "Outros",
 };
 
 export const OS_PRIORIDADE_LABELS: Record<OSPrioridade, string> = {
@@ -162,13 +164,20 @@ export const ASSIST_PERMISSIONS = [
   "ASSIST_OS_VIEW",
   "ASSIST_OS_CREATE",
   "ASSIST_OS_EDIT",
+  "ASSIST_OS_CHANGE_STATUS",
   "ASSIST_OS_CLOSE",
+  "ASSIST_INSPECAO_VIEW",
   "ASSIST_INSPECAO_CREATE",
+  "ASSIST_INSPECAO_EDIT",
   "ASSIST_INSPECAO_APROVAR",
+  "ASSIST_REQ_VIEW",
   "ASSIST_REQ_CREATE",
   "ASSIST_REQ_ATENDER",
+  "ASSIST_REQ_TRANSFERIR",
   "ASSIST_REQ_RECEBER",
+  "ASSIST_CONSUMO_VIEW",
   "ASSIST_CONSUMO_CREATE",
+  "ASSIST_CONSUMO_EDIT",
   "ASSIST_ESTOQUE_VIEW",
   "ASSIST_DASH_VIEW",
 ] as const;

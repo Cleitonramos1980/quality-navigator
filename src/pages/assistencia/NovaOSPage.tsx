@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import SectionCard from "@/components/forms/SectionCard";
 import FormField from "@/components/forms/FormField";
 import { criarOS } from "@/services/assistencia";
+import { registrarAuditoria } from "@/services/auditoria";
 import { buscarClientesERP, buscarPedidosERP, buscarItensPedidoERP } from "@/services/sac";
 import { OS_TIPO_LABELS, OS_PRIORIDADE_LABELS } from "@/types/assistencia";
 import type { OSTipo, OSPrioridade, OSOrigemTipo } from "@/types/assistencia";
@@ -38,7 +39,7 @@ const NovaOSPage = () => {
   const [nfVenda, setNfVenda] = useState(state.numNfVenda || "");
   const [produtoRelacionado, setProdutoRelacionado] = useState(state.produtoRelacionado || "");
   const [planta, setPlanta] = useState<Planta>((state.plantaResp as Planta) || "MAO");
-  const [tipoOs, setTipoOs] = useState<OSTipo>("ASSISTENCIA");
+  const [tipoOs, setTipoOs] = useState<OSTipo>("ASSISTENCIA_EXTERNA");
   const [prioridade, setPrioridade] = useState<OSPrioridade>("MEDIA");
   const [origemTipo, setOrigemTipo] = useState<OSOrigemTipo>("AVULSA");
   const [origemId, setOrigemId] = useState("");
@@ -119,6 +120,7 @@ const NovaOSPage = () => {
       dataPrevista: dataPrevista || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
     });
 
+    registrarAuditoria("CRIAR", "OS", novaOS.id, `Tipo: ${tipoOs}. Cliente: ${clienteNome}. Planta: ${planta}. Técnico: ${tecnicoResponsavel}`);
     toast({ title: "OS criada com sucesso", description: `Ordem de Serviço ${novaOS.id} foi criada.` });
     navigate(`/assistencia/os/${novaOS.id}`);
   };

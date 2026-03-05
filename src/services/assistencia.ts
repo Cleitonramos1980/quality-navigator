@@ -50,10 +50,30 @@ export async function listarConsumos(): Promise<ConsumoMaterial[]> {
   return [...mockConsumos];
 }
 
+export async function listarConsumosPorOS(osId: string): Promise<ConsumoMaterial[]> {
+  return mockConsumos.filter((c) => c.osId === osId);
+}
+
 export async function registrarConsumo(consumo: Omit<ConsumoMaterial, "id">): Promise<ConsumoMaterial> {
   const novo: ConsumoMaterial = { ...consumo, id: `CON-${String(mockConsumos.length + 1).padStart(3, "0")}` };
   mockConsumos.push(novo);
   return novo;
+}
+
+// ── Recebimento ──
+export async function receberRequisicao(id: string, itensRecebidos: { codMaterial: string; qtdRecebida: number }[], observacao?: string): Promise<void> {
+  const req = mockReqAssistencia.find((r) => r.id === id);
+  if (req) {
+    req.status = "RECEBIDA_ASSISTENCIA";
+    req.atualizadoAt = new Date().toISOString().slice(0, 10);
+    itensRecebidos.forEach((ir) => {
+      const item = req.itens.find((i) => i.codMaterial === ir.codMaterial);
+      if (item) {
+        item.qtdAtendida = ir.qtdRecebida;
+        item.situacao = ir.qtdRecebida >= item.qtdSolicitada ? "ATENDIDO" : ir.qtdRecebida > 0 ? "PARCIAL" : "INDISPONIVEL";
+      }
+    });
+  }
 }
 
 // ── Estoque ──
