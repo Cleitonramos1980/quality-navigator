@@ -26,6 +26,10 @@ import AtendimentosPage from "@/pages/sac/AtendimentosPage";
 import NovoAtendimentoPage from "@/pages/sac/NovoAtendimentoPage";
 import AtendimentoDetalhePage from "@/pages/sac/AtendimentoDetalhePage";
 import PesquisaSACPage from "@/pages/sac/PesquisaSACPage";
+import NovaRequisicaoPage from "@/pages/sac/requisicoes/NovaRequisicaoPage";
+import RequisicaoListPage from "@/pages/sac/requisicoes/RequisicaoListPage";
+import RequisicaoDetalhePage from "@/pages/sac/requisicoes/RequisicaoDetalhePage";
+import AtenderRequisicaoPage from "@/pages/sac/requisicoes/AtenderRequisicaoPage";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +55,10 @@ const App = () => (
           <Route path="/sac/atendimentos" element={<AppLayout><AtendimentosPage /></AppLayout>} />
           <Route path="/sac/novo" element={<AppLayout><NovoAtendimentoPage /></AppLayout>} />
           <Route path="/sac/pesquisa" element={<AppLayout><PesquisaSACPage /></AppLayout>} />
+          <Route path="/sac/requisicoes" element={<AppLayout><RequisicaoListPage /></AppLayout>} />
+          <Route path="/sac/requisicoes/nova" element={<AppLayout><NovaRequisicaoPage /></AppLayout>} />
+          <Route path="/sac/requisicoes/:id" element={<AppLayout><RequisicaoDetalhePage /></AppLayout>} />
+          <Route path="/sac/requisicoes/:id/atender" element={<AppLayout><AtenderRequisicaoPage /></AppLayout>} />
           <Route path="/sac/:id" element={<AppLayout><AtendimentoDetalhePage /></AppLayout>} />
           <Route path="/admin" element={<AppLayout><AdminPage /></AppLayout>} />
           <Route path="/administracao/usuarios" element={<AppLayout><UsuariosPage /></AppLayout>} />

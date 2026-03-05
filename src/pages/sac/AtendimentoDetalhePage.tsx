@@ -7,7 +7,7 @@ import AttachmentUploader from "@/components/upload/AttachmentUploader";
 import { mockAtendimentos } from "@/data/mockSACData";
 import { SAC_STATUS_LABELS, SAC_STATUS_COLORS, CANAL_LABELS, TIPO_CONTATO_LABELS, SACStatus } from "@/types/sac";
 import { PLANTA_LABELS } from "@/types/sgq";
-import { ArrowLeft, ShieldCheck, AlertTriangle, FileSearch, Clock, Upload } from "lucide-react";
+import { ArrowLeft, ShieldCheck, AlertTriangle, FileSearch, Clock, Upload, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -161,6 +161,9 @@ const AtendimentoDetalhePage = () => {
                 </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => navigate("/capa/nova", { state: sacPayload })}>
                   <FileSearch className="w-4 h-4 mr-2" /> Criar CAPA
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => navigate("/sac/requisicoes/nova", { state: sacPayload })}>
+                  <Package className="w-4 h-4 mr-2" /> Requisição
                 </Button>
               </div>
             </CardContent>

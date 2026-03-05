@@ -11,7 +11,7 @@ import SectionCard from "@/components/forms/SectionCard";
 import AttachmentUploader from "@/components/upload/AttachmentUploader";
 import { CANAL_LABELS, TIPO_CONTATO_LABELS, CanalContato, TipoContato } from "@/types/sac";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
-import { ArrowLeft, Save, X, Search, FileWarning, ClipboardList, Shield } from "lucide-react";
+import { ArrowLeft, Save, X, Search, FileWarning, ClipboardList, Shield, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { buscarClientesERP, buscarPedidosERP, buscarItensPedidoERP } from "@/services/sac";
 
@@ -293,6 +293,9 @@ const NovoAtendimentoPage = () => {
         </Button>
         <Button variant="outline" onClick={() => { handleSave(); navigate("/capa/nova", { state: buildStatePayload() }); }}>
           <ClipboardList className="w-4 h-4 mr-1" /> Criar CAPA
+        </Button>
+        <Button variant="outline" onClick={() => navigate("/sac/requisicoes/nova", { state: buildStatePayload() })}>
+          <Package className="w-4 h-4 mr-1" /> Requisição
         </Button>
         <Button onClick={handleSave}><Save className="w-4 h-4 mr-1" /> Salvar Atendimento</Button>
       </div>
