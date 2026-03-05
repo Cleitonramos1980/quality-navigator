@@ -34,6 +34,7 @@ const navItems = [
       { path: "/sac/atendimentos", label: "Atendimentos" },
       { path: "/sac/pesquisa", label: "Pesquisa" },
       { path: "/sac/novo", label: "Novo Atendimento" },
+      { path: "/sac/requisicoes", label: "Requisições" },
     ],
   },
   { path: "/admin", label: "Administração", icon: Settings },
