@@ -88,6 +88,11 @@ export interface OrdemServico {
   dataAbertura: string;
   dataPrevista: string;
   dataConclusao?: string;
+  // V2+ gate fields
+  recebimentoConfirmado?: boolean;
+  relatorioReparo?: string;
+  validacaoAprovada?: boolean;
+  mensagemEncerramento?: string;
 }
 
 // ── Requisição Assistência ──

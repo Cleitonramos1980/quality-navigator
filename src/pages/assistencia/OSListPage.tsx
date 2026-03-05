@@ -7,10 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { listarOS } from "@/services/assistencia";
 import { OS_STATUS_LABELS, OS_STATUS_COLORS, OS_PRIORIDADE_LABELS, OS_PRIORIDADE_COLORS, OS_TIPO_LABELS } from "@/types/assistencia";
 import type { OrdemServico, OSStatus, OSPrioridade } from "@/types/assistencia";
 import { PLANTA_LABELS, Planta } from "@/types/sgq";
+import { canCreateOS } from "@/lib/workflowOs";
 
 const OSListPage = () => {
   const navigate = useNavigate();
@@ -45,9 +47,18 @@ const OSListPage = () => {
           <h1 className="text-2xl font-bold text-foreground">Ordens de Serviço</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gestão completa de OS</p>
         </div>
-        <Button onClick={() => navigate("/assistencia/os/nova")} className="gap-2">
-          <Plus className="w-4 h-4" /> Nova OS
-        </Button>
+        {canCreateOS() ? (
+          <Button onClick={() => navigate("/assistencia/os/nova")} className="gap-2">
+            <Plus className="w-4 h-4" /> Nova OS
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span><Button disabled className="gap-2"><Plus className="w-4 h-4" /> Nova OS</Button></span>
+            </TooltipTrigger>
+            <TooltipContent>Somente SAC ou Admin podem criar OS</TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       {/* Filters */}

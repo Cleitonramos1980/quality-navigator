@@ -19,6 +19,7 @@ export const mockOrdensServico: OrdemServico[] = [
     decisaoTecnica: "Substituir bloco de espuma e revestimento",
     dataAbertura: "2026-02-28",
     dataPrevista: "2026-03-10",
+    recebimentoConfirmado: true,
   },
   {
     id: "OS-002",
@@ -103,6 +104,8 @@ export const mockOrdensServico: OrdemServico[] = [
     decisaoTecnica: "Reforar com camada adicional de espuma D33",
     dataAbertura: "2026-02-15",
     dataPrevista: "2026-03-01",
+    recebimentoConfirmado: true,
+    relatorioReparo: "Camada adicional de espuma D33 aplicada conforme especificação",
   },
 ];
 

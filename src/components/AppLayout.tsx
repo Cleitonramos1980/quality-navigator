@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   ShieldCheck,
@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
+import { getCurrentPerfil, getCurrentUserName, setCurrentPerfil } from "@/lib/rbac";
+import { getCurrentPapel, PAPEL_LABELS } from "@/lib/workflowOs";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -52,9 +54,14 @@ const navItems = [
 
 const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedPlanta, setSelectedPlanta] = useState<Planta | "ALL">("ALL");
   const [plantaOpen, setPlantaOpen] = useState(false);
+  const perfil = getCurrentPerfil();
+  const papel = getCurrentPapel();
+  const userName = getCurrentUserName();
+  const initials = userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen flex">
@@ -169,13 +176,13 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <div className="p-3 border-t border-sidebar-border">
           <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-8 h-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary text-xs font-bold">
-              AD
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">Administrador</p>
-              <p className="text-xs text-sidebar-foreground/50">ADMIN</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
+              <p className="text-xs text-sidebar-foreground/50">{perfil} — {PAPEL_LABELS[papel]}</p>
             </div>
-            <LogOut className="w-4 h-4 text-sidebar-foreground/40 hover:text-sidebar-foreground cursor-pointer" />
+            <LogOut className="w-4 h-4 text-sidebar-foreground/40 hover:text-sidebar-foreground cursor-pointer" onClick={() => navigate("/login")} />
           </div>
         </div>
       </aside>
