@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronDown,
   Headphones,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
@@ -35,6 +36,15 @@ const navItems = [
       { path: "/sac/pesquisa", label: "Pesquisa" },
       { path: "/sac/novo", label: "Novo Atendimento" },
       { path: "/sac/requisicoes", label: "Requisições" },
+    ],
+  },
+  {
+    path: "/assistencia/dashboard", label: "Assistência Técnica", icon: Wrench,
+    children: [
+      { path: "/assistencia/dashboard", label: "Dashboard" },
+      { path: "/assistencia/os", label: "Ordens de Serviço" },
+      { path: "/assistencia/requisicoes", label: "Requisições" },
+      { path: "/assistencia/estoque", label: "Estoque" },
     ],
   },
   { path: "/admin", label: "Administração", icon: Settings },
