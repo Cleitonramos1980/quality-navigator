@@ -30,6 +30,11 @@ import NovaRequisicaoPage from "@/pages/sac/requisicoes/NovaRequisicaoPage";
 import RequisicaoListPage from "@/pages/sac/requisicoes/RequisicaoListPage";
 import RequisicaoDetalhePage from "@/pages/sac/requisicoes/RequisicaoDetalhePage";
 import AtenderRequisicaoPage from "@/pages/sac/requisicoes/AtenderRequisicaoPage";
+import AssistenciaDashboardPage from "@/pages/assistencia/AssistenciaDashboardPage";
+import OSListPage from "@/pages/assistencia/OSListPage";
+import OSDetalhePage from "@/pages/assistencia/OSDetalhePage";
+import ReqAssistListPage from "@/pages/assistencia/ReqAssistListPage";
+import EstoquePage from "@/pages/assistencia/EstoquePage";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +70,11 @@ const App = () => (
           <Route path="/administracao/perfis" element={<AppLayout><PerfisPage /></AppLayout>} />
           <Route path="/administracao/log-auditoria" element={<AppLayout><LogAuditoriaPage /></AppLayout>} />
           <Route path="/administracao/parametros" element={<AppLayout><ParametrosPage /></AppLayout>} />
+          <Route path="/assistencia/dashboard" element={<AppLayout><AssistenciaDashboardPage /></AppLayout>} />
+          <Route path="/assistencia/os" element={<AppLayout><OSListPage /></AppLayout>} />
+          <Route path="/assistencia/os/:id" element={<AppLayout><OSDetalhePage /></AppLayout>} />
+          <Route path="/assistencia/requisicoes" element={<AppLayout><ReqAssistListPage /></AppLayout>} />
+          <Route path="/assistencia/estoque" element={<AppLayout><EstoquePage /></AppLayout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
