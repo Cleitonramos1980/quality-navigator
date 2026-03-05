@@ -188,3 +188,19 @@ export const ASSIST_PERMISSIONS = [
 ] as const;
 
 export type AssistPermission = typeof ASSIST_PERMISSIONS[number];
+
+// ── Log de Transição de OS ──
+
+export interface OSTransitionLog {
+  id: string;
+  osId: string;
+  oldStatus: OSStatus;
+  newStatus: OSStatus;
+  usuario: string;
+  perfil: string;
+  papel: string;
+  planta: string;
+  timestamp: string; // ISO
+  motivo?: string;
+  detalhes?: string; // JSON string
+}

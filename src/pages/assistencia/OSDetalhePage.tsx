@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Wrench, Package, FileText, Clock, User, MapPin, Plus, Trash2, Search, Warehouse, AlertTriangle, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Wrench, Package, FileText, Clock, User, MapPin, Plus, Trash2, Search, Warehouse, AlertTriangle, ShieldAlert, CheckCircle2, History, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,15 +12,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { buscarOS, atualizarStatusOS, listarReqAssistencia, listarConsumosPorOS, criarReqAssistencia, listarEstoque } from "@/services/assistencia";
 import { registrarAuditoria } from "@/services/auditoria";
-import { hasPermission, getCurrentPerfil } from "@/lib/rbac";
+import { hasPermission, getCurrentPerfil, getCurrentUserName } from "@/lib/rbac";
 import { canTransitionOS, getCurrentPapel, STATUS_RESPONSAVEL, PAPEL_LABELS } from "@/lib/workflowOs";
 import { OS_STATUS_LABELS, OS_STATUS_COLORS, OS_PRIORIDADE_LABELS, OS_PRIORIDADE_COLORS, OS_TIPO_LABELS, REQ_ASSIST_STATUS_LABELS, REQ_ASSIST_STATUS_COLORS } from "@/types/assistencia";
-import type { OrdemServico, OSStatus, RequisicaoAssistencia, ConsumoMaterial, ItemReqAssist } from "@/types/assistencia";
+import type { OrdemServico, OSStatus, RequisicaoAssistencia, ConsumoMaterial, ItemReqAssist, OSTransitionLog } from "@/types/assistencia";
 import { PLANTA_LABELS, Planta } from "@/types/sgq";
 import { EstoqueItem } from "@/data/mockAssistenciaData";
 import { toast } from "@/hooks/use-toast";
+import * as osTransitionLog from "@/services/osTransitionLog";
 
 const OS_STATUS_FLOW: OSStatus[] = [
   "ABERTA", "AGUARDANDO_RECEBIMENTO", "RECEBIDO", "EM_INSPECAO",
@@ -53,6 +55,14 @@ const OSDetalhePage = () => {
   const [estoqueFilter, setEstoqueFilter] = useState("");
   const [showEstoque, setShowEstoque] = useState(false);
 
+  // Transition log state
+  const [transitionLogs, setTransitionLogs] = useState<OSTransitionLog[]>([]);
+  const [showMotivoModal, setShowMotivoModal] = useState(false);
+  const [motivoText, setMotivoText] = useState("");
+  const [pendingBackStatus, setPendingBackStatus] = useState<OSStatus | null>(null);
+  const [showDetalhesModal, setShowDetalhesModal] = useState(false);
+  const [selectedLogDetalhes, setSelectedLogDetalhes] = useState<string>("");
+
   const papel = getCurrentPapel();
   const isDiretoria = papel === "DIRETORIA";
 
@@ -72,7 +82,10 @@ const OSDetalhePage = () => {
     });
     listarReqAssistencia().then((all) => setReqs(all.filter((r) => r.osId === id)));
     listarConsumosPorOS(id!).then(setConsumos);
+    osTransitionLog.listByOS(id!).then(setTransitionLogs);
   }, [id]);
+
+  const reloadLogs = () => { if (id) osTransitionLog.listByOS(id).then(setTransitionLogs); };
 
   if (!os) return <div className="p-8 text-muted-foreground">Carregando...</div>;
 
@@ -101,11 +114,16 @@ const OSDetalhePage = () => {
 
   const responsavelAtual = STATUS_RESPONSAVEL[os.status];
 
-  const handleChangeStatus = async (status: OSStatus, direction: "forward" | "back") => {
+  const handleChangeStatus = async (status: OSStatus, direction: "forward" | "back", motivo?: string) => {
     const result = canTransitionOS(osWithGates, status, direction, reqs);
     if (!result.allowed) {
-      // Log denied attempt
       registrarAuditoria("OS_TRANSICAO_NEGADA", "OS", os.id, `Tentativa: ${OS_STATUS_LABELS[os.status]} → ${OS_STATUS_LABELS[status]}. Motivo: ${result.reason}. Perfil: ${getCurrentPerfil()}`);
+      await osTransitionLog.append({
+        osId: os.id, oldStatus: os.status, newStatus: status,
+        usuario: getCurrentUserName(), perfil: getCurrentPerfil(), papel,
+        planta: os.planta, motivo: `NEGADA: ${result.reason}`,
+      });
+      reloadLogs();
       toast({ title: "Transição negada", description: result.reason, variant: "destructive" });
       return;
     }
@@ -122,8 +140,32 @@ const OSDetalhePage = () => {
     const statusAnterior = os.status;
     await atualizarStatusOS(os.id, status);
     setOs({ ...os, status });
-    registrarAuditoria("OS_TRANSICAO", "OS", os.id, `Status: ${OS_STATUS_LABELS[statusAnterior]} → ${OS_STATUS_LABELS[status]}. Perfil: ${getCurrentPerfil()}`);
+
+    // Log transition
+    await osTransitionLog.append({
+      osId: os.id, oldStatus: statusAnterior, newStatus: status,
+      usuario: getCurrentUserName(), perfil: getCurrentPerfil(), papel,
+      planta: os.planta, motivo: motivo || undefined,
+    });
+    reloadLogs();
+
+    registrarAuditoria("OS_TRANSICAO", "OS", os.id, `Status: ${OS_STATUS_LABELS[statusAnterior]} → ${OS_STATUS_LABELS[status]}. Perfil: ${getCurrentPerfil()}${motivo ? `. Motivo: ${motivo}` : ""}`);
     toast({ title: "Status atualizado", description: `OS movida para ${OS_STATUS_LABELS[status]}` });
+  };
+
+  // Back transition with motivo modal
+  const handleRequestBack = (targetStatus: OSStatus) => {
+    setPendingBackStatus(targetStatus);
+    setMotivoText("");
+    setShowMotivoModal(true);
+  };
+
+  const handleConfirmBack = () => {
+    if (pendingBackStatus) {
+      handleChangeStatus(pendingBackStatus, "back", motivoText || undefined);
+    }
+    setShowMotivoModal(false);
+    setPendingBackStatus(null);
   };
 
   // === Nova Requisição ===
@@ -216,7 +258,10 @@ const OSDetalhePage = () => {
     }
 
     return (
-      <Button variant={variant} onClick={() => handleChangeStatus(targetStatus, direction)} {...props}>
+      <Button variant={variant} onClick={() => {
+        if (direction === "back") { handleRequestBack(targetStatus); }
+        else { handleChangeStatus(targetStatus, direction); }
+      }} {...props}>
         {label}
       </Button>
     );
@@ -502,7 +547,54 @@ const OSDetalhePage = () => {
         </CardContent>
       </Card>
 
-      {/* ============ MODAL NOVA REQUISIÇÃO ============ */}
+      {/* ============ HISTÓRICO DE TRANSIÇÕES ============ */}
+      <Card className="glass-card">
+        <CardHeader className="pb-2 flex flex-row items-center gap-2">
+          <History className="w-4 h-4 text-muted-foreground" />
+          <CardTitle className="text-sm text-muted-foreground">Histórico de Transições</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Data/Hora</TableHead>
+                <TableHead className="text-xs">Usuário</TableHead>
+                <TableHead className="text-xs">Perfil/Papel</TableHead>
+                <TableHead className="text-xs">Planta</TableHead>
+                <TableHead className="text-xs">De → Para</TableHead>
+                <TableHead className="text-xs">Motivo</TableHead>
+                <TableHead className="text-xs w-16"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transitionLogs.length === 0 ? (
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground text-xs py-4">Nenhuma transição registrada</TableCell></TableRow>
+              ) : transitionLogs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">{log.timestamp.replace("T", " ").slice(0, 16)}</TableCell>
+                  <TableCell className="text-xs font-medium">{log.usuario}</TableCell>
+                  <TableCell className="text-xs">{log.perfil} / {log.papel}</TableCell>
+                  <TableCell className="text-xs">{log.planta}</TableCell>
+                  <TableCell className="text-xs">
+                    <Badge variant="outline" className="text-[10px] mr-1">{OS_STATUS_LABELS[log.oldStatus]}</Badge>
+                    <span className="text-muted-foreground">→</span>
+                    <Badge variant="outline" className="text-[10px] ml-1">{OS_STATUS_LABELS[log.newStatus]}</Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{log.motivo || "—"}</TableCell>
+                  <TableCell>
+                    {log.detalhes && (
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setSelectedLogDetalhes(log.detalhes!); setShowDetalhesModal(true); }}>
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
       <Dialog open={showNovaReq} onOpenChange={setShowNovaReq}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -660,6 +752,31 @@ const OSDetalhePage = () => {
               </TableBody>
             </Table>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ MODAL MOTIVO RETROCESSO ============ */}
+      <Dialog open={showMotivoModal} onOpenChange={setShowMotivoModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Motivo do Retorno</DialogTitle>
+            <DialogDescription>Informe o motivo para retroceder o status da OS.</DialogDescription>
+          </DialogHeader>
+          <Textarea value={motivoText} onChange={(e) => setMotivoText(e.target.value)} placeholder="Ex.: Falta de informação, dados incorretos..." rows={3} />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => setShowMotivoModal(false)}>Cancelar</Button>
+            <Button onClick={handleConfirmBack}>Confirmar Retrocesso</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ MODAL DETALHES DO LOG ============ */}
+      <Dialog open={showDetalhesModal} onOpenChange={setShowDetalhesModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Transição</DialogTitle>
+          </DialogHeader>
+          <pre className="bg-muted p-4 rounded-md text-xs overflow-auto max-h-64 whitespace-pre-wrap">{selectedLogDetalhes}</pre>
         </DialogContent>
       </Dialog>
     </div>
