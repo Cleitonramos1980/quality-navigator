@@ -118,6 +118,8 @@ export function validateGate(
 }
 
 // ── Função central: pode transicionar? ──
+// DEPRECATED: Use dispatchOSEvent() from osStateMachine.ts instead.
+// Kept for backward compatibility.
 export interface TransitionResult {
   allowed: boolean;
   reason: string;
