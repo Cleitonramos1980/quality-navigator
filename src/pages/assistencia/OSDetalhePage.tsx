@@ -12,17 +12,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { buscarOS, atualizarStatusOS, listarReqAssistencia, listarConsumosPorOS, criarReqAssistencia, listarEstoque } from "@/services/assistencia";
 import { registrarAuditoria } from "@/services/auditoria";
 import { hasPermission, getCurrentPerfil, getCurrentUserName } from "@/lib/rbac";
-import { canTransitionOS, getCurrentPapel, STATUS_RESPONSAVEL, PAPEL_LABELS } from "@/lib/workflowOs";
+import { getCurrentPapel, PAPEL_LABELS, STATUS_RESPONSAVEL } from "@/lib/workflowOs";
 import { OS_STATUS_LABELS, OS_STATUS_COLORS, OS_PRIORIDADE_LABELS, OS_PRIORIDADE_COLORS, OS_TIPO_LABELS, REQ_ASSIST_STATUS_LABELS, REQ_ASSIST_STATUS_COLORS } from "@/types/assistencia";
 import type { OrdemServico, OSStatus, RequisicaoAssistencia, ConsumoMaterial, ItemReqAssist, OSTransitionLog } from "@/types/assistencia";
 import { PLANTA_LABELS, Planta } from "@/types/sgq";
 import { EstoqueItem } from "@/data/mockAssistenciaData";
 import { toast } from "@/hooks/use-toast";
 import * as osTransitionLog from "@/services/osTransitionLog";
+import { getAvailableEvents, dispatchOSEvent, canDispatchEvent, OS_EVENT_LABELS } from "@/lib/osStateMachine";
+import type { OSEvent, OSEventType, AvailableEvent } from "@/lib/osStateMachine";
 
 const OS_STATUS_FLOW: OSStatus[] = [
   "ABERTA", "AGUARDANDO_RECEBIMENTO", "RECEBIDO", "EM_INSPECAO",
@@ -57,9 +58,22 @@ const OSDetalhePage = () => {
 
   // Transition log state
   const [transitionLogs, setTransitionLogs] = useState<OSTransitionLog[]>([]);
+
+  // Event modals
   const [showMotivoModal, setShowMotivoModal] = useState(false);
   const [motivoText, setMotivoText] = useState("");
-  const [pendingBackStatus, setPendingBackStatus] = useState<OSStatus | null>(null);
+  const [pendingEvent, setPendingEvent] = useState<OSEvent | null>(null);
+
+  // Decisão inspeção modal
+  const [showDecisaoModal, setShowDecisaoModal] = useState(false);
+  const [decisaoInspecao, setDecisaoInspecao] = useState<"REPARAR" | "TROCAR" | "REJEITAR" | "REENTRADA">("REPARAR");
+
+  // Return target selector
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnTargets, setReturnTargets] = useState<OSStatus[]>([]);
+  const [selectedReturnTarget, setSelectedReturnTarget] = useState<OSStatus | "">("");
+
+  // Log details modal
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
   const [selectedLogDetalhes, setSelectedLogDetalhes] = useState<string>("");
 
@@ -89,7 +103,7 @@ const OSDetalhePage = () => {
 
   if (!os) return <div className="p-8 text-muted-foreground">Carregando...</div>;
 
-  // Build current OS with live gate fields for validation
+  // Build current OS with live gate fields
   const osWithGates: OrdemServico = {
     ...os,
     laudoInspecao: laudo || undefined,
@@ -101,34 +115,18 @@ const OSDetalhePage = () => {
   };
 
   const currentIdx = OS_STATUS_FLOW.indexOf(os.status);
-  const nextStatus = currentIdx >= 0 && currentIdx < OS_STATUS_FLOW.length - 1 ? OS_STATUS_FLOW[currentIdx + 1] : null;
-  const prevStatus = currentIdx > 0 ? OS_STATUS_FLOW[currentIdx - 1] : null;
+  const responsavelAtual = STATUS_RESPONSAVEL[os.status];
 
-  const forwardResult = nextStatus ? canTransitionOS(osWithGates, nextStatus, "forward", reqs) : null;
-  const backResult = prevStatus ? canTransitionOS(osWithGates, prevStatus, "back", reqs) : null;
-  const cancelResult = canTransitionOS(osWithGates, "CANCELADA", "forward", reqs);
+  // Get available events from state machine
+  const availableEvents = getAvailableEvents(osWithGates, reqs);
 
   const reqsEmTransferencia = reqs.filter((r) => r.status === "EM_TRANSFERENCIA");
   const reqsRecebidas = reqs.filter((r) => r.status === "RECEBIDA_ASSISTENCIA");
   const consumoLiberado = reqsRecebidas.length > 0;
 
-  const responsavelAtual = STATUS_RESPONSAVEL[os.status];
-
-  const handleChangeStatus = async (status: OSStatus, direction: "forward" | "back", motivo?: string) => {
-    const result = canTransitionOS(osWithGates, status, direction, reqs);
-    if (!result.allowed) {
-      registrarAuditoria("OS_TRANSICAO_NEGADA", "OS", os.id, `Tentativa: ${OS_STATUS_LABELS[os.status]} → ${OS_STATUS_LABELS[status]}. Motivo: ${result.reason}. Perfil: ${getCurrentPerfil()}`);
-      await osTransitionLog.append({
-        osId: os.id, oldStatus: os.status, newStatus: status,
-        usuario: getCurrentUserName(), perfil: getCurrentPerfil(), papel,
-        planta: os.planta, motivo: `NEGADA: ${result.reason}`,
-      });
-      reloadLogs();
-      toast({ title: "Transição negada", description: result.reason, variant: "destructive" });
-      return;
-    }
-
-    // Persist gate fields on the OS mock before transitioning
+  // ── Event dispatch handler ──
+  const handleDispatchEvent = async (event: OSEvent) => {
+    // Persist gate fields on the OS mock before dispatching
     const osRef = os as any;
     if (laudo) osRef.laudoInspecao = laudo;
     if (decisao) osRef.decisaoTecnica = decisao;
@@ -137,38 +135,76 @@ const OSDetalhePage = () => {
     if (validacaoAprovada) osRef.validacaoAprovada = true;
     if (mensagemEncerramento) osRef.mensagemEncerramento = mensagemEncerramento;
 
-    const statusAnterior = os.status;
-    await atualizarStatusOS(os.id, status);
-    setOs({ ...os, status });
+    const result = await dispatchOSEvent(osWithGates, event, reqs);
 
-    // Log transition
-    await osTransitionLog.append({
-      osId: os.id, oldStatus: statusAnterior, newStatus: status,
-      usuario: getCurrentUserName(), perfil: getCurrentPerfil(), papel,
-      planta: os.planta, motivo: motivo || undefined,
-    });
+    if (!result.ok) {
+      toast({ title: "Transição negada", description: (result as { ok: false; reason: string }).reason, variant: "destructive" });
+      reloadLogs();
+      return;
+    }
+
+    await atualizarStatusOS(os.id, result.newState);
+    setOs({ ...os, status: result.newState });
     reloadLogs();
-
-    registrarAuditoria("OS_TRANSICAO", "OS", os.id, `Status: ${OS_STATUS_LABELS[statusAnterior]} → ${OS_STATUS_LABELS[status]}. Perfil: ${getCurrentPerfil()}${motivo ? `. Motivo: ${motivo}` : ""}`);
-    toast({ title: "Status atualizado", description: `OS movida para ${OS_STATUS_LABELS[status]}` });
+    toast({ title: "Status atualizado", description: `OS movida para ${OS_STATUS_LABELS[result.newState]}` });
   };
 
-  // Back transition with motivo modal
-  const handleRequestBack = (targetStatus: OSStatus) => {
-    setPendingBackStatus(targetStatus);
-    setMotivoText("");
-    setShowMotivoModal(true);
+  // ── Event button click handlers ──
+  const handleEventClick = (evt: AvailableEvent) => {
+    if (evt.type === "FINALIZAR_INSPECAO" && evt.needsDecisao) {
+      setDecisaoInspecao("REPARAR");
+      setShowDecisaoModal(true);
+      return;
+    }
+
+    if (evt.type === "RETORNAR_ETAPA") {
+      setReturnTargets(evt.returnTargets || []);
+      setSelectedReturnTarget(evt.returnTargets?.[0] || "");
+      setMotivoText("");
+      setShowReturnModal(true);
+      return;
+    }
+
+    if (evt.type === "CANCELAR_OS") {
+      setMotivoText("");
+      setPendingEvent({ type: "CANCELAR_OS" });
+      setShowMotivoModal(true);
+      return;
+    }
+
+    // Direct dispatch
+    handleDispatchEvent({ type: evt.type });
   };
 
-  const handleConfirmBack = () => {
-    if (pendingBackStatus) {
-      handleChangeStatus(pendingBackStatus, "back", motivoText || undefined);
+  const handleConfirmDecisao = () => {
+    setShowDecisaoModal(false);
+    handleDispatchEvent({
+      type: "FINALIZAR_INSPECAO",
+      payload: { decisaoInspecao },
+    });
+  };
+
+  const handleConfirmReturn = () => {
+    if (!selectedReturnTarget || !motivoText) {
+      toast({ title: "Preencha o motivo", variant: "destructive" });
+      return;
+    }
+    setShowReturnModal(false);
+    handleDispatchEvent({
+      type: "RETORNAR_ETAPA",
+      payload: { returnToState: selectedReturnTarget as OSStatus, motivo: motivoText },
+    });
+  };
+
+  const handleConfirmMotivo = () => {
+    if (pendingEvent) {
+      handleDispatchEvent({ ...pendingEvent, payload: { ...pendingEvent.payload, motivo: motivoText } });
     }
     setShowMotivoModal(false);
-    setPendingBackStatus(null);
+    setPendingEvent(null);
   };
 
-  // === Nova Requisição ===
+  // === Nova Requisição (unchanged) ===
   const openNovaReq = async () => {
     const est = await listarEstoque();
     setEstoque(est);
@@ -230,43 +266,6 @@ const OSDetalhePage = () => {
     !estoqueFilter || e.descricao.toLowerCase().includes(estoqueFilter.toLowerCase()) || e.codMaterial.toLowerCase().includes(estoqueFilter.toLowerCase())
   );
 
-  const TransitionButton = ({ targetStatus, direction, label, variant = "default", ...props }: {
-    targetStatus: OSStatus;
-    direction: "forward" | "back";
-    label: string;
-    variant?: "default" | "outline" | "destructive";
-  } & Omit<React.ComponentProps<typeof Button>, "onClick" | "variant">) => {
-    const result = direction === "forward" ? forwardResult : direction === "back" ? backResult : cancelResult;
-    const transResult = canTransitionOS(osWithGates, targetStatus, direction, reqs);
-    const allowed = transResult.allowed;
-
-    if (isDiretoria) return null;
-
-    if (!allowed) {
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>
-              <Button variant={variant} disabled {...props}>
-                {label}
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs text-xs">{transResult.reason}</TooltipContent>
-        </Tooltip>
-      );
-    }
-
-    return (
-      <Button variant={variant} onClick={() => {
-        if (direction === "back") { handleRequestBack(targetStatus); }
-        else { handleChangeStatus(targetStatus, direction); }
-      }} {...props}>
-        {label}
-      </Button>
-    );
-  };
-
   // Determine which sections to highlight based on papel
   const showInspecaoSection = ["INSPECAO", "ADMIN"].includes(papel) || os.status === "EM_INSPECAO";
   const showReparoSection = ["REPARO", "ADMIN"].includes(papel) || os.status === "EM_REPARO";
@@ -289,15 +288,53 @@ const OSDetalhePage = () => {
           <p className="text-sm text-muted-foreground mt-0.5">{OS_TIPO_LABELS[os.tipoOs]} — {os.clienteNome}</p>
         </div>
 
-        {prevStatus && os.status !== "CANCELADA" && (
-          <TransitionButton targetStatus={prevStatus} direction="back" label={`← ${OS_STATUS_LABELS[prevStatus]}`} variant="outline" className="gap-2" />
-        )}
-        {nextStatus && os.status !== "CANCELADA" && (
-          <TransitionButton targetStatus={nextStatus} direction="forward" label={`Avançar → ${OS_STATUS_LABELS[nextStatus]}`} className="gap-2" />
-        )}
-        {os.status !== "CANCELADA" && os.status !== "ENCERRADA" && (
-          <TransitionButton targetStatus={"CANCELADA"} direction="forward" label="Cancelar OS" variant="destructive" size="sm" />
-        )}
+        {/* Event-based buttons from state machine */}
+        {availableEvents.map((evt) => {
+          // Check if the event can be dispatched (for disabling with tooltip)
+          const checkEvent: OSEvent = { type: evt.type };
+          const check = canDispatchEvent(osWithGates, checkEvent, reqs);
+
+          if (evt.type === "RETORNAR_ETAPA" || evt.type === "CANCELAR_OS" || evt.needsDecisao) {
+            // These always show enabled (validation happens in modal)
+            return (
+              <Button
+                key={evt.type}
+                variant={evt.variant}
+                size={evt.type === "CANCELAR_OS" ? "sm" : "default"}
+                onClick={() => handleEventClick(evt)}
+                className="gap-2"
+              >
+                {evt.label}
+              </Button>
+            );
+          }
+
+          if (!check.allowed) {
+            return (
+              <Tooltip key={evt.type}>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button variant={evt.variant} disabled className="gap-2">
+                      {evt.label}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-xs">{check.reason}</TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return (
+            <Button
+              key={evt.type}
+              variant={evt.variant}
+              onClick={() => handleEventClick(evt)}
+              className="gap-2"
+            >
+              {evt.label}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Responsável atual */}
@@ -315,12 +352,17 @@ const OSDetalhePage = () => {
               const isCurrent = s === os.status;
               const isPast = i < currentIdx;
               return (
-                <div key={s} className="flex items-center gap-1">
-                  <div className={`px-2 py-1 rounded text-[10px] font-medium whitespace-nowrap ${isCurrent ? "bg-primary text-primary-foreground" : isPast ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>
-                    {OS_STATUS_LABELS[s]}
-                  </div>
-                  {i < OS_STATUS_FLOW.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
-                </div>
+                <Tooltip key={s}>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1">
+                      <div className={`px-2 py-1 rounded text-[10px] font-medium whitespace-nowrap cursor-default ${isCurrent ? "bg-primary text-primary-foreground" : isPast ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>
+                        {OS_STATUS_LABELS[s]}
+                      </div>
+                      {i < OS_STATUS_FLOW.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Mudança somente via eventos autorizados</TooltipContent>
+                </Tooltip>
               );
             })}
           </div>
@@ -595,6 +637,7 @@ const OSDetalhePage = () => {
         </CardContent>
       </Card>
 
+      {/* ============ MODAL NOVA REQUISIÇÃO ============ */}
       <Dialog open={showNovaReq} onOpenChange={setShowNovaReq}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -755,17 +798,67 @@ const OSDetalhePage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ============ MODAL MOTIVO RETROCESSO ============ */}
+      {/* ============ MODAL DECISÃO INSPEÇÃO ============ */}
+      <Dialog open={showDecisaoModal} onOpenChange={setShowDecisaoModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Decisão da Inspeção</DialogTitle>
+            <DialogDescription>Selecione a decisão técnica para esta OS.</DialogDescription>
+          </DialogHeader>
+          <Select value={decisaoInspecao} onValueChange={(v) => setDecisaoInspecao(v as any)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="REPARAR">Reparar (→ Aguardando Peças)</SelectItem>
+              <SelectItem value="TROCAR">Trocar (→ Validação)</SelectItem>
+              <SelectItem value="REJEITAR">Rejeitar (→ Validação)</SelectItem>
+              <SelectItem value="REENTRADA">Reentrada (→ Validação)</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => setShowDecisaoModal(false)}>Cancelar</Button>
+            <Button onClick={handleConfirmDecisao}>Confirmar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ MODAL RETORNAR ETAPA ============ */}
+      <Dialog open={showReturnModal} onOpenChange={setShowReturnModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Retornar Etapa</DialogTitle>
+            <DialogDescription>Selecione o estado de destino e informe o motivo.</DialogDescription>
+          </DialogHeader>
+          {returnTargets.length > 1 ? (
+            <Select value={selectedReturnTarget} onValueChange={(v) => setSelectedReturnTarget(v as OSStatus)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {returnTargets.map((t) => (
+                  <SelectItem key={t} value={t}>{OS_STATUS_LABELS[t]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-sm text-foreground">Retornar para: <strong>{OS_STATUS_LABELS[returnTargets[0]]}</strong></p>
+          )}
+          <Textarea value={motivoText} onChange={(e) => setMotivoText(e.target.value)} placeholder="Ex.: Falta de informação, dados incorretos..." rows={3} />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => setShowReturnModal(false)}>Cancelar</Button>
+            <Button onClick={handleConfirmReturn}>Confirmar Retrocesso</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ MODAL MOTIVO (CANCELAMENTO) ============ */}
       <Dialog open={showMotivoModal} onOpenChange={setShowMotivoModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Motivo do Retorno</DialogTitle>
-            <DialogDescription>Informe o motivo para retroceder o status da OS.</DialogDescription>
+            <DialogTitle>Motivo do Cancelamento</DialogTitle>
+            <DialogDescription>Informe o motivo para cancelar a OS.</DialogDescription>
           </DialogHeader>
-          <Textarea value={motivoText} onChange={(e) => setMotivoText(e.target.value)} placeholder="Ex.: Falta de informação, dados incorretos..." rows={3} />
+          <Textarea value={motivoText} onChange={(e) => setMotivoText(e.target.value)} placeholder="Ex.: Solicitação do cliente, duplicidade..." rows={3} />
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => setShowMotivoModal(false)}>Cancelar</Button>
-            <Button onClick={handleConfirmBack}>Confirmar Retrocesso</Button>
+            <Button variant="destructive" onClick={handleConfirmMotivo}>Confirmar Cancelamento</Button>
           </div>
         </DialogContent>
       </Dialog>
