@@ -203,16 +203,13 @@ export function getDefaultRouteForPerfil(perfil: PerfilNome): string {
 }
 
 // ── Visibilidade de módulos no menu ──
-export type NavModulo = "dashboard" | "sac" | "assistencia" | "garantias" | "nc" | "capa" | "auditorias" | "admin";
+export type NavModulo = "dashboard" | "sac" | "assistencia" | "qualidade" | "admin";
 
 const MODULO_PAPEIS: Record<NavModulo, PapelOperacional[]> = {
   dashboard: ["SAC", "ASSISTENCIA", "INSPECAO", "REPARO", "ALMOX_CD", "VALIDACAO", "DIRETORIA", "ADMIN"],
   sac: ["SAC", "ADMIN", "DIRETORIA"],
+  qualidade: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
   assistencia: ["ASSISTENCIA", "INSPECAO", "REPARO", "VALIDACAO", "ALMOX_CD", "ADMIN", "DIRETORIA"],
-  garantias: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
-  nc: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
-  capa: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
-  auditorias: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
   admin: ["ADMIN"],
 };
 

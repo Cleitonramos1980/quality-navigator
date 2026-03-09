@@ -35,18 +35,23 @@ interface NavItem {
 
 const allNavItems: NavItem[] = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard, modulo: "dashboard" },
-  { path: "/garantias", label: "Garantias", icon: ShieldCheck, modulo: "garantias" },
-  { path: "/nao-conformidades", label: "Não Conformidades", icon: AlertTriangle, modulo: "nc" },
-  { path: "/capa", label: "CAPA", icon: FileSearch, modulo: "capa" },
-  { path: "/auditorias", label: "Auditorias", icon: ClipboardCheck, modulo: "auditorias" },
   {
     path: "/sac/dashboard", label: "SAC", icon: Headphones, modulo: "sac",
     children: [
-      { path: "/sac/dashboard", label: "Dashboard" },
+      { path: "/sac/dashboard", label: "Dashboard SAC" },
       { path: "/sac/atendimentos", label: "Atendimentos" },
-      { path: "/sac/pesquisa", label: "Pesquisa" },
       { path: "/sac/novo", label: "Novo Atendimento" },
+      { path: "/sac/pesquisa", label: "Pesquisa" },
+      { path: "/garantias", label: "Garantias" },
       { path: "/sac/requisicoes", label: "Requisições" },
+    ],
+  },
+  {
+    path: "/nao-conformidades", label: "Qualidade", icon: ShieldAlert, modulo: "qualidade",
+    children: [
+      { path: "/nao-conformidades", label: "Não Conformidades" },
+      { path: "/capa", label: "CAPA" },
+      { path: "/auditorias", label: "Auditorias" },
     ],
   },
   {
@@ -54,11 +59,22 @@ const allNavItems: NavItem[] = [
     children: [
       { path: "/assistencia/dashboard", label: "Dashboard" },
       { path: "/assistencia/os", label: "Ordens de Serviço" },
-      { path: "/assistencia/requisicoes", label: "Requisições" },
+      { path: "/assistencia/os/nova", label: "Nova Ordem de Serviço" },
+      { path: "/assistencia/requisicoes", label: "Requisições de Material" },
       { path: "/assistencia/estoque", label: "Estoque" },
+      { path: "/assistencia/os/consumo", label: "Registrar Consumo" },
     ],
   },
-  { path: "/admin", label: "Administração", icon: Settings, modulo: "admin" },
+  {
+    path: "/admin", label: "Administração", icon: Settings, modulo: "admin",
+    children: [
+      { path: "/admin", label: "Administração" },
+      { path: "/administracao/usuarios", label: "Usuários" },
+      { path: "/administracao/perfis", label: "Perfis de Acesso" },
+      { path: "/administracao/log-auditoria", label: "Log de Auditoria" },
+      { path: "/administracao/parametros", label: "Parâmetros" },
+    ],
+  },
 ];
 
 const AppLayout = ({ children }: AppLayoutProps) => {
