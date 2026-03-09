@@ -172,7 +172,7 @@ const CalendarioAuditoriasPage = () => {
                     </SelectContent>
                   </Select>
                 </FormField>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <FormField label="Planta" required>
                     <Select value={novaForm.planta} onValueChange={(v) => setNovaForm((f) => ({ ...f, planta: v }))}>
                       <SelectTrigger><SelectValue placeholder="Planta" /></SelectTrigger>
@@ -185,6 +185,9 @@ const CalendarioAuditoriasPage = () => {
                   </FormField>
                   <FormField label="Data" required>
                     <Input type="date" value={novaForm.data} onChange={(e) => setNovaForm((f) => ({ ...f, data: e.target.value }))} />
+                  </FormField>
+                  <FormField label="Hora de Início" required>
+                    <Input type="time" value={novaForm.hora} onChange={(e) => setNovaForm((f) => ({ ...f, hora: e.target.value }))} />
                   </FormField>
                 </div>
                 <FormField label="Local">
