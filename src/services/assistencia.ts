@@ -32,7 +32,14 @@ export async function buscarReqAssistencia(id: string): Promise<RequisicaoAssist
 }
 
 export async function criarReqAssistencia(req: Omit<RequisicaoAssistencia, "id">): Promise<RequisicaoAssistencia> {
-  const nova: RequisicaoAssistencia = { ...req, id: `RA-${String(mockReqAssistencia.length + 1).padStart(3, "0")}` };
+  // Sanitize item quantities
+  const itensSanitizados = req.itens.map((item) => ({
+    ...item,
+    qtdSolicitada: Math.max(1, Math.round(Number(item.qtdSolicitada) || 1)),
+    qtdAtendida: item.qtdAtendida != null ? Math.max(0, Math.round(Number(item.qtdAtendida) || 0)) : undefined,
+    qtdRecebida: (item as any).qtdRecebida != null ? Math.max(0, Math.round(Number((item as any).qtdRecebida) || 0)) : undefined,
+  }));
+  const nova: RequisicaoAssistencia = { ...req, itens: itensSanitizados, id: `RA-${String(mockReqAssistencia.length + 1).padStart(3, "0")}` };
   mockReqAssistencia.push(nova);
   return nova;
 }

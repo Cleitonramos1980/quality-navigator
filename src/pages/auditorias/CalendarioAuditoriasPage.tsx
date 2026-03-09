@@ -61,6 +61,7 @@ const CalendarioAuditoriasPage = () => {
     local: "",
     auditor: "",
     data: "",
+    hora: "",
   });
 
   const allAuditorias = useMemo(() => [...mockAuditorias], []);
@@ -102,8 +103,8 @@ const CalendarioAuditoriasPage = () => {
   };
 
   const handleAddAuditoria = () => {
-    if (!novaForm.tplNome || !novaForm.planta || !novaForm.auditor || !novaForm.data) {
-      toast({ title: "Campos obrigatórios", description: "Preencha tipo, planta, auditor e data.", variant: "destructive" });
+    if (!novaForm.tplNome || !novaForm.planta || !novaForm.auditor || !novaForm.data || !novaForm.hora) {
+      toast({ title: "Campos obrigatórios", description: "Preencha tipo, planta, auditor, data e hora.", variant: "destructive" });
       return;
     }
     const nova: AudExec = {
@@ -113,11 +114,11 @@ const CalendarioAuditoriasPage = () => {
       local: novaForm.local || "A definir",
       auditor: novaForm.auditor,
       status: "PLANEJADA",
-      startedAt: novaForm.data,
+      startedAt: `${novaForm.data}T${novaForm.hora}:00`,
     };
     mockAuditorias.push(nova);
     toast({ title: "Auditoria programada", description: `${nova.tplNome} em ${nova.startedAt}` });
-    setNovaForm({ tplNome: "", planta: "", local: "", auditor: "", data: "" });
+    setNovaForm({ tplNome: "", planta: "", local: "", auditor: "", data: "", hora: "" });
     setDialogOpen(false);
   };
 
@@ -171,7 +172,7 @@ const CalendarioAuditoriasPage = () => {
                     </SelectContent>
                   </Select>
                 </FormField>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <FormField label="Planta" required>
                     <Select value={novaForm.planta} onValueChange={(v) => setNovaForm((f) => ({ ...f, planta: v }))}>
                       <SelectTrigger><SelectValue placeholder="Planta" /></SelectTrigger>
@@ -184,6 +185,9 @@ const CalendarioAuditoriasPage = () => {
                   </FormField>
                   <FormField label="Data" required>
                     <Input type="date" value={novaForm.data} onChange={(e) => setNovaForm((f) => ({ ...f, data: e.target.value }))} />
+                  </FormField>
+                  <FormField label="Hora de Início" required>
+                    <Input type="time" value={novaForm.hora} onChange={(e) => setNovaForm((f) => ({ ...f, hora: e.target.value }))} />
                   </FormField>
                 </div>
                 <FormField label="Local">
@@ -234,7 +238,12 @@ const CalendarioAuditoriasPage = () => {
               return (
                 <div
                   key={day}
-                  onClick={() => setSelectedDay(day === selectedDay ? null : day)}
+                  onClick={() => {
+                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                    setNovaForm((f) => ({ ...f, data: dateStr }));
+                    setDialogOpen(true);
+                    setSelectedDay(day);
+                  }}
                   className={cn(
                     "h-24 border border-border/30 p-1 cursor-pointer transition-colors hover:bg-accent/30 overflow-hidden",
                     isToday && "bg-primary/5",
@@ -248,15 +257,21 @@ const CalendarioAuditoriasPage = () => {
                     {day}
                   </span>
                   <div className="space-y-0.5 mt-0.5">
-                    {dayAuds.slice(0, 2).map((a) => (
-                      <div
-                        key={a.id}
-                        className={cn("text-[10px] leading-tight px-1 py-0.5 rounded truncate", STATUS_COLORS[a.status])}
-                        title={a.tplNome}
-                      >
-                        {a.tplNome.length > 18 ? a.tplNome.slice(0, 16) + "…" : a.tplNome}
-                      </div>
-                    ))}
+                    {dayAuds
+                      .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
+                      .slice(0, 2).map((a) => {
+                        const hora = a.startedAt.includes("T") ? a.startedAt.split("T")[1]?.slice(0, 5) : "";
+                        return (
+                          <div
+                            key={a.id}
+                            className={cn("text-[10px] leading-tight px-1 py-0.5 rounded truncate", STATUS_COLORS[a.status])}
+                            title={a.tplNome}
+                          >
+                            {hora && <span className="font-mono mr-0.5">{hora}</span>}
+                            {a.tplNome.length > 12 ? a.tplNome.slice(0, 10) + "…" : a.tplNome}
+                          </div>
+                        );
+                      })}
                     {dayAuds.length > 2 && (
                       <div className="text-[10px] text-muted-foreground px-1">+{dayAuds.length - 2} mais</div>
                     )}
@@ -286,22 +301,28 @@ const CalendarioAuditoriasPage = () => {
               <p className="text-sm text-muted-foreground text-center py-6">Nenhuma auditoria programada para este dia</p>
             ) : (
               <div className="space-y-3">
-                {selectedDayAuditorias.map((a) => (
-                  <div key={a.id} className="flex items-start gap-4 p-3 rounded-lg border border-border bg-card">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-xs text-primary font-medium">{a.id}</span>
-                        <span className={cn("text-xs px-2 py-0.5 rounded-full", STATUS_COLORS[a.status])}>{statusLabel[a.status]}</span>
+                {[...selectedDayAuditorias]
+                  .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
+                  .map((a) => {
+                    const hora = a.startedAt.includes("T") ? a.startedAt.split("T")[1]?.slice(0, 5) : null;
+                    return (
+                      <div key={a.id} className="flex items-start gap-4 p-3 rounded-lg border border-border bg-card">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-mono text-xs text-primary font-medium">{a.id}</span>
+                            <span className={cn("text-xs px-2 py-0.5 rounded-full", STATUS_COLORS[a.status])}>{statusLabel[a.status]}</span>
+                            {hora && <span className="text-xs font-mono text-muted-foreground">⏰ {hora}</span>}
+                          </div>
+                          <h4 className="font-medium text-foreground text-sm">{a.tplNome}</h4>
+                          <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                            <div>Planta: <span className="font-mono">{a.planta}</span> – {PLANTA_LABELS[a.planta as Planta]}</div>
+                            <div>Local: {a.local}</div>
+                            <div>Auditor: <span className="font-medium text-foreground">{a.auditor}</span></div>
+                          </div>
+                        </div>
                       </div>
-                      <h4 className="font-medium text-foreground text-sm">{a.tplNome}</h4>
-                      <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                        <div>Planta: <span className="font-mono">{a.planta}</span> – {PLANTA_LABELS[a.planta as Planta]}</div>
-                        <div>Local: {a.local}</div>
-                        <div>Auditor: <span className="font-medium text-foreground">{a.auditor}</span></div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
             )}
           </CardContent>
