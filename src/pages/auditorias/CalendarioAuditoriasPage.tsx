@@ -235,7 +235,12 @@ const CalendarioAuditoriasPage = () => {
               return (
                 <div
                   key={day}
-                  onClick={() => setSelectedDay(day === selectedDay ? null : day)}
+                  onClick={() => {
+                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                    setNovaForm((f) => ({ ...f, data: dateStr }));
+                    setDialogOpen(true);
+                    setSelectedDay(day);
+                  }}
                   className={cn(
                     "h-24 border border-border/30 p-1 cursor-pointer transition-colors hover:bg-accent/30 overflow-hidden",
                     isToday && "bg-primary/5",
