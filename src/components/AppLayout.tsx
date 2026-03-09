@@ -2,10 +2,6 @@ import { ReactNode, useState, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  ShieldCheck,
-  AlertTriangle,
-  ClipboardCheck,
-  FileSearch,
   Settings,
   Menu,
   X,
@@ -19,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
 import { getCurrentPerfil, getCurrentUserName, setCurrentPerfil } from "@/lib/rbac";
 import { getCurrentPapel, PAPEL_LABELS, canSeeModulo, canSeeAssistSubmenu, type NavModulo } from "@/lib/workflowOs";
+import { ShieldAlert, BookOpen } from "lucide-react";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -34,18 +31,23 @@ interface NavItem {
 
 const allNavItems: NavItem[] = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard, modulo: "dashboard" },
-  { path: "/garantias", label: "Garantias", icon: ShieldCheck, modulo: "garantias" },
-  { path: "/nao-conformidades", label: "Não Conformidades", icon: AlertTriangle, modulo: "nc" },
-  { path: "/capa", label: "CAPA", icon: FileSearch, modulo: "capa" },
-  { path: "/auditorias", label: "Auditorias", icon: ClipboardCheck, modulo: "auditorias" },
   {
     path: "/sac/dashboard", label: "SAC", icon: Headphones, modulo: "sac",
     children: [
-      { path: "/sac/dashboard", label: "Dashboard" },
+      { path: "/sac/dashboard", label: "Dashboard SAC" },
       { path: "/sac/atendimentos", label: "Atendimentos" },
-      { path: "/sac/pesquisa", label: "Pesquisa" },
       { path: "/sac/novo", label: "Novo Atendimento" },
+      { path: "/sac/pesquisa", label: "Pesquisa" },
+      { path: "/garantias", label: "Garantias" },
       { path: "/sac/requisicoes", label: "Requisições" },
+    ],
+  },
+  {
+    path: "/nao-conformidades", label: "Qualidade", icon: ShieldAlert, modulo: "qualidade",
+    children: [
+      { path: "/nao-conformidades", label: "Não Conformidades" },
+      { path: "/capa", label: "CAPA" },
+      { path: "/auditorias", label: "Auditorias" },
     ],
   },
   {
@@ -53,11 +55,22 @@ const allNavItems: NavItem[] = [
     children: [
       { path: "/assistencia/dashboard", label: "Dashboard" },
       { path: "/assistencia/os", label: "Ordens de Serviço" },
-      { path: "/assistencia/requisicoes", label: "Requisições" },
+      { path: "/assistencia/os/nova", label: "Nova Ordem de Serviço" },
+      { path: "/assistencia/requisicoes", label: "Requisições de Material" },
       { path: "/assistencia/estoque", label: "Estoque" },
+      { path: "/assistencia/os/consumo", label: "Registrar Consumo" },
     ],
   },
-  { path: "/admin", label: "Administração", icon: Settings, modulo: "admin" },
+  {
+    path: "/admin", label: "Administração", icon: Settings, modulo: "admin",
+    children: [
+      { path: "/admin", label: "Administração" },
+      { path: "/administracao/usuarios", label: "Usuários" },
+      { path: "/administracao/perfis", label: "Perfis de Acesso" },
+      { path: "/administracao/log-auditoria", label: "Log de Auditoria" },
+      { path: "/administracao/parametros", label: "Parâmetros" },
+    ],
+  },
 ];
 
 const AppLayout = ({ children }: AppLayoutProps) => {
@@ -155,7 +168,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         {/* Nav */}
         <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.children && item.children.some((c) => location.pathname === c.path));
+            const isActive = location.pathname === item.path || (item.children && item.children.some((c) => location.pathname === c.path || location.pathname.startsWith(c.path + "/")));
             return (
               <div key={item.path}>
                 <Link
@@ -180,7 +193,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         onClick={() => setSidebarOpen(false)}
                         className={cn(
                           "block px-3 py-1.5 rounded-md text-xs transition-colors",
-                          location.pathname === child.path
+                          location.pathname === child.path || location.pathname.startsWith(child.path + "/")
                             ? "text-sidebar-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground/80"
                         )}
