@@ -193,7 +193,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         onClick={() => setSidebarOpen(false)}
                         className={cn(
                           "block px-3 py-1.5 rounded-md text-xs transition-colors",
-                          location.pathname === child.path
+                          location.pathname === child.path || location.pathname.startsWith(child.path + "/")
                             ? "text-sidebar-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground/80"
                         )}
