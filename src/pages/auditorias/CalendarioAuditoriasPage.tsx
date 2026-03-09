@@ -257,15 +257,21 @@ const CalendarioAuditoriasPage = () => {
                     {day}
                   </span>
                   <div className="space-y-0.5 mt-0.5">
-                    {dayAuds.slice(0, 2).map((a) => (
-                      <div
-                        key={a.id}
-                        className={cn("text-[10px] leading-tight px-1 py-0.5 rounded truncate", STATUS_COLORS[a.status])}
-                        title={a.tplNome}
-                      >
-                        {a.tplNome.length > 18 ? a.tplNome.slice(0, 16) + "…" : a.tplNome}
-                      </div>
-                    ))}
+                    {dayAuds
+                      .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
+                      .slice(0, 2).map((a) => {
+                        const hora = a.startedAt.includes("T") ? a.startedAt.split("T")[1]?.slice(0, 5) : "";
+                        return (
+                          <div
+                            key={a.id}
+                            className={cn("text-[10px] leading-tight px-1 py-0.5 rounded truncate", STATUS_COLORS[a.status])}
+                            title={a.tplNome}
+                          >
+                            {hora && <span className="font-mono mr-0.5">{hora}</span>}
+                            {a.tplNome.length > 12 ? a.tplNome.slice(0, 10) + "…" : a.tplNome}
+                          </div>
+                        );
+                      })}
                     {dayAuds.length > 2 && (
                       <div className="text-[10px] text-muted-foreground px-1">+{dayAuds.length - 2} mais</div>
                     )}
