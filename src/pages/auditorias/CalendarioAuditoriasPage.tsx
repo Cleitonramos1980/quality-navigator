@@ -103,8 +103,8 @@ const CalendarioAuditoriasPage = () => {
   };
 
   const handleAddAuditoria = () => {
-    if (!novaForm.tplNome || !novaForm.planta || !novaForm.auditor || !novaForm.data) {
-      toast({ title: "Campos obrigatórios", description: "Preencha tipo, planta, auditor e data.", variant: "destructive" });
+    if (!novaForm.tplNome || !novaForm.planta || !novaForm.auditor || !novaForm.data || !novaForm.hora) {
+      toast({ title: "Campos obrigatórios", description: "Preencha tipo, planta, auditor, data e hora.", variant: "destructive" });
       return;
     }
     const nova: AudExec = {
@@ -114,11 +114,11 @@ const CalendarioAuditoriasPage = () => {
       local: novaForm.local || "A definir",
       auditor: novaForm.auditor,
       status: "PLANEJADA",
-      startedAt: novaForm.data,
+      startedAt: `${novaForm.data}T${novaForm.hora}:00`,
     };
     mockAuditorias.push(nova);
     toast({ title: "Auditoria programada", description: `${nova.tplNome} em ${nova.startedAt}` });
-    setNovaForm({ tplNome: "", planta: "", local: "", auditor: "", data: "" });
+    setNovaForm({ tplNome: "", planta: "", local: "", auditor: "", data: "", hora: "" });
     setDialogOpen(false);
   };
 
