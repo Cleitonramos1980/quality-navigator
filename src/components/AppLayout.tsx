@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
 import { getCurrentPerfil, getCurrentUserName, setCurrentPerfil } from "@/lib/rbac";
 import { getCurrentPapel, PAPEL_LABELS, canSeeModulo, canSeeAssistSubmenu, type NavModulo } from "@/lib/workflowOs";
+import { ShieldAlert, BookOpen } from "lucide-react";
 
 interface AppLayoutProps {
   children: ReactNode;
