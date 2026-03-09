@@ -43,22 +43,21 @@ const allNavItems: NavItem[] = [
     ],
   },
   {
-    path: "/nao-conformidades", label: "Qualidade", icon: ShieldAlert, modulo: "qualidade",
+    path: "/auditorias", label: "Qualidade", icon: ShieldAlert, modulo: "qualidade",
     children: [
+      { path: "/auditorias", label: "Auditorias" },
       { path: "/nao-conformidades", label: "Não Conformidades" },
       { path: "/capa", label: "CAPA" },
-      { path: "/auditorias", label: "Auditorias" },
     ],
   },
   {
-    path: "/assistencia/dashboard", label: "Assistência Técnica", icon: Wrench, modulo: "assistencia",
+    path: "/assistencia/os/nova", label: "Assistência Técnica", icon: Wrench, modulo: "assistencia",
     children: [
-      { path: "/assistencia/dashboard", label: "Dashboard" },
-      { path: "/assistencia/os", label: "Ordens de Serviço" },
       { path: "/assistencia/os/nova", label: "Nova Ordem de Serviço" },
+      { path: "/assistencia/os", label: "Ordens de Serviço" },
       { path: "/assistencia/requisicoes", label: "Requisições de Material" },
-      { path: "/assistencia/estoque", label: "Estoque" },
       { path: "/assistencia/os/consumo", label: "Registrar Consumo" },
+      { path: "/assistencia/estoque", label: "Estoque" },
     ],
   },
   {
