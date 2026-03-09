@@ -24,10 +24,10 @@ export const mockCAPAs: CAPA[] = [
 ];
 
 export const mockAuditorias: AudExec[] = [
-  { id: "AUD-001", tplNome: "Auditoria 5S - Produção", planta: "MAO", local: "Linha de Montagem 1", auditor: "Pedro Almeida", status: "CONCLUIDA", startedAt: "2026-02-15", finishedAt: "2026-02-15" },
-  { id: "AUD-002", tplNome: "Auditoria de Processo - Espuma", planta: "BEL", local: "Setor de Espumação", auditor: "Laura Mendes", status: "EM_EXECUCAO", startedAt: "2026-03-01" },
-  { id: "AUD-003", tplNome: "Auditoria ISO 9001 - Interna", planta: "AGR", local: "Toda a planta", auditor: "Fernando Oliveira", status: "PLANEJADA", startedAt: "2026-03-15" },
-  { id: "AUD-004", tplNome: "Auditoria de Produto Final", planta: "MAO", local: "Expedição", auditor: "Pedro Almeida", status: "PLANEJADA", startedAt: "2026-03-20" },
+  { id: "AUD-001", tplNome: "Auditoria 5S - Produção", planta: "MAO", local: "Linha de Montagem 1", auditor: "Pedro Almeida", status: "CONCLUIDA", startedAt: "2026-02-15T08:00:00", finishedAt: "2026-02-15" },
+  { id: "AUD-002", tplNome: "Auditoria de Processo", planta: "BEL", local: "Setor de Espumação", auditor: "Laura Mendes", status: "EM_EXECUCAO", startedAt: "2026-03-14T08:00:00" },
+  { id: "AUD-003", tplNome: "Auditoria ISO 9001", planta: "AGR", local: "Toda a planta", auditor: "Fernando Oliveira", status: "PLANEJADA", startedAt: "2026-03-14T11:02:00" },
+  { id: "AUD-004", tplNome: "Auditoria de Produto Final", planta: "MAO", local: "Expedição", auditor: "Pedro Almeida", status: "PLANEJADA", startedAt: "2026-03-19T09:30:00" },
 ];
 
 export const dashboardData = {
