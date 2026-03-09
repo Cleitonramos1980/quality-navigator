@@ -61,6 +61,7 @@ const CalendarioAuditoriasPage = () => {
     local: "",
     auditor: "",
     data: "",
+    hora: "",
   });
 
   const allAuditorias = useMemo(() => [...mockAuditorias], []);
