@@ -2,10 +2,6 @@ import { ReactNode, useState, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  ShieldCheck,
-  AlertTriangle,
-  ClipboardCheck,
-  FileSearch,
   Settings,
   Menu,
   X,
