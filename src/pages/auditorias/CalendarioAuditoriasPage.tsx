@@ -301,22 +301,28 @@ const CalendarioAuditoriasPage = () => {
               <p className="text-sm text-muted-foreground text-center py-6">Nenhuma auditoria programada para este dia</p>
             ) : (
               <div className="space-y-3">
-                {selectedDayAuditorias.map((a) => (
-                  <div key={a.id} className="flex items-start gap-4 p-3 rounded-lg border border-border bg-card">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-xs text-primary font-medium">{a.id}</span>
-                        <span className={cn("text-xs px-2 py-0.5 rounded-full", STATUS_COLORS[a.status])}>{statusLabel[a.status]}</span>
+                {[...selectedDayAuditorias]
+                  .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
+                  .map((a) => {
+                    const hora = a.startedAt.includes("T") ? a.startedAt.split("T")[1]?.slice(0, 5) : null;
+                    return (
+                      <div key={a.id} className="flex items-start gap-4 p-3 rounded-lg border border-border bg-card">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-mono text-xs text-primary font-medium">{a.id}</span>
+                            <span className={cn("text-xs px-2 py-0.5 rounded-full", STATUS_COLORS[a.status])}>{statusLabel[a.status]}</span>
+                            {hora && <span className="text-xs font-mono text-muted-foreground">⏰ {hora}</span>}
+                          </div>
+                          <h4 className="font-medium text-foreground text-sm">{a.tplNome}</h4>
+                          <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                            <div>Planta: <span className="font-mono">{a.planta}</span> – {PLANTA_LABELS[a.planta as Planta]}</div>
+                            <div>Local: {a.local}</div>
+                            <div>Auditor: <span className="font-medium text-foreground">{a.auditor}</span></div>
+                          </div>
+                        </div>
                       </div>
-                      <h4 className="font-medium text-foreground text-sm">{a.tplNome}</h4>
-                      <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                        <div>Planta: <span className="font-mono">{a.planta}</span> – {PLANTA_LABELS[a.planta as Planta]}</div>
-                        <div>Local: {a.local}</div>
-                        <div>Auditor: <span className="font-medium text-foreground">{a.auditor}</span></div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
             )}
           </CardContent>

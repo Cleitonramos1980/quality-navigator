@@ -241,6 +241,11 @@ const OSDetalhePage = () => {
       toast({ title: "Adicione ao menos um material", variant: "destructive" });
       return;
     }
+    const itemInvalido = reqItens.find((i) => !i.qtdSolicitada || isNaN(Number(i.qtdSolicitada)) || Number(i.qtdSolicitada) < 1);
+    if (itemInvalido) {
+      toast({ title: "Quantidade inválida", description: `Verifique a quantidade do material ${itemInvalido.codMaterial}. Mínimo: 1.`, variant: "destructive" });
+      return;
+    }
     const novaReq = await criarReqAssistencia({
       osId: os.id,
       cdResponsavel: reqCdResponsavel,

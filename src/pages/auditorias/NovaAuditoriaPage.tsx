@@ -51,7 +51,7 @@ const NovaAuditoriaPage = () => {
         </div>
       </div>
 
-      <SectionCard title="Configuração" description="Tipo e template da auditoria">
+      <SectionCard title="Configuração" description="Tipo de auditoria e checklist">
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label="Tipo de Auditoria" required>
             <Select value={form.tipoAuditoria} onValueChange={(v) => update("tipoAuditoria", v)}>
@@ -61,9 +61,9 @@ const NovaAuditoriaPage = () => {
               </SelectContent>
             </Select>
           </FormField>
-          <FormField label="Template Checklist">
+          <FormField label="Checklist de Auditoria">
             <Select value={form.template} onValueChange={(v) => update("template", v)}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Selecione o tipo de auditoria" /></SelectTrigger>
               <SelectContent>
                 {templates.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
               </SelectContent>
