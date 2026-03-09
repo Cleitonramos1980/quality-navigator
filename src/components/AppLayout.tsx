@@ -168,7 +168,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         {/* Nav */}
         <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.children && item.children.some((c) => location.pathname === c.path));
+            const isActive = location.pathname === item.path || (item.children && item.children.some((c) => location.pathname === c.path || location.pathname.startsWith(c.path + "/")));
             return (
               <div key={item.path}>
                 <Link
