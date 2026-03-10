@@ -1,19 +1,23 @@
-import { Plus, Search } from "lucide-react";
+﻿import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import StatusBadge from "@/components/StatusBadge";
-import { mockCAPAs } from "@/data/mockData";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getCAPAs } from "@/services/capa";
+import type { CAPA } from "@/types/sgq";
 
 const CAPAPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [capas, setCapas] = useState<CAPA[]>([]);
 
-  const filtered = mockCAPAs.filter(
-    (c) =>
-      c.descricaoProblema.toLowerCase().includes(search.toLowerCase()) ||
-      c.id.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    getCAPAs().then(setCapas);
+  }, []);
+
+  const filtered = capas.filter(
+    (c) => c.descricaoProblema.toLowerCase().includes(search.toLowerCase()) || c.id.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -59,3 +63,5 @@ const CAPAPage = () => {
 };
 
 export default CAPAPage;
+
+

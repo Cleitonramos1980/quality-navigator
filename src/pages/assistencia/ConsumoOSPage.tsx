@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Search, AlertTriangle, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { registrarAuditoria } from "@/services/auditoria";
 import { hasPermission, getCurrentUserName } from "@/lib/rbac";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { OrdemServico, RequisicaoAssistencia } from "@/types/assistencia";
-import { EstoqueItem } from "@/data/mockAssistenciaData";
+import type { EstoqueItem } from "@/types/assistencia";
 import { toast } from "@/hooks/use-toast";
 
 const ConsumoOSPage = () => {
@@ -40,11 +40,16 @@ const ConsumoOSPage = () => {
 
   useEffect(() => {
     if (!id) return;
-    buscarOS(id).then((data) => { if (data) setOs(data); });
-    listarReqAssistencia().then((all) => {
-      const osReqs = all.filter((r) => r.osId === id);
-      setReqs(osReqs);
-    });
+    Promise.all([buscarOS(id), listarReqAssistencia()])
+      .then(([osData, reqAll]) => {
+        if (osData) setOs(osData);
+        const osReqs = reqAll.filter((r) => r.osId === id);
+        setReqs(osReqs);
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar dados da OS.";
+        toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" });
+      });
   }, [id]);
 
   if (!os) return <div className="p-8 text-muted-foreground">Carregando...</div>;
@@ -53,10 +58,15 @@ const ConsumoOSPage = () => {
   const consumoLiberado = reqsRecebidas.length > 0;
 
   const openEstoque = async () => {
-    const est = await listarEstoque();
-    setEstoque(est);
-    setEstoqueFilter("");
-    setShowEstoque(true);
+    try {
+      const est = await listarEstoque();
+      setEstoque(est);
+      setEstoqueFilter("");
+      setShowEstoque(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao carregar estoque.";
+      toast({ title: "Erro ao buscar estoque", description: message, variant: "destructive" });
+    }
   };
 
   const selectMaterial = (item: EstoqueItem) => {
@@ -80,20 +90,25 @@ const ConsumoOSPage = () => {
       return;
     }
 
-    const novo = await registrarConsumo({
-      osId: os.id,
-      reqId: selectedReqId || undefined,
-      codMaterial,
-      descricao: descricaoMaterial,
-      un,
-      qtdConsumida,
-      tecnico: getCurrentUserName(),
-      dataConsumo: new Date().toISOString().slice(0, 10),
-    });
+    try {
+      const novo = await registrarConsumo({
+        osId: os.id,
+        reqId: selectedReqId || undefined,
+        codMaterial,
+        descricao: descricaoMaterial,
+        un,
+        qtdConsumida,
+        tecnico: getCurrentUserName(),
+        dataConsumo: new Date().toISOString().slice(0, 10),
+      });
 
-    registrarAuditoria("REGISTRAR_CONSUMO", "CONSUMO", novo.id, `OS: ${os.id}. Material: ${codMaterial} — Qtd: ${qtdConsumida} ${un}. Req: ${selectedReqId || "—"}`);
-    toast({ title: "Consumo registrado", description: `${novo.id} — ${descricaoMaterial}` });
-    navigate(`/assistencia/os/${os.id}`);
+      registrarAuditoria("REGISTRAR_CONSUMO", "CONSUMO", novo.id, `OS: ${os.id}. Material: ${codMaterial} — Qtd: ${qtdConsumida} ${un}. Req: ${selectedReqId || "—"}`);
+      toast({ title: "Consumo registrado", description: `${novo.id} — ${descricaoMaterial}` });
+      navigate(`/assistencia/os/${os.id}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao registrar consumo.";
+      toast({ title: "Erro ao registrar consumo", description: message, variant: "destructive" });
+    }
   };
 
   return (
@@ -213,3 +228,7 @@ const ConsumoOSPage = () => {
 };
 
 export default ConsumoOSPage;
+
+
+
+

@@ -1,4 +1,4 @@
-import { SACAtendimento } from "@/types/sac";
+﻿import { SACAtendimento } from "@/types/sac";
 
 export const mockAtendimentos: SACAtendimento[] = [
   {
@@ -97,3 +97,4 @@ export const sacDashboardData = {
     { dia: "02/03", count: 1 },
   ],
 };
+

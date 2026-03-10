@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search } from "lucide-react";
 import { MaterialERP } from "@/types/sacRequisicao";
 import { buscarMateriais } from "@/services/sacRequisicoes";
+import { useToast } from "@/hooks/use-toast";
 
 interface MaterialPickerModalProps {
   open: boolean;
@@ -14,12 +15,19 @@ interface MaterialPickerModalProps {
 }
 
 const MaterialPickerModal = ({ open, onOpenChange, onSelect }: MaterialPickerModalProps) => {
+  const { toast } = useToast();
   const [filtro, setFiltro] = useState({ codigo: "", descricao: "" });
   const [results, setResults] = useState<MaterialERP[]>([]);
 
   const handleSearch = async () => {
-    const r = await buscarMateriais(filtro);
-    setResults(r);
+    try {
+      const r = await buscarMateriais(filtro);
+      setResults(r);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao buscar materiais.";
+      setResults([]);
+      toast({ title: "Erro na busca", description: message, variant: "destructive" });
+    }
   };
 
   return (
@@ -68,3 +76,5 @@ const MaterialPickerModal = ({ open, onOpenChange, onSelect }: MaterialPickerMod
 };
 
 export default MaterialPickerModal;
+
+

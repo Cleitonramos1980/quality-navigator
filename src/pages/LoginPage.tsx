@@ -1,46 +1,55 @@
 import { useState } from "react";
-import { Factory } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { setCurrentPerfil, type PerfilNome } from "@/lib/rbac";
+import { setAuthSession } from "@/lib/rbac";
 import { getDefaultRouteForPerfil } from "@/lib/workflowOs";
-
-const PERFIL_OPTIONS: { value: PerfilNome; label: string }[] = [
-  { value: "ADMIN", label: "Administrador" },
-  { value: "SAC", label: "SAC" },
-  { value: "ASSISTENCIA", label: "Assistência Técnica" },
-  { value: "QUALIDADE", label: "Qualidade / Inspeção" },
-  { value: "TECNICO", label: "Técnico / Reparo" },
-  { value: "ALMOX", label: "Almoxarifado / CD" },
-  { value: "DIRETORIA", label: "Diretoria" },
-  { value: "AUDITOR", label: "Auditor" },
-  { value: "VALIDACAO", label: "Validação Final" },
-];
+import { login } from "@/services/auth";
+import { useToast } from "@/components/ui/use-toast";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedPerfil, setSelectedPerfil] = useState<PerfilNome>("ADMIN");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrentPerfil(selectedPerfil);
-    navigate(getDefaultRouteForPerfil(selectedPerfil));
+    setLoading(true);
+    try {
+      const response = await login(email, password);
+      setAuthSession({
+        token: response.token,
+        user: response.user,
+      });
+      navigate(getDefaultRouteForPerfil(response.user.perfil));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha de autenticação.";
+      toast({
+        title: "Login inválido",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-sidebar p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-sidebar-primary flex items-center justify-center mx-auto mb-4">
-            <Factory className="w-7 h-7 text-sidebar-primary-foreground" />
+          <div className="w-44 h-14 rounded-xl bg-white/95 border border-border flex items-center justify-center mx-auto mb-4 overflow-hidden px-2">
+            <img
+              src="/rodrigues-colchoes-logo.png"
+              alt="Rodrigues Colchoes"
+              className="h-full w-full object-contain"
+            />
           </div>
-          <h1 className="text-xl font-bold text-sidebar-primary">SGQ RODRIGUES</h1>
-          <p className="text-sm text-sidebar-foreground/60 mt-1">Sistema de Gestão da Qualidade</p>
+          <h1 className="text-xl font-bold text-sidebar-primary">SQI</h1>
+          <p className="text-sm text-sidebar-foreground/60 mt-1">Sistema de Gestão Integrada</p>
           <p className="text-xs text-sidebar-foreground/40 mt-0.5">Rodrigues Ind. e Com. de Colchões Ltda</p>
         </div>
 
@@ -50,9 +59,10 @@ const LoginPage = () => {
             <Input
               id="email"
               type="email"
-              placeholder="seu@email.com"
+              placeholder="usuario@empresa.com.br"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
           </div>
           <div className="space-y-2">
@@ -63,26 +73,14 @@ const LoginPage = () => {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="perfil">Perfil (simulação)</Label>
-            <Select value={selectedPerfil} onValueChange={(v) => setSelectedPerfil(v as PerfilNome)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PERFIL_OPTIONS.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button type="submit" className="w-full">
-            Entrar
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Entrando..." : "Entrar"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Esqueceu a senha? Contate o administrador.
+            Autenticação via backend com JWT.
           </p>
         </form>
       </div>

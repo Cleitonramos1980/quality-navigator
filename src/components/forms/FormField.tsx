@@ -8,16 +8,19 @@ interface FormFieldProps {
   children: ReactNode;
   className?: string;
   hint?: string;
+  error?: string;
+  fieldId?: string;
 }
 
-const FormField = ({ label, required, children, className, hint }: FormFieldProps) => (
+const FormField = ({ label, required, children, className, hint, error, fieldId }: FormFieldProps) => (
   <div className={cn("space-y-1.5", className)}>
-    <Label className="text-sm font-medium text-foreground">
+    <Label htmlFor={fieldId} className="text-sm font-medium text-foreground">
       {label}
       {required && <span className="text-destructive ml-0.5">*</span>}
     </Label>
     {children}
     {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    {error && <p className="text-xs text-destructive">{error}</p>}
   </div>
 );
 

@@ -1,0 +1,3 @@
+-- VW_SGQ_WinThor_Integracao_Fase1_v3.sql
+-- Arquivo placeholder no workspace.
+-- Substituir pelo conteúdo oficial homologado antes de aplicar em produção.

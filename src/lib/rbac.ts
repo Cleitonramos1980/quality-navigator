@@ -1,4 +1,3 @@
-// RBAC granular — permissões por ação para Assistência Técnica
 import { AssistPermission } from "@/types/assistencia";
 
 export const ASSIST_PERMISSION_LABELS: Record<AssistPermission, string> = {
@@ -31,7 +30,6 @@ export const ASSIST_PERMISSION_GROUPS = [
   { label: "Dashboard / Estoque", perms: ["ASSIST_DASH_VIEW", "ASSIST_ESTOQUE_VIEW"] as AssistPermission[] },
 ];
 
-// Perfis padrão com permissões de Assistência
 export type PerfilNome = "ADMIN" | "SAC" | "QUALIDADE" | "AUDITOR" | "ASSISTENCIA" | "ALMOX" | "TECNICO" | "DIRETORIA" | "VALIDACAO";
 
 export const PERFIL_ASSIST_PERMISSIONS: Record<PerfilNome, AssistPermission[]> = {
@@ -72,33 +70,78 @@ export const PERFIL_ASSIST_PERMISSIONS: Record<PerfilNome, AssistPermission[]> =
   ],
 };
 
-// Simulated current user (mock) — change perfil to test different roles
-let currentUserPerfil: PerfilNome = "ADMIN";
+const AUTH_STORAGE_KEY = "sgq.authSession";
+const PERFIL_VALUES = new Set<PerfilNome>(["ADMIN", "SAC", "QUALIDADE", "AUDITOR", "ASSISTENCIA", "ALMOX", "TECNICO", "DIRETORIA", "VALIDACAO"]);
 
-export function setCurrentPerfil(perfil: PerfilNome) {
-  currentUserPerfil = perfil;
+export interface AuthUser {
+  id: string;
+  nome: string;
+  email: string;
+  perfil: PerfilNome;
+  ativo?: boolean;
+}
+
+interface AuthSession {
+  token: string;
+  user: AuthUser;
+}
+
+function readSession(): AuthSession | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as AuthSession;
+    if (!parsed?.token || !parsed?.user?.perfil || !PERFIL_VALUES.has(parsed.user.perfil)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+let currentSession: AuthSession | null = readSession();
+
+export function setAuthSession(session: AuthSession): void {
+  currentSession = session;
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+  }
+}
+
+export function clearAuthSession(): void {
+  currentSession = null;
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+}
+
+export function isAuthenticated(): boolean {
+  const session = readSession();
+  if (session) currentSession = session;
+  return Boolean(currentSession?.token);
+}
+
+export function getAuthToken(): string | null {
+  const session = readSession();
+  if (session) currentSession = session;
+  return currentSession?.token ?? null;
 }
 
 export function getCurrentPerfil(): PerfilNome {
-  return currentUserPerfil;
+  const session = readSession();
+  if (session) currentSession = session;
+  return currentSession?.user?.perfil ?? "ADMIN";
 }
 
 export function hasPermission(perm: AssistPermission): boolean {
-  const perms = PERFIL_ASSIST_PERMISSIONS[currentUserPerfil];
+  const perfil = getCurrentPerfil();
+  const perms = PERFIL_ASSIST_PERMISSIONS[perfil];
   return perms?.includes(perm) ?? false;
 }
 
 export function getCurrentUserName(): string {
-  const names: Record<PerfilNome, string> = {
-    ADMIN: "Carlos Silva",
-    SAC: "Maria Costa",
-    QUALIDADE: "Ana Souza",
-    AUDITOR: "Pedro Almeida",
-    ASSISTENCIA: "João Técnico",
-    ALMOX: "Marcos Almoxarifado",
-    TECNICO: "João Técnico",
-    DIRETORIA: "Fernando Oliveira",
-    VALIDACAO: "Ricardo Validação",
-  };
-  return names[currentUserPerfil];
+  const session = readSession();
+  if (session) currentSession = session;
+  return currentSession?.user?.nome ?? "Usuário";
 }

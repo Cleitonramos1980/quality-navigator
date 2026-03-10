@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, PackageCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,20 +39,25 @@ const ReceberRequisicaoPage = () => {
 
   useEffect(() => {
     if (!id) return;
-    buscarReqAssistencia(id).then((data) => {
-      if (data) {
-        setReq(data);
-        setItens(data.itens.map((i) => ({
-          codMaterial: i.codMaterial,
-          descricao: i.descricao,
-          un: i.un,
-          qtdSolicitada: i.qtdSolicitada,
-          qtdAtendida: i.qtdAtendida ?? i.qtdSolicitada,
-          qtdRecebida: i.qtdAtendida ?? i.qtdSolicitada,
-          recebido: true,
-        })));
-      }
-    });
+    buscarReqAssistencia(id)
+      .then((data) => {
+        if (data) {
+          setReq(data);
+          setItens(data.itens.map((i) => ({
+            codMaterial: i.codMaterial,
+            descricao: i.descricao,
+            un: i.un,
+            qtdSolicitada: i.qtdSolicitada,
+            qtdAtendida: i.qtdAtendida ?? i.qtdSolicitada,
+            qtdRecebida: i.qtdAtendida ?? i.qtdSolicitada,
+            recebido: true,
+          })));
+        }
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar requisição.";
+        toast({ title: "Erro ao carregar requisição", description: message, variant: "destructive" });
+      });
   }, [id]);
 
   if (!req) return <div className="p-8 text-muted-foreground">Carregando...</div>;
@@ -74,10 +79,15 @@ const ReceberRequisicaoPage = () => {
       return;
     }
 
-    await receberRequisicao(req.id, itensRecebidos, observacao);
-    registrarAuditoria("RECEBER", "REQUISICAO", req.id, `Recebimento confirmado. ${itensRecebidos.length} item(ns). Obs: ${observacao || "—"}`);
-    toast({ title: "Recebimento confirmado", description: `Requisição ${req.id} marcada como Recebida na Assistência.` });
-    navigate(`/assistencia/os/${req.osId}`);
+    try {
+      await receberRequisicao(req.id, itensRecebidos, observacao);
+      registrarAuditoria("RECEBER", "REQUISICAO", req.id, `Recebimento confirmado. ${itensRecebidos.length} item(ns). Obs: ${observacao || "—"}`);
+      toast({ title: "Recebimento confirmado", description: `Requisição ${req.id} marcada como Recebida na Assistência.` });
+      navigate(`/assistencia/os/${req.osId}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao confirmar recebimento.";
+      toast({ title: "Erro ao confirmar recebimento", description: message, variant: "destructive" });
+    }
   };
 
   const toggleRecebido = (codMaterial: string) => {
@@ -125,7 +135,7 @@ const ReceberRequisicaoPage = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="w-12 text-center text-xs">✓</TableHead>
+                <TableHead className="w-12 text-center text-xs">âœ“</TableHead>
                 <TableHead className="text-xs">Código</TableHead>
                 <TableHead className="text-xs">Descrição</TableHead>
                 <TableHead className="text-xs">UN</TableHead>
@@ -203,3 +213,4 @@ const ReceberRequisicaoPage = () => {
 };
 
 export default ReceberRequisicaoPage;
+

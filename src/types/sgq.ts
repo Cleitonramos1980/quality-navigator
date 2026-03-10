@@ -1,8 +1,9 @@
-// Core types for SGQ Rodrigues
+﻿// Core types for SQI
 
 export type Planta = "MAO" | "BEL" | "AGR";
 
-export type UserRole = "ADMIN" | "SAC" | "QUALIDADE" | "AUDITOR" | "DIRETORIA";
+export type UserRole = "ADMIN" | "SAC" | "QUALIDADE" | "AUDITOR" | "ASSISTENCIA" | "TECNICO" | "ALMOX" | "DIRETORIA" | "VALIDACAO";
+export type Perfil = UserRole;
 
 export type GarantiaStatus = "ABERTO" | "EM_ANALISE" | "APROVADO" | "NEGADO" | "EM_TROCA" | "ENCERRADO";
 
@@ -62,7 +63,9 @@ export interface GarantiaCaso {
   numPedido: string;
   numNfVenda: string;
   numNfTroca?: string;
+  codprod?: string;
   defeito: string;
+  descricao?: string;
   plantaResp: Planta;
   status: GarantiaStatus;
   custoEstimado?: number;
@@ -75,6 +78,9 @@ export interface NCRegistro {
   id: string;
   codcli?: string;
   clienteNome?: string;
+  numPedido?: string;
+  numNf?: string;
+  codprod?: string;
   motivoId: string;
   tipoNc: NCTipo;
   gravidade: Gravidade;
@@ -86,6 +92,9 @@ export interface NCRegistro {
   status: NCStatus;
   planta: Planta;
   abertoAt: string;
+  encerradoAt?: string;
+  origem?: string;
+  origemId?: string;
 }
 
 export interface CAPA {
@@ -95,6 +104,7 @@ export interface CAPA {
   descricaoProblema: string;
   causaRaiz?: string;
   planoAcao?: string;
+  criterioEficacia?: string;
   responsavel: string;
   dataInicio: string;
   dataPrazo: string;
@@ -104,11 +114,226 @@ export interface CAPA {
 
 export interface AudExec {
   id: string;
+  tplId?: string;
   tplNome: string;
+  tipoAuditoria?: string;
   planta: Planta;
   local: string;
   auditor: string;
+  escopo?: string;
   status: AuditStatus;
   startedAt: string;
   finishedAt?: string;
 }
+
+export interface DocumentoQualidade {
+  id: string;
+  codigo: string;
+  titulo: string;
+  tipo: string;
+  status: string;
+  versaoAtual: string;
+  elaborador: string;
+  revisor: string;
+  aprovador: string;
+  responsavel?: string;
+  setor: string;
+  validadeAt?: string;
+  aprovadoPor?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TreinamentoQualidade {
+  id: string;
+  titulo: string;
+  tipo: string;
+  cargoAlvo: string;
+  instrutor: string;
+  cargaHoraria: number;
+  status: string;
+  dataPlanejada: string;
+  dataRealizacao?: string;
+  validadeMeses?: number;
+  observacoes?: string;
+}
+
+export interface TreinamentoParticipante {
+  id: string;
+  treinamentoId: string;
+  colaborador: string;
+  cargo: string;
+  resultado: string;
+  status: string;
+  concluidoAt?: string;
+}
+
+export interface MudancaQualidade {
+  id: string;
+  titulo: string;
+  descricao: string;
+  tipo: string;
+  area: string;
+  solicitante: string;
+  risco: "BAIXO" | "MEDIO" | "ALTO" | "CRITICO" | string;
+  status: string;
+  dataSolicitacao: string;
+  dataImplementacao?: string;
+  aprovador?: string;
+  planoValidacao?: string;
+}
+
+export interface FornecedorQualidade {
+  id: string;
+  codigo: string;
+  nome: string;
+  categoria: string;
+  status: string;
+  score: number;
+  ultimaAvaliacaoAt?: string;
+  responsavel?: string;
+}
+
+export interface ScarFornecedor {
+  id: string;
+  fornecedorId: string;
+  titulo: string;
+  descricao: string;
+  status: string;
+  gravidade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA" | string;
+  responsavel: string;
+  prazo: string;
+  dataAbertura: string;
+  dataFechamento?: string;
+  acaoCorretiva?: string;
+}
+
+export interface InstrumentoMetrologia {
+  id: string;
+  codigo: string;
+  descricao: string;
+  tipo: string;
+  fabricante?: string;
+  numeroSerie?: string;
+  planta: Planta;
+  local: string;
+  statusCalibracao: string;
+  ultimaCalibracaoAt?: string;
+  proximaCalibracaoAt: string;
+  incerteza?: number;
+  responsavel: string;
+}
+
+export interface EstudoMsa {
+  id: string;
+  instrumentoId: string;
+  caracteristica: string;
+  metodo: string;
+  rrPercent: number;
+  ndc: number;
+  resultado: string;
+  estudadoAt: string;
+  responsavel: string;
+  observacoes?: string;
+}
+
+export interface IndicadorIndustrial {
+  id: string;
+  data: string;
+  planta: Planta;
+  linha: string;
+  oee: number;
+  fpy: number;
+  scrapRate: number;
+  reworkRate: number;
+  mtbfHoras: number;
+  mttrHoras: number;
+  paradasNaoPlanejadas?: number;
+  fonte?: string;
+}
+
+export interface IndicadorIndustrialResumo {
+  count: number;
+  oeeMedio: number;
+  fpyMedio: number;
+  scrapMedio: number;
+  reworkMedio: number;
+  mtbfMedio: number;
+  mttrMedio: number;
+}
+
+export interface RegraRiscoSla {
+  id: string;
+  origemTipo: string;
+  criticidade: string;
+  pontuacaoMin: number;
+  pontuacaoMax: number;
+  slaHoras: number;
+  resposta: string;
+}
+
+export interface AvaliacaoRiscoSla {
+  id: string;
+  origemTipo: string;
+  origemId: string;
+  criticidade: string;
+  impacto: number;
+  recorrencia: number;
+  detectabilidade: number;
+  pontuacao: number;
+  slaHoras: number;
+  statusSla: string;
+  limiteAt: string;
+  criadoAt: string;
+  justificativa?: string;
+}
+
+export interface AuditoriaCamada {
+  id: string;
+  camada: string;
+  planta: Planta;
+  area: string;
+  processo: string;
+  auditor: string;
+  frequencia: string;
+  status: string;
+  proximaExecucaoAt: string;
+  ultimaExecucaoAt?: string;
+  score?: number;
+  achados?: string;
+}
+
+export interface GateFornecedor {
+  id: string;
+  fornecedorId: string;
+  coreTool: string;
+  status: string;
+  evidencia?: string;
+  validadoPor?: string;
+  validadoAt?: string;
+  observacoes?: string;
+}
+
+export interface IsoReadinessItem {
+  id: string;
+  clausula: string;
+  titulo: string;
+  status: string;
+  responsavel: string;
+  prazo: string;
+  evidencia?: string;
+  ultimaRevisaoAt?: string;
+  risco: string;
+}
+
+export interface IsoReadinessResumo {
+  total: number;
+  atendidos: number;
+  pendentes: number;
+  riscoAlto: number;
+  percentualAtendimento: number;
+}
+
+
+
+

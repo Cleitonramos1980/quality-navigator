@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,9 @@ import { OS_STATUS_LABELS, OS_STATUS_COLORS, OS_PRIORIDADE_LABELS, OS_PRIORIDADE
 import type { OrdemServico, OSStatus, OSPrioridade } from "@/types/assistencia";
 import { PLANTA_LABELS, Planta } from "@/types/sgq";
 import { canCreateOS } from "@/lib/workflowOs";
+import { evaluateSlaFromDueDate } from "@/lib/sla";
+import SLABadge from "@/components/common/SLABadge";
+import { useUxMetrics } from "@/hooks/useUxMetrics";
 
 const OSListPage = () => {
   const navigate = useNavigate();
@@ -21,6 +24,7 @@ const OSListPage = () => {
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterPlanta, setFilterPlanta] = useState<string>("ALL");
   const [filterPrioridade, setFilterPrioridade] = useState<string>("ALL");
+  const { trackAction } = useUxMetrics("ASSISTENCIA_OS_LISTA");
 
   useEffect(() => {
     listarOS().then(setOsList);
@@ -48,7 +52,7 @@ const OSListPage = () => {
           <p className="text-sm text-muted-foreground mt-0.5">Gestão completa de OS</p>
         </div>
         {canCreateOS() ? (
-          <Button onClick={() => navigate("/assistencia/os/nova")} className="gap-2">
+          <Button onClick={() => { trackAction("OPEN_NOVA_OS"); navigate("/assistencia/os/nova"); }} className="gap-2">
             <Plus className="w-4 h-4" /> Nova OS
           </Button>
         ) : (
@@ -113,13 +117,14 @@ const OSListPage = () => {
                 <TableHead>Técnico</TableHead>
                 <TableHead>Prioridade</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>SLA</TableHead>
                 <TableHead>Abertura</TableHead>
                 <TableHead>Previsão</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((os) => (
-                <TableRow key={os.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/assistencia/os/${os.id}`)}>
+                <TableRow key={os.id} className="cursor-pointer hover:bg-muted/50" onClick={() => { trackAction("OPEN_OS", { id: os.id }); navigate(`/assistencia/os/${os.id}`); }}>
                   <TableCell className="font-mono text-xs">{os.id}</TableCell>
                   <TableCell className="text-sm">{os.clienteNome}</TableCell>
                   <TableCell className="text-xs">{OS_TIPO_LABELS[os.tipoOs]}</TableCell>
@@ -127,12 +132,13 @@ const OSListPage = () => {
                   <TableCell className="text-xs">{os.tecnicoResponsavel}</TableCell>
                   <TableCell><Badge className={`text-[10px] ${OS_PRIORIDADE_COLORS[os.prioridade]}`}>{OS_PRIORIDADE_LABELS[os.prioridade]}</Badge></TableCell>
                   <TableCell><Badge className={`text-[10px] ${OS_STATUS_COLORS[os.status]}`}>{OS_STATUS_LABELS[os.status]}</Badge></TableCell>
+                  <TableCell><SLABadge evaluation={evaluateSlaFromDueDate(os.dataPrevista)} /></TableCell>
                   <TableCell className="text-xs text-muted-foreground">{os.dataAbertura}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{os.dataPrevista}</TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma OS encontrada</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma OS encontrada</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -143,3 +149,4 @@ const OSListPage = () => {
 };
 
 export default OSListPage;
+

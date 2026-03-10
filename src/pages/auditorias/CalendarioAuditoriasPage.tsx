@@ -1,32 +1,32 @@
-import { useState, useMemo } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, ListFilter, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import FormField from "@/components/forms/FormField";
-import { mockAuditorias } from "@/data/mockData";
-import { AudExec, AuditStatus, PLANTA_LABELS, Planta, STATUS_COLORS } from "@/types/sgq";
-import { ArrowLeft, ChevronLeft, ChevronRight, Plus, CalendarDays, ListFilter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-
-const TIPOS_AUDITORIA = [
-  "Auditoria 5S",
-  "Auditoria de Processo",
-  "Auditoria ISO 9001",
-  "Auditoria de Produto Final",
-  "Auditoria de Fornecedor",
-  "Auditoria Ambiental",
-] as const;
+import { createAuditoria, getAuditoriaTemplates, getAuditorias } from "@/services/auditorias";
+import type { AudExec, AuditStatus, Planta } from "@/types/sgq";
+import { PLANTA_LABELS, STATUS_COLORS } from "@/types/sgq";
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
 const MONTHS = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 const statusLabel: Record<AuditStatus, string> = {
@@ -36,54 +36,91 @@ const statusLabel: Record<AuditStatus, string> = {
   CANCELADA: "Cancelada",
 };
 
-function getDaysInMonth(year: number, month: number) {
+function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
-function getFirstDayOfMonth(year: number, month: number) {
+function getFirstDayOfMonth(year: number, month: number): number {
   return new Date(year, month, 1).getDay();
+}
+
+function extractDateParts(value: string): { year: number; month: number; day: number } | null {
+  const datePart = value.split("T")[0] ?? "";
+  const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  return {
+    year: Number(match[1]),
+    month: Number(match[2]) - 1,
+    day: Number(match[3]),
+  };
+}
+
+function extractHoraInicio(startedAt: string): string {
+  const isoMatch = startedAt.match(/T(\d{2}:\d{2})/);
+  if (isoMatch?.[1]) return isoMatch[1];
+  const spacedMatch = startedAt.match(/\s(\d{2}:\d{2})/);
+  if (spacedMatch?.[1]) return spacedMatch[1];
+  return "--:--";
+}
+
+function compareByHoraInicio(a: AudExec, b: AudExec): number {
+  return extractHoraInicio(a.startedAt).localeCompare(extractHoraInicio(b.startedAt));
+}
+
+function toInputDate(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 const CalendarioAuditoriasPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const today = new Date();
+
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [filterPlanta, setFilterPlanta] = useState<string>("TODAS");
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [auditorias, setAuditorias] = useState<AudExec[]>([]);
+  const [templates, setTemplates] = useState<Array<{ id: string; nome: string }>>([]);
 
-  // Nova auditoria form
   const [novaForm, setNovaForm] = useState({
+    tplId: "",
     tplNome: "",
-    planta: "" as string,
+    planta: "",
     local: "",
     auditor: "",
     data: "",
-    hora: "",
+    horaInicio: "08:00",
   });
 
-  const allAuditorias = useMemo(() => [...mockAuditorias], []);
+  useEffect(() => {
+    Promise.all([getAuditorias(), getAuditoriaTemplates()])
+      .then(([auds, templatesRaw]) => {
+        setAuditorias(auds);
+        setTemplates(templatesRaw.map((item) => ({ id: item.id, nome: item.nome })));
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar calendário de auditorias.";
+        toast({ title: "Erro ao carregar auditorias", description: message, variant: "destructive" });
+      });
+  }, [toast]);
 
-  const filteredAuditorias = useMemo(() => {
-    return allAuditorias.filter((a) => {
-      if (filterPlanta !== "TODAS" && a.planta !== filterPlanta) return false;
-      return true;
-    });
-  }, [allAuditorias, filterPlanta]);
+  const filteredAuditorias = useMemo(
+    () => auditorias.filter((a) => filterPlanta === "TODAS" || a.planta === filterPlanta),
+    [auditorias, filterPlanta],
+  );
 
-  // Map auditorias to calendar days
   const auditoriasByDay = useMemo(() => {
     const map: Record<number, AudExec[]> = {};
-    filteredAuditorias.forEach((a) => {
-      const date = new Date(a.startedAt);
-      if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
-        const day = date.getDate();
-        if (!map[day]) map[day] = [];
-        map[day].push(a);
-      }
+    filteredAuditorias.forEach((auditoria) => {
+      const parts = extractDateParts(auditoria.startedAt);
+      if (!parts) return;
+      if (parts.year !== currentYear || parts.month !== currentMonth) return;
+      if (!map[parts.day]) map[parts.day] = [];
+      map[parts.day].push(auditoria);
     });
+    Object.values(map).forEach((list) => list.sort(compareByHoraInicio));
     return map;
   }, [filteredAuditorias, currentYear, currentMonth]);
 
@@ -91,114 +128,210 @@ const CalendarioAuditoriasPage = () => {
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
 
   const prevMonth = () => {
-    if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1); }
-    else setCurrentMonth((m) => m - 1);
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear((year) => year - 1);
+    } else {
+      setCurrentMonth((month) => month - 1);
+    }
     setSelectedDay(null);
   };
 
   const nextMonth = () => {
-    if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear((y) => y + 1); }
-    else setCurrentMonth((m) => m + 1);
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear((year) => year + 1);
+    } else {
+      setCurrentMonth((month) => month + 1);
+    }
     setSelectedDay(null);
   };
 
-  const handleAddAuditoria = () => {
-    if (!novaForm.tplNome || !novaForm.planta || !novaForm.auditor || !novaForm.data || !novaForm.hora) {
-      toast({ title: "Campos obrigatórios", description: "Preencha tipo, planta, auditor, data e hora.", variant: "destructive" });
+  const openProgramarAuditoriaDialog = (day: number) => {
+    setSelectedDay(day);
+    setNovaForm((prev) => ({
+      ...prev,
+      data: toInputDate(currentYear, currentMonth, day),
+    }));
+    setDialogOpen(true);
+  };
+
+  const handleAddAuditoria = async () => {
+    if (!novaForm.tplNome || !novaForm.planta || !novaForm.auditor || !novaForm.data || !novaForm.horaInicio) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha tipo, planta, auditor, data e hora de início.",
+        variant: "destructive",
+      });
       return;
     }
-    const nova: AudExec = {
-      id: `AUD-${String(allAuditorias.length + 1).padStart(3, "0")}`,
-      tplNome: novaForm.tplNome,
-      planta: novaForm.planta as Planta,
-      local: novaForm.local || "A definir",
-      auditor: novaForm.auditor,
-      status: "PLANEJADA",
-      startedAt: `${novaForm.data}T${novaForm.hora}:00`,
-    };
-    mockAuditorias.push(nova);
-    toast({ title: "Auditoria programada", description: `${nova.tplNome} em ${nova.startedAt}` });
-    setNovaForm({ tplNome: "", planta: "", local: "", auditor: "", data: "", hora: "" });
-    setDialogOpen(false);
+
+    try {
+      const nova = await createAuditoria({
+        tplId: novaForm.tplId || undefined,
+        tplNome: novaForm.tplNome,
+        tipoAuditoria: novaForm.tplNome,
+        planta: novaForm.planta as Planta,
+        local: novaForm.local || "A definir",
+        auditor: novaForm.auditor,
+        status: "PLANEJADA",
+        startedAt: `${novaForm.data}T${novaForm.horaInicio}:00`,
+        escopo: undefined,
+        finishedAt: undefined,
+      } as any);
+
+      setAuditorias((prev) => [...prev, nova]);
+      toast({
+        title: "Auditoria programada",
+        description: `${nova.tplNome} em ${novaForm.data} às ${novaForm.horaInicio}`,
+      });
+      setNovaForm({
+        tplId: "",
+        tplNome: "",
+        planta: "",
+        local: "",
+        auditor: "",
+        data: "",
+        horaInicio: "08:00",
+      });
+      setDialogOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao programar auditoria.";
+      toast({ title: "Erro ao programar auditoria", description: message, variant: "destructive" });
+    }
   };
 
   const selectedDayAuditorias = selectedDay ? (auditoriasByDay[selectedDay] || []) : [];
-
-  const todayDay = today.getFullYear() === currentYear && today.getMonth() === currentMonth ? today.getDate() : null;
+  const todayDay =
+    today.getFullYear() === currentYear && today.getMonth() === currentMonth
+      ? today.getDate()
+      : null;
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/auditorias")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
               <CalendarDays className="w-6 h-6 text-primary" />
               Calendário de Auditorias
             </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Programação mensal de auditorias</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">Programação mensal de auditorias</p>
           </div>
         </div>
+
         <div className="flex items-center gap-2">
           <Select value={filterPlanta} onValueChange={setFilterPlanta}>
             <SelectTrigger className="w-[160px]">
-              <ListFilter className="w-4 h-4 mr-2" />
+              <ListFilter className="mr-2 h-4 w-4" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="TODAS">Todas as Plantas</SelectItem>
-              {(Object.keys(PLANTA_LABELS) as Planta[]).map((p) => (
-                <SelectItem key={p} value={p}>{p} – {PLANTA_LABELS[p]}</SelectItem>
+              {(Object.keys(PLANTA_LABELS) as Planta[]).map((planta) => (
+                <SelectItem key={planta} value={planta}>
+                  {planta} - {PLANTA_LABELS[planta]}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2"><Plus className="w-4 h-4" /> Programar</Button>
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                Programar
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Programar Nova Auditoria</DialogTitle>
               </DialogHeader>
+
               <div className="space-y-4 pt-2">
                 <FormField label="Tipo de Auditoria" required>
-                  <Select value={novaForm.tplNome} onValueChange={(v) => setNovaForm((f) => ({ ...f, tplNome: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
+                  <Select
+                    value={novaForm.tplId}
+                    onValueChange={(value) => {
+                      const template = templates.find((item) => item.id === value);
+                      setNovaForm((prev) => ({
+                        ...prev,
+                        tplId: value,
+                        tplNome: template?.nome || "",
+                      }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo de auditoria" />
+                    </SelectTrigger>
                     <SelectContent>
-                      {TIPOS_AUDITORIA.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.nome}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FormField>
-                <div className="grid grid-cols-3 gap-3">
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <FormField label="Planta" required>
-                    <Select value={novaForm.planta} onValueChange={(v) => setNovaForm((f) => ({ ...f, planta: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Planta" /></SelectTrigger>
+                    <Select
+                      value={novaForm.planta}
+                      onValueChange={(value) => setNovaForm((prev) => ({ ...prev, planta: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Planta" />
+                      </SelectTrigger>
                       <SelectContent>
-                        {(Object.keys(PLANTA_LABELS) as Planta[]).map((p) => (
-                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        {(Object.keys(PLANTA_LABELS) as Planta[]).map((planta) => (
+                          <SelectItem key={planta} value={planta}>
+                            {planta}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </FormField>
+
                   <FormField label="Data" required>
-                    <Input type="date" value={novaForm.data} onChange={(e) => setNovaForm((f) => ({ ...f, data: e.target.value }))} />
+                    <Input
+                      type="date"
+                      value={novaForm.data}
+                      onChange={(e) => setNovaForm((prev) => ({ ...prev, data: e.target.value }))}
+                    />
                   </FormField>
+
                   <FormField label="Hora de Início" required>
-                    <Input type="time" value={novaForm.hora} onChange={(e) => setNovaForm((f) => ({ ...f, hora: e.target.value }))} />
+                    <Input
+                      type="time"
+                      value={novaForm.horaInicio}
+                      onChange={(e) => setNovaForm((prev) => ({ ...prev, horaInicio: e.target.value }))}
+                    />
                   </FormField>
                 </div>
+
                 <FormField label="Local">
-                  <Input placeholder="Ex: Linha de Montagem 2" value={novaForm.local} onChange={(e) => setNovaForm((f) => ({ ...f, local: e.target.value }))} />
+                  <Input
+                    value={novaForm.local}
+                    onChange={(e) => setNovaForm((prev) => ({ ...prev, local: e.target.value }))}
+                  />
                 </FormField>
+
                 <FormField label="Auditor" required>
-                  <Input placeholder="Nome do auditor" value={novaForm.auditor} onChange={(e) => setNovaForm((f) => ({ ...f, auditor: e.target.value }))} />
+                  <Input
+                    value={novaForm.auditor}
+                    onChange={(e) => setNovaForm((prev) => ({ ...prev, auditor: e.target.value }))}
+                  />
                 </FormField>
-                <div className="flex gap-2 justify-end pt-2">
-                  <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                  <Button onClick={handleAddAuditoria}>Programar</Button>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={() => void handleAddAuditoria()}>Programar</Button>
                 </div>
               </div>
             </DialogContent>
@@ -206,29 +339,35 @@ const CalendarioAuditoriasPage = () => {
         </div>
       </div>
 
-      {/* Calendar */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={prevMonth}><ChevronLeft className="w-5 h-5" /></Button>
-            <CardTitle className="text-lg">{MONTHS[currentMonth]} {currentYear}</CardTitle>
-            <Button variant="ghost" size="icon" onClick={nextMonth}><ChevronRight className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="icon" onClick={prevMonth}>
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <CardTitle className="text-lg">
+              {MONTHS[currentMonth]} {currentYear}
+            </CardTitle>
+            <Button variant="ghost" size="icon" onClick={nextMonth}>
+              <ChevronRight className="w-5 h-5" />
+            </Button>
           </div>
         </CardHeader>
+
         <CardContent>
-          {/* Weekday headers */}
-          <div className="grid grid-cols-7 mb-1">
-            {WEEKDAYS.map((d) => (
-              <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">{d}</div>
+          <div className="mb-1 grid grid-cols-7">
+            {WEEKDAYS.map((dayLabel) => (
+              <div key={dayLabel} className="py-2 text-center text-xs font-medium text-muted-foreground">
+                {dayLabel}
+              </div>
             ))}
           </div>
-          {/* Days grid */}
+
           <div className="grid grid-cols-7">
-            {/* Empty cells before first day */}
             {Array.from({ length: firstDay }).map((_, i) => (
               <div key={`empty-${i}`} className="h-24 border border-border/30" />
             ))}
-            {/* Day cells */}
+
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
               const dayAuds = auditoriasByDay[day] || [];
@@ -238,42 +377,38 @@ const CalendarioAuditoriasPage = () => {
               return (
                 <div
                   key={day}
-                  onClick={() => {
-                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                    setNovaForm((f) => ({ ...f, data: dateStr }));
-                    setDialogOpen(true);
-                    setSelectedDay(day);
-                  }}
+                  onClick={() => openProgramarAuditoriaDialog(day)}
                   className={cn(
-                    "h-24 border border-border/30 p-1 cursor-pointer transition-colors hover:bg-accent/30 overflow-hidden",
+                    "h-24 cursor-pointer overflow-hidden border border-border/30 p-1 transition-colors hover:bg-accent/30",
                     isToday && "bg-primary/5",
-                    isSelected && "ring-2 ring-primary bg-primary/10"
+                    isSelected && "bg-primary/10 ring-2 ring-primary",
                   )}
                 >
-                  <span className={cn(
-                    "text-xs font-medium inline-flex items-center justify-center w-6 h-6 rounded-full",
-                    isToday && "bg-primary text-primary-foreground"
-                  )}>
+                  <span
+                    className={cn(
+                      "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
+                      isToday && "bg-primary text-primary-foreground",
+                    )}
+                  >
                     {day}
                   </span>
-                  <div className="space-y-0.5 mt-0.5">
-                    {dayAuds
-                      .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
-                      .slice(0, 2).map((a) => {
-                        const hora = a.startedAt.includes("T") ? a.startedAt.split("T")[1]?.slice(0, 5) : "";
-                        return (
-                          <div
-                            key={a.id}
-                            className={cn("text-[10px] leading-tight px-1 py-0.5 rounded truncate", STATUS_COLORS[a.status])}
-                            title={a.tplNome}
-                          >
-                            {hora && <span className="font-mono mr-0.5">{hora}</span>}
-                            {a.tplNome.length > 12 ? a.tplNome.slice(0, 10) + "…" : a.tplNome}
-                          </div>
-                        );
-                      })}
+
+                  <div className="mt-0.5 space-y-0.5">
+                    {dayAuds.slice(0, 2).map((auditoria) => (
+                      <div
+                        key={auditoria.id}
+                        className={cn(
+                          "flex items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] leading-tight",
+                          STATUS_COLORS[auditoria.status],
+                        )}
+                        title={`${extractHoraInicio(auditoria.startedAt)} - ${auditoria.tplNome}`}
+                      >
+                        <span className="shrink-0 font-mono">{extractHoraInicio(auditoria.startedAt)}</span>
+                        <span className="truncate">{auditoria.tplNome}</span>
+                      </div>
+                    ))}
                     {dayAuds.length > 2 && (
-                      <div className="text-[10px] text-muted-foreground px-1">+{dayAuds.length - 2} mais</div>
+                      <div className="px-1 text-[10px] text-muted-foreground">+{dayAuds.length - 2} mais</div>
                     )}
                   </div>
                 </div>
@@ -283,7 +418,6 @@ const CalendarioAuditoriasPage = () => {
         </CardContent>
       </Card>
 
-      {/* Selected day detail */}
       {selectedDay !== null && (
         <Card className="animate-fade-in">
           <CardHeader className="pb-2">
@@ -296,56 +430,44 @@ const CalendarioAuditoriasPage = () => {
               )}
             </CardTitle>
           </CardHeader>
+
           <CardContent>
             {selectedDayAuditorias.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Nenhuma auditoria programada para este dia</p>
+              <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma auditoria programada para este dia</p>
             ) : (
               <div className="space-y-3">
-                {[...selectedDayAuditorias]
-                  .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
-                  .map((a) => {
-                    const hora = a.startedAt.includes("T") ? a.startedAt.split("T")[1]?.slice(0, 5) : null;
-                    return (
-                      <div key={a.id} className="flex items-start gap-4 p-3 rounded-lg border border-border bg-card">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-mono text-xs text-primary font-medium">{a.id}</span>
-                            <span className={cn("text-xs px-2 py-0.5 rounded-full", STATUS_COLORS[a.status])}>{statusLabel[a.status]}</span>
-                            {hora && <span className="text-xs font-mono text-muted-foreground">⏰ {hora}</span>}
-                          </div>
-                          <h4 className="font-medium text-foreground text-sm">{a.tplNome}</h4>
-                          <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                            <div>Planta: <span className="font-mono">{a.planta}</span> – {PLANTA_LABELS[a.planta as Planta]}</div>
-                            <div>Local: {a.local}</div>
-                            <div>Auditor: <span className="font-medium text-foreground">{a.auditor}</span></div>
-                          </div>
+                {selectedDayAuditorias.map((auditoria) => (
+                  <div key={auditoria.id} className="flex items-start gap-4 rounded-lg border border-border bg-card p-3">
+                    <div className="flex-1">
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className="font-mono text-xs font-medium text-primary">{auditoria.id}</span>
+                        <span className={cn("rounded-full px-2 py-0.5 text-xs", STATUS_COLORS[auditoria.status])}>
+                          {statusLabel[auditoria.status]}
+                        </span>
+                      </div>
+
+                      <h4 className="text-sm font-medium text-foreground">{auditoria.tplNome}</h4>
+
+                      <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                        <div>
+                          Início: <span className="font-mono text-foreground">{extractHoraInicio(auditoria.startedAt)}</span>
+                        </div>
+                        <div>
+                          Planta: <span className="font-mono">{auditoria.planta}</span> - {PLANTA_LABELS[auditoria.planta as Planta]}
+                        </div>
+                        <div>Local: {auditoria.local}</div>
+                        <div>
+                          Auditor: <span className="font-medium text-foreground">{auditoria.auditor}</span>
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
       )}
-
-      {/* Monthly summary */}
-      <div className="grid gap-4 sm:grid-cols-4">
-        {(["PLANEJADA", "EM_EXECUCAO", "CONCLUIDA", "CANCELADA"] as AuditStatus[]).map((status) => {
-          const count = filteredAuditorias.filter((a) => {
-            const d = new Date(a.startedAt);
-            return d.getFullYear() === currentYear && d.getMonth() === currentMonth && a.status === status;
-          }).length;
-          return (
-            <Card key={status}>
-              <CardContent className="pt-4 pb-3 text-center">
-                <span className={cn("text-xs px-2 py-1 rounded-full", STATUS_COLORS[status])}>{statusLabel[status]}</span>
-                <p className="text-2xl font-bold text-foreground mt-2">{count}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { OrdemServico, RequisicaoAssistencia, ConsumoMaterial } from "@/types/assistencia";
+﻿import { OrdemServico, RequisicaoAssistencia, ConsumoMaterial } from "@/types/assistencia";
 
 export const mockOrdensServico: OrdemServico[] = [
   {
@@ -191,3 +191,5 @@ export const mockEstoque: EstoqueItem[] = [
   { codMaterial: "MAT-009", descricao: "Zíper Capa Protetora Queen", un: "UN", categoria: "Aviamento", estoqueMAO: 80, estoqueBEL: 30, estoqueAGR: 55 },
   { codMaterial: "MAT-010", descricao: "Espuma Viscoelástica Pillow", un: "UN", categoria: "Espuma", estoqueMAO: 40, estoqueBEL: 15, estoqueAGR: 25 },
 ];
+
+

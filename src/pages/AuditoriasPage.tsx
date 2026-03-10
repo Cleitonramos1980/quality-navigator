@@ -1,11 +1,19 @@
-import StatusBadge from "@/components/StatusBadge";
-import { mockAuditorias } from "@/data/mockData";
+﻿import StatusBadge from "@/components/StatusBadge";
 import { Plus, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getAuditorias } from "@/services/auditorias";
+import type { AudExec } from "@/types/sgq";
 
 const AuditoriasPage = () => {
   const navigate = useNavigate();
+  const [auditorias, setAuditorias] = useState<AudExec[]>([]);
+
+  useEffect(() => {
+    getAuditorias().then(setAuditorias);
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -20,7 +28,7 @@ const AuditoriasPage = () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {mockAuditorias.map((a) => (
+        {auditorias.map((a) => (
           <div key={a.id} className="glass-card rounded-lg p-5 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-start justify-between mb-2">
               <span className="font-mono text-xs font-medium text-primary">{a.id}</span>
@@ -40,3 +48,5 @@ const AuditoriasPage = () => {
 };
 
 export default AuditoriasPage;
+
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Wrench, ClipboardList, Package, BarChart3, ArrowRight, ShieldAlert, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -316,3 +316,5 @@ const AssistenciaDashboardPage = () => {
 };
 
 export default AssistenciaDashboardPage;
+
+

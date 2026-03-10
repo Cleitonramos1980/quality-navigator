@@ -1,85 +1,204 @@
-import { mockAtendimentos, sacDashboardData } from "@/data/mockSACData";
-import { SACAtendimento } from "@/types/sac";
+﻿import { ApiError, apiGet, apiPost, apiPostFormData, apiPut } from "@/services/api";
+import type { SACAtendimento, SACAvaliacao, SACAvaliacaoDashboard } from "@/types/sac";
 
-// Mock service — prepared for future Oracle/WinThor REST integration
+export interface SACDashboardData {
+  porStatus: Array<{ name: string; value: number }>;
+  porTipo: Array<{ name: string; value: number }>;
+  porPlanta: Array<{ name: string; value: number }>;
+  porDia: Array<{ date: string; value: number }>;
+}
 
-export async function getSACDashboard() {
-  return sacDashboardData;
+export interface SACAtendimentoAnexo {
+  id: string;
+  atendimentoId: string;
+  nomeArquivo: string;
+  mimeType: string;
+  tamanho: number;
+  caminho: string;
+  criadoAt: string;
+}
+
+export interface SACUploadAnexosResponse {
+  atendimentoId: string;
+  uploaded: number;
+  anexos: SACAtendimentoAnexo[];
+  rejected?: Array<{ nomeArquivo: string; motivo: string }>;
+}
+
+export interface SACHistoricoCliente {
+  atendimentos: SACAtendimento[];
+  garantias: any[];
+  ncs: any[];
+  capa: any[];
+  avaliacoes: SACAvaliacao[];
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function toOptionalString(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  const normalized = String(value).trim();
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function normalizeAtendimentoPayload(data: Partial<SACAtendimento>): Partial<SACAtendimento> {
+  return {
+    ...data,
+    codcli: toOptionalString(data.codcli) || "",
+    clienteNome: toOptionalString(data.clienteNome) || "",
+    cgcent: toOptionalString(data.cgcent) || "",
+    telefone: toOptionalString(data.telefone) || "",
+    numPedido: toOptionalString(data.numPedido),
+    numNfVenda: toOptionalString(data.numNfVenda),
+    codprod: toOptionalString(data.codprod),
+    produtoRelacionado: toOptionalString(data.produtoRelacionado),
+    descricao: toOptionalString(data.descricao) || "",
+  };
+}
+
+export async function getSACDashboard(): Promise<SACDashboardData> {
+  return apiGet<SACDashboardData>("/sac/dashboard");
+}
+
+export async function getSACAvaliacaoDashboard(): Promise<SACAvaliacaoDashboard> {
+  return apiGet<SACAvaliacaoDashboard>("/sac/dashboard/avaliacoes");
 }
 
 export async function getAtendimentos(): Promise<SACAtendimento[]> {
-  return mockAtendimentos;
+  return apiGet<SACAtendimento[]>("/sac/atendimentos");
 }
 
 export async function getAtendimentoById(id: string): Promise<SACAtendimento | undefined> {
-  return mockAtendimentos.find((a) => a.id === id);
+  return apiGet<SACAtendimento | null>(`/sac/atendimentos/${id}`).then((r) => r || undefined);
+}
+
+export async function getAvaliacoes(filters?: Record<string, string | number | undefined>): Promise<SACAvaliacao[]> {
+  const query = filters
+    ? new URLSearchParams(
+      Object.entries(filters)
+        .filter(([, value]) => value != null && String(value).trim() !== "")
+        .map(([key, value]) => [key, String(value)]),
+    ).toString()
+    : "";
+
+  return apiGet<SACAvaliacao[]>(`/sac/avaliacoes${query ? `?${query}` : ""}`);
+}
+
+export async function getAvaliacaoById(id: string): Promise<SACAvaliacao | undefined> {
+  return apiGet<SACAvaliacao | null>(`/sac/avaliacoes/${encodeURIComponent(id)}`).then((item) => item || undefined);
+}
+
+export async function gerarLinkAvaliacao(atendimentoId: string): Promise<SACAvaliacao> {
+  return apiPost<SACAvaliacao>(`/sac/atendimentos/${encodeURIComponent(atendimentoId)}/avaliacao/link`, {});
+}
+
+export async function enviarAvaliacaoWhatsapp(atendimentoId: string, regenerateToken = false): Promise<SACAvaliacao> {
+  return apiPost<SACAvaliacao>(`/sac/atendimentos/${encodeURIComponent(atendimentoId)}/avaliacao/enviar`, { regenerateToken });
+}
+
+export async function reenviarAvaliacao(avaliacaoId: string, regenerateToken = true): Promise<SACAvaliacao> {
+  return apiPost<SACAvaliacao>(`/sac/avaliacoes/${encodeURIComponent(avaliacaoId)}/reenviar`, { regenerateToken });
+}
+
+export async function getHistoricoClienteSAC(filters: { codcli?: string; cgcent?: string; cliente?: string }): Promise<SACHistoricoCliente> {
+  const query = new URLSearchParams(
+    Object.entries(filters)
+      .filter(([, value]) => value != null && String(value).trim().length > 0)
+      .map(([key, value]) => [key, String(value)]),
+  ).toString();
+  return apiGet<SACHistoricoCliente>(`/sac/historico-cliente?${query}`);
+}
+
+export async function getAvaliacaoPublic(token: string): Promise<{
+  id: string;
+  atendimentoId: string;
+  codcli: string;
+  clienteNome: string;
+  statusResposta: string;
+  dataEnvio?: string;
+  nota?: number;
+  comentario?: string;
+}> {
+  return apiGet(`/sac/avaliacoes/public?token=${encodeURIComponent(token)}`);
+}
+
+export async function responderAvaliacaoPublic(payload: { token: string; nota: number; comentario?: string }): Promise<SACAvaliacao> {
+  return apiPost<SACAvaliacao>("/sac/avaliacoes/public/responder", payload);
 }
 
 export async function criarAtendimento(data: Partial<SACAtendimento>): Promise<SACAtendimento> {
-  const novo: SACAtendimento = {
-    id: `SAC-${String(mockAtendimentos.length + 1).padStart(3, "0")}`,
-    codcli: data.codcli || "",
-    clienteNome: data.clienteNome || "",
-    cgcent: data.cgcent || "",
-    telefone: data.telefone || "",
-    canal: data.canal || "TELEFONE",
-    tipoContato: data.tipoContato || "RECLAMACAO",
-    descricao: data.descricao || "",
-    plantaResp: data.plantaResp || "MAO",
-    numPedido: data.numPedido,
-    numNfVenda: data.numNfVenda,
-    status: "ABERTO",
-    abertoAt: new Date().toISOString().slice(0, 10),
-    atualizadoAt: new Date().toISOString().slice(0, 10),
-  };
-  mockAtendimentos.push(novo);
-  return novo;
+  return apiPost<SACAtendimento>("/sac/atendimentos", normalizeAtendimentoPayload(data));
 }
 
-// ERP views — future integration
+export async function uploadAtendimentoAnexos(atendimentoId: string, files: File[]): Promise<SACUploadAnexosResponse> {
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append("files", file, file.name));
+      return await apiPostFormData<SACUploadAnexosResponse>(
+        `/sac/atendimentos/${encodeURIComponent(atendimentoId)}/anexos`,
+        formData,
+      );
+    } catch (error) {
+      const nonRetryable = error instanceof ApiError && error.status > 0 && error.status < 500 && error.status !== 408;
+      if (attempt >= maxAttempts || nonRetryable) throw error;
+      await sleep(400 * attempt);
+    }
+  }
+
+  throw new Error("Falha no upload de anexos.");
+}
+
+export async function updateAtendimento(id: string, data: Partial<SACAtendimento>): Promise<SACAtendimento> {
+  return apiPut<SACAtendimento>(`/sac/atendimentos/${id}`, normalizeAtendimentoPayload(data));
+}
+
 export async function buscarClientesERP(filtro: Record<string, string>) {
-  // Will call /erp/clientes
-  return [
-    { codcli: "1042", nome: "Magazine Luiza", cgcent: "47.960.950/0001-21", telefones: "(92) 3232-1010", cidade: "Manaus", uf: "AM" },
-    { codcli: "2081", nome: "Casas Bahia", cgcent: "33.041.260/0001-65", telefones: "(91) 3344-5566", cidade: "Belém", uf: "PA" },
-    { codcli: "3055", nome: "Ponto Frio", cgcent: "44.123.456/0001-78", telefones: "(81) 3456-7890", cidade: "Agrestina", uf: "PE" },
-  ];
+  const codcli = (filtro.codcli || "").trim();
+  const cgcent = (filtro.cgcent || "").trim();
+  const telent = (filtro.telent || filtro.telefone || "").trim();
+
+  const query = codcli
+    ? new URLSearchParams({ codcli }).toString()
+    : new URLSearchParams(
+        Object.entries({ cgcent, telent }).filter(([, value]) => Boolean(value)),
+      ).toString();
+  if (!query) return [];
+
+  const data = await apiGet<any[]>(`/erp/clientes-sac-busca?${query}`);
+  return data.map((item) => ({
+    codcli: String(item.codcli ?? ""),
+    nome: String(item.cliente ?? ""),
+    cgcent: String(item.cgcent ?? ""),
+    telefones: String(item.telefone ?? ""),
+    cidade: String(item.nomecidade ?? ""),
+    uf: "",
+  }));
 }
 
 export async function buscarPedidosERP(codcli?: string) {
-  const todos = [
-    { numped: "PED-88421", numnf: "NF-112340", codcli: "1042", dtPedido: "2026-01-10", vlrPedido: 1890.0, status: "FATURADO", canal: "LOJA" },
-    { numped: "PED-88500", numnf: "NF-112500", codcli: "1042", dtPedido: "2026-02-05", vlrPedido: 3250.0, status: "FATURADO", canal: "ECOMMERCE" },
-    { numped: "PED-77312", numnf: "NF-109877", codcli: "2081", dtPedido: "2026-01-15", vlrPedido: 2450.0, status: "FATURADO", canal: "ECOMMERCE" },
-    { numped: "PED-66201", numnf: "", codcli: "3055", dtPedido: "2026-02-10", vlrPedido: 1200.0, status: "EM_SEPARACAO", canal: "LOJA" },
-  ];
-  return codcli ? todos.filter((p) => p.codcli === codcli) : todos;
+  if (!codcli) return [];
+  const query = `?codcli=${encodeURIComponent(codcli)}`;
+  const data = await apiGet<any[]>(`/erp/pedidos-por-cliente${query}`);
+  return data.map((item) => ({
+    numped: String(item.numped ?? ""),
+    numnf: item.numnf == null ? "" : String(item.numnf),
+    codcli: item.codcli == null ? "" : String(item.codcli),
+    dtPedido: item.dtPedido == null ? "" : String(item.dtPedido),
+    vlrPedido: Number(item.vlrPedido ?? 0),
+    status: item.status == null ? "" : String(item.status),
+    canal: item.canal == null ? "" : String(item.canal),
+  }));
 }
 
 export async function buscarItensPedidoERP(numped: string) {
-  const itensMap: Record<string, Array<{ numped: string; numnf: string; codprod: string; descricao: string; un: string; qtd: number; vlrUnit: number; vlrTotal: number }>> = {
-    "PED-88421": [
-      { numped: "PED-88421", numnf: "NF-112340", codprod: "COL-QN-001", descricao: "Colchão Queen Premium Molas Ensacadas", un: "UN", qtd: 2, vlrUnit: 789.0, vlrTotal: 1578.0 },
-      { numped: "PED-88421", numnf: "NF-112340", codprod: "TRV-VIS-01", descricao: "Travesseiro Viscoelástico", un: "UN", qtd: 4, vlrUnit: 78.0, vlrTotal: 312.0 },
-    ],
-    "PED-88500": [
-      { numped: "PED-88500", numnf: "NF-112500", codprod: "COL-CS-002", descricao: "Colchão Casal Ortopédico", un: "UN", qtd: 3, vlrUnit: 650.0, vlrTotal: 1950.0 },
-      { numped: "PED-88500", numnf: "NF-112500", codprod: "COL-SL-003", descricao: "Colchão Solteiro Confort", un: "UN", qtd: 5, vlrUnit: 260.0, vlrTotal: 1300.0 },
-    ],
-    "PED-77312": [
-      { numped: "PED-77312", numnf: "NF-109877", codprod: "COL-KG-004", descricao: "Colchão King Size Luxo", un: "UN", qtd: 1, vlrUnit: 2450.0, vlrTotal: 2450.0 },
-    ],
-    "PED-66201": [
-      { numped: "PED-66201", numnf: "", codprod: "COL-QN-001", descricao: "Colchão Queen Premium Molas Ensacadas", un: "UN", qtd: 1, vlrUnit: 789.0, vlrTotal: 789.0 },
-      { numped: "PED-66201", numnf: "", codprod: "PRO-BS-01", descricao: "Protetor de Colchão Impermeável", un: "UN", qtd: 2, vlrUnit: 205.5, vlrTotal: 411.0 },
-    ],
-  };
-  return itensMap[numped] || [];
+  return apiGet<any[]>(`/erp/pedido-itens-por-pedido?numped=${encodeURIComponent(numped)}`);
 }
 
 export async function buscarNFVendaERP(filtro?: Record<string, string>) {
-  return [
-    { numnf: "NF-112340", serie: "1", chaveNfe: "35260247960950000121550010001123401001123400", dtEmissao: "2026-01-12", codcli: "1042", numped: "PED-88421", vlrTotal: 1890.0 },
-    { numnf: "NF-109877", serie: "1", chaveNfe: "35260233041260000165550010001098771001098770", dtEmissao: "2026-01-18", codcli: "2081", numped: "PED-77312", vlrTotal: 2450.0 },
-  ];
+  const query = filtro ? new URLSearchParams(filtro).toString() : "";
+  return apiGet<any[]>(`/erp/nf-venda${query ? `?${query}` : ""}`);
 }

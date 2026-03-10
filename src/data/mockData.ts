@@ -1,4 +1,4 @@
-import { GarantiaCaso, NCRegistro, CAPA, AudExec } from "@/types/sgq";
+﻿import { GarantiaCaso, NCRegistro, CAPA, AudExec } from "@/types/sgq";
 
 export const mockGarantias: GarantiaCaso[] = [
   { id: "GAR-001", codcli: "1042", clienteNome: "Magazine Luiza", numPedido: "PED-88421", numNfVenda: "NF-112340", defeito: "deformação", plantaResp: "MAO", status: "ABERTO", custoEstimado: 450, abertoAt: "2026-02-28", obs: "Colchão Queen apresenta deformação central após 3 meses" },
@@ -67,3 +67,4 @@ export const dashboardData = {
     { month: "Fev", count: 9 },
   ],
 };
+

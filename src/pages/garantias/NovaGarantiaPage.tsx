@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Save, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import SectionCard from "@/components/forms/SectionCard";
 import AttachmentUploader from "@/components/upload/AttachmentUploader";
 import { DEFEITO_OPTIONS, PLANTA_LABELS, Planta } from "@/types/sgq";
 import { useToast } from "@/hooks/use-toast";
+import { createGarantia } from "@/services/garantias";
 
 const NovaGarantiaPage = () => {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ const NovaGarantiaPage = () => {
     clienteNome: sacData?.clienteNome || "",
     numPedido: sacData?.numPedido || "",
     numNfVenda: sacData?.numNfVenda || "",
+    codprod: sacData?.codprod || "",
     numNfTroca: "",
     defeito: "",
     descricao: sacData?.descricao || "",
@@ -32,96 +34,47 @@ const NovaGarantiaPage = () => {
 
   const update = (field: string, value: string) => setForm((p) => ({ ...p, [field]: value }));
 
-  const handleSave = (iniciarAnalise = false) => {
+  const handleSave = async (iniciarAnalise = false) => {
     if (!form.codcli || !form.clienteNome || !form.numNfVenda || !form.defeito || !form.plantaResp) {
       toast({ title: "Campos obrigatórios", description: "Preencha todos os campos obrigatórios.", variant: "destructive" });
       return;
     }
-    toast({ title: iniciarAnalise ? "Garantia criada e em análise" : "Garantia salva", description: `Status: ${iniciarAnalise ? "EM_ANALISE" : "ABERTO"}` });
-    navigate("/garantias");
+    try {
+      await createGarantia({
+        codcli: form.codcli,
+        clienteNome: form.clienteNome,
+        numPedido: form.numPedido,
+        numNfVenda: form.numNfVenda,
+        numNfTroca: form.numNfTroca || undefined,
+        codprod: form.codprod || undefined,
+        defeito: form.defeito,
+        descricao: form.descricao || undefined,
+        plantaResp: form.plantaResp as Planta,
+        status: iniciarAnalise ? "EM_ANALISE" : "ABERTO",
+        custoEstimado: form.custoEstimado ? Number(form.custoEstimado) : undefined,
+        obs: form.obs || undefined,
+        abertoAt: new Date().toISOString().slice(0, 10),
+        encerradoAt: undefined,
+      } as any);
+      toast({ title: iniciarAnalise ? "Garantia criada e em análise" : "Garantia salva", description: `Status: ${iniciarAnalise ? "EM_ANALISE" : "ABERTO"}` });
+      navigate("/garantias");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao salvar garantia.";
+      toast({ title: "Erro ao salvar garantia", description: message, variant: "destructive" });
+    }
   };
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/garantias")}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Nova Garantia</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Cadastro de novo caso de garantia</p>
-        </div>
-      </div>
-
-      <SectionCard title="Dados do Cliente" description="Informações do cliente e pedido">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="CODCLI" required>
-            <Input placeholder="Ex: 1042" value={form.codcli} onChange={(e) => update("codcli", e.target.value)} />
-          </FormField>
-          <FormField label="Cliente" required>
-            <Input placeholder="Nome do cliente" value={form.clienteNome} onChange={(e) => update("clienteNome", e.target.value)} />
-          </FormField>
-          <FormField label="Nº Pedido de Compra">
-            <Input placeholder="PED-00000" value={form.numPedido} onChange={(e) => update("numPedido", e.target.value)} />
-          </FormField>
-          <FormField label="Nº NF Venda" required>
-            <Input placeholder="NF-000000" value={form.numNfVenda} onChange={(e) => update("numNfVenda", e.target.value)} />
-          </FormField>
-          <FormField label="Nº NF Troca">
-            <Input placeholder="NF-T-0000" value={form.numNfTroca} onChange={(e) => update("numNfTroca", e.target.value)} />
-          </FormField>
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Informações do Defeito" description="Detalhes sobre o problema reportado">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Defeito" required>
-            <Select value={form.defeito} onValueChange={(v) => update("defeito", v)}>
-              <SelectTrigger><SelectValue placeholder="Selecione o defeito" /></SelectTrigger>
-              <SelectContent>
-                {DEFEITO_OPTIONS.map((d) => (
-                  <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormField>
-          <FormField label="Planta Responsável" required>
-            <Select value={form.plantaResp} onValueChange={(v) => update("plantaResp", v)}>
-              <SelectTrigger><SelectValue placeholder="Selecione a planta" /></SelectTrigger>
-              <SelectContent>
-                {(Object.keys(PLANTA_LABELS) as Planta[]).map((p) => (
-                  <SelectItem key={p} value={p}>{p} – {PLANTA_LABELS[p]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormField>
-          <FormField label="Custo Estimado (R$)">
-            <Input type="number" placeholder="0.00" value={form.custoEstimado} onChange={(e) => update("custoEstimado", e.target.value)} />
-          </FormField>
-        </div>
-        <FormField label="Descrição detalhada">
-          <Textarea placeholder="Descreva o problema em detalhes..." value={form.descricao} onChange={(e) => update("descricao", e.target.value)} rows={3} />
-        </FormField>
-        <FormField label="Observações">
-          <Textarea placeholder="Observações adicionais..." value={form.obs} onChange={(e) => update("obs", e.target.value)} rows={2} />
-        </FormField>
-      </SectionCard>
-
-      <SectionCard title="Evidências" description="Anexe fotos, vídeos ou documentos">
-        <AttachmentUploader accept="image/*,video/*,.pdf,.docx" maxFiles={10} />
-      </SectionCard>
-
-      <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2">
-        <Button variant="outline" onClick={() => navigate("/garantias")}>Cancelar</Button>
-        <Button variant="secondary" className="gap-2" onClick={() => handleSave(false)}>
-          <Save className="w-4 h-4" /> Salvar
-        </Button>
-        <Button className="gap-2" onClick={() => handleSave(true)}>
-          <Play className="w-4 h-4" /> Salvar e Iniciar Análise
-        </Button>
-      </div>
+      <div className="flex items-center gap-4"><Button variant="ghost" size="icon" onClick={() => navigate("/garantias")}><ArrowLeft className="w-5 h-5" /></Button><div><h1 className="text-2xl font-bold text-foreground">Nova Garantia</h1><p className="text-sm text-muted-foreground mt-0.5">Cadastro de novo caso de garantia</p></div></div>
+      <SectionCard title="Dados do Cliente" description="Informações do cliente e pedido"><div className="grid gap-4 sm:grid-cols-2"><FormField label="CODCLI" required><Input value={form.codcli} onChange={(e) => update("codcli", e.target.value)} /></FormField><FormField label="Cliente" required><Input value={form.clienteNome} onChange={(e) => update("clienteNome", e.target.value)} /></FormField><FormField label="Nº Pedido de Compra"><Input value={form.numPedido} onChange={(e) => update("numPedido", e.target.value)} /></FormField><FormField label="Nº NF Venda" required><Input value={form.numNfVenda} onChange={(e) => update("numNfVenda", e.target.value)} /></FormField><FormField label="Nº NF Troca"><Input value={form.numNfTroca} onChange={(e) => update("numNfTroca", e.target.value)} /></FormField><FormField label="CODPROD"><Input value={form.codprod} onChange={(e) => update("codprod", e.target.value)} /></FormField></div></SectionCard>
+      <SectionCard title="Informações do Defeito" description="Detalhes sobre o problema reportado"><div className="grid gap-4 sm:grid-cols-2"><FormField label="Defeito" required><Select value={form.defeito} onValueChange={(v) => update("defeito", v)}><SelectTrigger><SelectValue placeholder="Selecione o defeito" /></SelectTrigger><SelectContent>{DEFEITO_OPTIONS.map((d) => <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>)}</SelectContent></Select></FormField><FormField label="Planta Responsável" required><Select value={form.plantaResp} onValueChange={(v) => update("plantaResp", v)}><SelectTrigger><SelectValue placeholder="Selecione a planta" /></SelectTrigger><SelectContent>{(Object.keys(PLANTA_LABELS) as Planta[]).map((p) => <SelectItem key={p} value={p}>{p} - {PLANTA_LABELS[p]}</SelectItem>)}</SelectContent></Select></FormField><FormField label="Custo Estimado (R$)"><Input type="number" value={form.custoEstimado} onChange={(e) => update("custoEstimado", e.target.value)} /></FormField></div><FormField label="Descrição detalhada"><Textarea value={form.descricao} onChange={(e) => update("descricao", e.target.value)} rows={3} /></FormField><FormField label="Observações"><Textarea value={form.obs} onChange={(e) => update("obs", e.target.value)} rows={2} /></FormField></SectionCard>
+      <SectionCard title="Evidências" description="Anexe fotos, vídeos ou documentos"><AttachmentUploader accept="image/*,video/*,.pdf,.docx" maxFiles={10} /></SectionCard>
+      <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2"><Button variant="outline" onClick={() => navigate("/garantias")}>Cancelar</Button><Button variant="secondary" className="gap-2" onClick={() => { void handleSave(false); }}><Save className="w-4 h-4" /> Salvar</Button><Button className="gap-2" onClick={() => { void handleSave(true); }}><Play className="w-4 h-4" /> Salvar e Iniciar Análise</Button></div>
     </div>
   );
 };
 
 export default NovaGarantiaPage;
+
+

@@ -1,0 +1,33 @@
+{
+  "baseUrl": "http://127.0.0.1:3333",
+  "startedAt": "2026-03-08T00:35:06.992Z",
+  "now": "2026-03-08T01:05:07.269Z",
+  "durationMinutes": 30,
+  "elapsedMinutes": 30,
+  "progressPct": 100,
+  "concurrency": 4,
+  "pauseMs": 150,
+  "totalRequests": 27350,
+  "success": 27350,
+  "failed": 0,
+  "timeouts": 0,
+  "errorRatePct": 0,
+  "rps": 15.19,
+  "latencyMs": {
+    "p50": 114.3,
+    "p95": 233.42,
+    "p99": 236.46,
+    "max": 2564.03,
+    "avg": 106.98
+  },
+  "scenarioCount": {
+    "sac-create": 3904,
+    "erp-clientes": 7871,
+    "erp-itens": 5754,
+    "erp-pedidos": 5928,
+    "assistencia-create-os": 3893
+  },
+  "statusCount": {
+    "200": 27350
+  }
+}

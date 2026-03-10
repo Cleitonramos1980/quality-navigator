@@ -1,4 +1,4 @@
-import { Planta } from "./sgq";
+﻿import { Planta } from "./sgq";
 
 export type SACStatus = "ABERTO" | "EM_ANALISE" | "AGUARDANDO_CLIENTE" | "RESOLVIDO" | "ENCERRADO";
 
@@ -40,6 +40,16 @@ export const SAC_STATUS_COLORS: Record<SACStatus, string> = {
   ENCERRADO: "bg-muted text-muted-foreground",
 };
 
+export interface SACAtendimentoAnexo {
+  id: string;
+  atendimentoId: string;
+  nomeArquivo: string;
+  mimeType: string;
+  tamanho: number;
+  caminho: string;
+  criadoAt: string;
+}
+
 export interface SACAtendimento {
   id: string;
   codcli: string;
@@ -52,11 +62,14 @@ export interface SACAtendimento {
   plantaResp: Planta;
   numPedido?: string;
   numNfVenda?: string;
+  codprod?: string;
+  produtoRelacionado?: string;
   status: SACStatus;
   abertoAt: string;
   atualizadoAt: string;
   encerradoAt?: string;
   timeline?: SACTimelineEntry[];
+  anexos?: SACAtendimentoAnexo[];
 }
 
 export interface SACTimelineEntry {
@@ -65,4 +78,62 @@ export interface SACTimelineEntry {
   usuario: string;
   acao: string;
   descricao: string;
+}
+
+export type SACAvaliacaoCanalEnvio = "WHATSAPP";
+export type SACAvaliacaoStatusEnvio =
+  | "NAO_ENVIADA"
+  | "ENVIADA"
+  | "ENTREGUE"
+  | "LIDA"
+  | "RESPONDIDA"
+  | "FALHA"
+  | "EXPIRADA";
+export type SACAvaliacaoStatusResposta = "NAO_RESPONDIDA" | "RESPONDIDA" | "EXPIRADA";
+
+export interface SACAvaliacaoEnvioLog {
+  id: string;
+  data: string;
+  canal: SACAvaliacaoCanalEnvio;
+  telefone: string;
+  status: SACAvaliacaoStatusEnvio;
+  provider: string;
+  erro?: string;
+}
+
+export interface SACAvaliacao {
+  id: string;
+  atendimentoId: string;
+  codcli: string;
+  clienteNome: string;
+  telefone: string;
+  planta: Planta;
+  responsavelAtendimento?: string;
+  encerradoAt?: string;
+  token: string;
+  link: string;
+  canalEnvio: SACAvaliacaoCanalEnvio;
+  statusEnvio: SACAvaliacaoStatusEnvio;
+  dataEnvio?: string;
+  statusResposta: SACAvaliacaoStatusResposta;
+  dataResposta?: string;
+  nota?: number;
+  comentario?: string;
+  envioLogs: SACAvaliacaoEnvioLog[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SACAvaliacaoDashboard {
+  totalPesquisasEnviadas: number;
+  totalPesquisasRespondidas: number;
+  taxaResposta: number;
+  notaMedia: number;
+  percentualNotasAltas: number;
+  percentualNotasBaixas: number;
+  pesquisasNaoRespondidas: number;
+  evolucaoNotaPorPeriodo: Array<{ periodo: string; notaMedia: number }>;
+  avaliacoesPorPlanta: Array<{ name: string; value: number }>;
+  avaliacoesPorAtendente: Array<{ name: string; value: number }>;
+  distribuicaoNota: Array<{ name: string; value: number }>;
 }

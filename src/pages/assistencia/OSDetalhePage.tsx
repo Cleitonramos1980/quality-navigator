@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Wrench, Package, FileText, Clock, User, MapPin, Plus, Trash2, Search, Warehouse, AlertTriangle, ShieldAlert, CheckCircle2, History, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { getCurrentPapel, PAPEL_LABELS, STATUS_RESPONSAVEL } from "@/lib/workflo
 import { OS_STATUS_LABELS, OS_STATUS_COLORS, OS_PRIORIDADE_LABELS, OS_PRIORIDADE_COLORS, OS_TIPO_LABELS, REQ_ASSIST_STATUS_LABELS, REQ_ASSIST_STATUS_COLORS } from "@/types/assistencia";
 import type { OrdemServico, OSStatus, RequisicaoAssistencia, ConsumoMaterial, ItemReqAssist, OSTransitionLog } from "@/types/assistencia";
 import { PLANTA_LABELS, Planta } from "@/types/sgq";
-import { EstoqueItem } from "@/data/mockAssistenciaData";
+import type { EstoqueItem } from "@/types/assistencia";
 import { toast } from "@/hooks/use-toast";
 import * as osTransitionLog from "@/services/osTransitionLog";
 import { getAvailableEvents, dispatchOSEvent, canDispatchEvent, OS_EVENT_LABELS } from "@/lib/osStateMachine";
@@ -82,24 +82,34 @@ const OSDetalhePage = () => {
 
   useEffect(() => {
     if (!id) return;
-    buscarOS(id).then((data) => {
-      if (data) {
-        setOs(data);
-        setLaudo(data.laudoInspecao || "");
-        setDecisao(data.decisaoTecnica || "");
-        setReqPlantaDestino(data.planta);
-        setRecebimentoConfirmado(data.recebimentoConfirmado || false);
-        setRelatorioReparo(data.relatorioReparo || "");
-        setValidacaoAprovada(data.validacaoAprovada || false);
-        setMensagemEncerramento(data.mensagemEncerramento || "");
-      }
-    });
-    listarReqAssistencia().then((all) => setReqs(all.filter((r) => r.osId === id)));
-    listarConsumosPorOS(id!).then(setConsumos);
-    osTransitionLog.listByOS(id!).then(setTransitionLogs);
+    Promise.all([buscarOS(id), listarReqAssistencia(), listarConsumosPorOS(id), osTransitionLog.listByOS(id)])
+      .then(([data, allReqs, consumosList, logs]) => {
+        if (data) {
+          setOs(data);
+          setLaudo(data.laudoInspecao || "");
+          setDecisao(data.decisaoTecnica || "");
+          setReqPlantaDestino(data.planta);
+          setRecebimentoConfirmado(data.recebimentoConfirmado || false);
+          setRelatorioReparo(data.relatorioReparo || "");
+          setValidacaoAprovada(data.validacaoAprovada || false);
+          setMensagemEncerramento(data.mensagemEncerramento || "");
+        }
+        setReqs(allReqs.filter((r) => r.osId === id));
+        setConsumos(consumosList);
+        setTransitionLogs(logs);
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar dados da OS.";
+        toast({ title: "Erro ao carregar OS", description: message, variant: "destructive" });
+      });
   }, [id]);
 
-  const reloadLogs = () => { if (id) osTransitionLog.listByOS(id).then(setTransitionLogs); };
+  const reloadLogs = () => {
+    if (!id) return;
+    osTransitionLog.listByOS(id).then(setTransitionLogs).catch(() => {
+      toast({ title: "Erro ao atualizar histórico", variant: "destructive" });
+    });
+  };
 
   if (!os) return <div className="p-8 text-muted-foreground">Carregando...</div>;
 
@@ -124,7 +134,7 @@ const OSDetalhePage = () => {
   const reqsRecebidas = reqs.filter((r) => r.status === "RECEBIDA_ASSISTENCIA");
   const consumoLiberado = reqsRecebidas.length > 0;
 
-  // ── Event dispatch handler ──
+  // â”€â”€ Event dispatch handler â”€â”€
   const handleDispatchEvent = async (event: OSEvent) => {
     // Persist gate fields on the OS mock before dispatching
     const osRef = os as any;
@@ -135,21 +145,27 @@ const OSDetalhePage = () => {
     if (validacaoAprovada) osRef.validacaoAprovada = true;
     if (mensagemEncerramento) osRef.mensagemEncerramento = mensagemEncerramento;
 
-    const result = await dispatchOSEvent(osWithGates, event, reqs);
+    try {
+      const result = await dispatchOSEvent(osWithGates, event, reqs);
 
-    if (!result.ok) {
-      toast({ title: "Transição negada", description: (result as { ok: false; reason: string }).reason, variant: "destructive" });
+      if (!result.ok) {
+        toast({ title: "Transição negada", description: (result as { ok: false; reason: string }).reason, variant: "destructive" });
+        reloadLogs();
+        return;
+      }
+
+      await atualizarStatusOS(os.id, result.newState);
+      setOs({ ...os, status: result.newState });
       reloadLogs();
-      return;
+      toast({ title: "Status atualizado", description: `OS movida para ${OS_STATUS_LABELS[result.newState]}` });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao aplicar transição da OS.";
+      toast({ title: "Erro ao atualizar OS", description: message, variant: "destructive" });
+      reloadLogs();
     }
-
-    await atualizarStatusOS(os.id, result.newState);
-    setOs({ ...os, status: result.newState });
-    reloadLogs();
-    toast({ title: "Status atualizado", description: `OS movida para ${OS_STATUS_LABELS[result.newState]}` });
   };
 
-  // ── Event button click handlers ──
+  // â”€â”€ Event button click handlers â”€â”€
   const handleEventClick = (evt: AvailableEvent) => {
     if (evt.type === "FINALIZAR_INSPECAO" && evt.needsDecisao) {
       setDecisaoInspecao("REPARAR");
@@ -173,12 +189,12 @@ const OSDetalhePage = () => {
     }
 
     // Direct dispatch
-    handleDispatchEvent({ type: evt.type });
+    void handleDispatchEvent({ type: evt.type });
   };
 
   const handleConfirmDecisao = () => {
     setShowDecisaoModal(false);
-    handleDispatchEvent({
+    void handleDispatchEvent({
       type: "FINALIZAR_INSPECAO",
       payload: { decisaoInspecao },
     });
@@ -190,7 +206,7 @@ const OSDetalhePage = () => {
       return;
     }
     setShowReturnModal(false);
-    handleDispatchEvent({
+    void handleDispatchEvent({
       type: "RETORNAR_ETAPA",
       payload: { returnToState: selectedReturnTarget as OSStatus, motivo: motivoText },
     });
@@ -198,7 +214,7 @@ const OSDetalhePage = () => {
 
   const handleConfirmMotivo = () => {
     if (pendingEvent) {
-      handleDispatchEvent({ ...pendingEvent, payload: { ...pendingEvent.payload, motivo: motivoText } });
+      void handleDispatchEvent({ ...pendingEvent, payload: { ...pendingEvent.payload, motivo: motivoText } });
     }
     setShowMotivoModal(false);
     setPendingEvent(null);
@@ -206,12 +222,17 @@ const OSDetalhePage = () => {
 
   // === Nova Requisição (unchanged) ===
   const openNovaReq = async () => {
-    const est = await listarEstoque();
-    setEstoque(est);
-    setReqCdResponsavel("MAO");
-    setReqPlantaDestino(os.planta);
-    setReqItens([]);
-    setShowNovaReq(true);
+    try {
+      const est = await listarEstoque();
+      setEstoque(est);
+      setReqCdResponsavel("MAO");
+      setReqPlantaDestino(os.planta);
+      setReqItens([]);
+      setShowNovaReq(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao carregar estoque.";
+      toast({ title: "Erro ao abrir nova requisição", description: message, variant: "destructive" });
+    }
   };
 
   const addMaterialToReq = (item: EstoqueItem) => {
@@ -229,7 +250,8 @@ const OSDetalhePage = () => {
   };
 
   const updateQtdItem = (codMaterial: string, qtd: number) => {
-    setReqItens((prev) => prev.map((i) => i.codMaterial === codMaterial ? { ...i, qtdSolicitada: qtd } : i));
+    const safeQtd = Number.isFinite(qtd) ? Math.max(1, Math.floor(qtd)) : 1;
+    setReqItens((prev) => prev.map((i) => i.codMaterial === codMaterial ? { ...i, qtdSolicitada: safeQtd } : i));
   };
 
   const removeItemFromReq = (codMaterial: string) => {
@@ -241,24 +263,31 @@ const OSDetalhePage = () => {
       toast({ title: "Adicione ao menos um material", variant: "destructive" });
       return;
     }
-    const itemInvalido = reqItens.find((i) => !i.qtdSolicitada || isNaN(Number(i.qtdSolicitada)) || Number(i.qtdSolicitada) < 1);
-    if (itemInvalido) {
-      toast({ title: "Quantidade inválida", description: `Verifique a quantidade do material ${itemInvalido.codMaterial}. Mínimo: 1.`, variant: "destructive" });
+
+    const hasInvalidQtd = reqItens.some((item) => !Number.isFinite(item.qtdSolicitada) || item.qtdSolicitada <= 0);
+    if (hasInvalidQtd) {
+      toast({ title: "Quantidade inválida", description: "A quantidade solicitada deve ser maior que zero.", variant: "destructive" });
       return;
     }
-    const novaReq = await criarReqAssistencia({
-      osId: os.id,
-      cdResponsavel: reqCdResponsavel,
-      plantaDestino: reqPlantaDestino,
-      status: "PENDENTE",
-      itens: reqItens,
-      criadoAt: new Date().toISOString().slice(0, 10),
-      atualizadoAt: new Date().toISOString().slice(0, 10),
-    });
-    setReqs((prev) => [...prev, novaReq]);
-    setShowNovaReq(false);
-    registrarAuditoria("CRIAR", "REQUISICAO", novaReq.id, `Requisição criada vinculada à ${os.id}. ${reqItens.length} item(ns).`);
-    toast({ title: "Requisição criada", description: `${novaReq.id} vinculada à ${os.id}` });
+
+    try {
+      const novaReq = await criarReqAssistencia({
+        osId: os.id,
+        cdResponsavel: reqCdResponsavel,
+        plantaDestino: reqPlantaDestino,
+        status: "PENDENTE",
+        itens: reqItens,
+        criadoAt: new Date().toISOString().slice(0, 10),
+        atualizadoAt: new Date().toISOString().slice(0, 10),
+      });
+      setReqs((prev) => [...prev, novaReq]);
+      setShowNovaReq(false);
+      registrarAuditoria("CRIAR", "REQUISICAO", novaReq.id, `Requisição criada vinculada à ${os.id}. ${reqItens.length} item(ns).`);
+      toast({ title: "Requisição criada", description: `${novaReq.id} vinculada à ${os.id}` });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao criar requisição de materiais.";
+      toast({ title: "Erro ao criar requisição", description: message, variant: "destructive" });
+    }
   };
 
   const getEstoquePlanta = (item: EstoqueItem, planta: Planta) => {
@@ -882,3 +911,7 @@ const OSDetalhePage = () => {
 };
 
 export default OSDetalhePage;
+
+
+
+

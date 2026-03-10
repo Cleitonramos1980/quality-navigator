@@ -1,4 +1,4 @@
-import { Planta } from "./sgq";
+﻿import { Planta } from "./sgq";
 
 export type RequisicaoStatus = "RASCUNHO" | "PENDENTE" | "ATENDIDA" | "PARCIAL" | "NEGADA";
 export type RequisicaoMotivo = "MANUTENCAO_CONSERTO" | "TROCA_COMPONENTE" | "ASSISTENCIA_EXTERNA" | "OUTRO";
@@ -61,6 +61,7 @@ export interface SACRequisicao {
   cgcent: string;
   numPedido?: string;
   numNfVenda?: string;
+  codprod?: string;
   produtoRelacionado?: string;
   plantaCd: Planta;
   motivo: RequisicaoMotivo;
@@ -82,3 +83,6 @@ export interface MaterialERP {
   categoria: string;
   estoqueDisponivel: number;
 }
+
+
+

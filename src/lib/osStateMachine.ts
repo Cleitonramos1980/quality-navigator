@@ -1,4 +1,4 @@
-// OS State Machine — formal state/event transitions with RBAC, gates, and side-effects
+﻿// OS State Machine — formal state/event transitions with RBAC, gates, and side-effects
 import type { OrdemServico, OSStatus, RequisicaoAssistencia } from "@/types/assistencia";
 import type { PapelOperacional } from "@/lib/workflowOs";
 import { getCurrentPapel, PAPEL_LABELS } from "@/lib/workflowOs";
@@ -6,7 +6,7 @@ import { hasPermission, getCurrentPerfil, getCurrentUserName } from "@/lib/rbac"
 import * as osTransitionLog from "@/services/osTransitionLog";
 import { registrarAuditoria } from "@/services/auditoria";
 
-// ── Types ──
+// â”€â”€ Types â”€â”€
 
 export type OSState = OSStatus;
 
@@ -50,7 +50,7 @@ export const OS_EVENT_LABELS: Record<OSEventType, string> = {
   RETORNAR_ETAPA: "Retornar Etapa",
 };
 
-// ── Transition Definition ──
+// â”€â”€ Transition Definition â”€â”€
 
 interface TransitionDef {
   event: OSEventType;
@@ -61,7 +61,7 @@ interface TransitionDef {
   guard?: (os: OrdemServico, reqs: RequisicaoAssistencia[], evt: OSEvent) => { ok: boolean; reason?: string };
 }
 
-// ── Guards ──
+// â”€â”€ Guards â”€â”€
 
 function guardSubmeterRecebimento(os: OrdemServico): { ok: boolean; reason?: string } {
   const missing: string[] = [];
@@ -113,7 +113,7 @@ function guardRetornarEtapa(_os: OrdemServico, _reqs: RequisicaoAssistencia[], e
   return { ok: true };
 }
 
-// ── Forward Transitions ──
+// â”€â”€ Forward Transitions â”€â”€
 
 const FORWARD_TRANSITIONS: TransitionDef[] = [
   {
@@ -193,14 +193,14 @@ const FORWARD_TRANSITIONS: TransitionDef[] = [
   },
 ];
 
-// ── Cancel (from any active state) ──
+// â”€â”€ Cancel (from any active state) â”€â”€
 
 const CANCEL_FROM: OSState[] = [
   "ABERTA", "AGUARDANDO_RECEBIMENTO", "RECEBIDO", "EM_INSPECAO",
   "AGUARDANDO_PECAS", "EM_REPARO", "AGUARDANDO_VALIDACAO", "CONCLUIDA",
 ];
 
-// ── Back edges (controlled) ──
+// â”€â”€ Back edges (controlled) â”€â”€
 
 const BACK_EDGES: Record<OSState, OSState[]> = {
   EM_INSPECAO: ["RECEBIDO"],
@@ -216,7 +216,7 @@ const BACK_EDGES: Record<OSState, OSState[]> = {
   CANCELADA: [],
 };
 
-// ── Get available events for current state+user ──
+// â”€â”€ Get available events for current state+user â”€â”€
 
 export interface AvailableEvent {
   type: OSEventType;
@@ -297,7 +297,7 @@ export function getAvailableEvents(
   return events;
 }
 
-// ── Dispatch (the single entry point) ──
+// â”€â”€ Dispatch (the single entry point) â”€â”€
 
 export async function dispatchOSEvent(
   os: OrdemServico,
@@ -309,7 +309,7 @@ export async function dispatchOSEvent(
   const usuario = getCurrentUserName();
   const isAdmin = papel === "ADMIN";
 
-  // ── Cancel ──
+  // â”€â”€ Cancel â”€â”€
   if (event.type === "CANCELAR_OS") {
     if (!isAdmin && papel !== "SAC") {
       return deny("Somente SAC ou ADMIN podem cancelar OS");
@@ -321,7 +321,7 @@ export async function dispatchOSEvent(
     return { ok: true, newState: "CANCELADA" };
   }
 
-  // ── Return ──
+  // â”€â”€ Return â”€â”€
   if (event.type === "RETORNAR_ETAPA") {
     const guardResult = guardRetornarEtapa(os, reqs, event);
     if (!guardResult.ok) return deny(guardResult.reason!);
@@ -340,7 +340,7 @@ export async function dispatchOSEvent(
     return { ok: true, newState: target };
   }
 
-  // ── Forward transitions ──
+  // â”€â”€ Forward transitions â”€â”€
   const transition = FORWARD_TRANSITIONS.find(t => t.event === event.type && t.from === os.status);
   if (!transition) {
     return deny(`Evento "${OS_EVENT_LABELS[event.type]}" não é válido no estado ${os.status}`);
@@ -371,7 +371,7 @@ export async function dispatchOSEvent(
   return { ok: true, newState };
 }
 
-// ── Helpers ──
+// â”€â”€ Helpers â”€â”€
 
 function deny(reason: string): TransitionResult {
   return { ok: false, reason };
@@ -403,7 +403,7 @@ async function logTransition(
   );
 }
 
-// ── Check helpers for backward compat ──
+// â”€â”€ Check helpers for backward compat â”€â”€
 
 export function canDispatchEvent(
   os: OrdemServico,
@@ -441,3 +441,5 @@ export function canDispatchEvent(
   }
   return { allowed: true, reason: "" };
 }
+
+

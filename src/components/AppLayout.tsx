@@ -1,21 +1,31 @@
-import { ReactNode, useState, useMemo } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+﻿import { ReactNode, useMemo, useState } from "react";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Settings,
-  Menu,
-  X,
-  Factory,
-  LogOut,
   ChevronDown,
+  ClipboardCheck,
+  Factory,
   Headphones,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Settings,
   Wrench,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
-import { getCurrentPerfil, getCurrentUserName, setCurrentPerfil } from "@/lib/rbac";
-import { getCurrentPapel, PAPEL_LABELS, canSeeModulo, canSeeAssistSubmenu, type NavModulo } from "@/lib/workflowOs";
-import { ShieldAlert, BookOpen } from "lucide-react";
+import { clearAuthSession, getCurrentPerfil, getCurrentUserName, isAuthenticated } from "@/lib/rbac";
+import {
+  canSeeAssistSubmenu,
+  canSeeModulo,
+  canSeeQualidadeSubmenu,
+  canSeeSacSubmenu,
+  getCurrentPapel,
+  PAPEL_LABELS,
+  type NavModulo,
+} from "@/lib/workflowOs";
+import { prefetchRoute } from "@/lib/routePrefetch";
+import GlobalCommandPalette from "@/components/navigation/GlobalCommandPalette";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -38,32 +48,43 @@ const allNavItems: NavItem[] = [
       { path: "/sac/atendimentos", label: "Atendimentos" },
       { path: "/sac/novo", label: "Novo Atendimento" },
       { path: "/sac/pesquisa", label: "Pesquisa" },
+      { path: "/sac/avaliacoes", label: "Avaliações" },
       { path: "/garantias", label: "Garantias" },
       { path: "/sac/requisicoes", label: "Requisições" },
     ],
   },
   {
-    path: "/auditorias", label: "Qualidade", icon: ShieldAlert, modulo: "qualidade",
+    path: "/nao-conformidades", label: "Qualidade", icon: ClipboardCheck, modulo: "qualidade",
     children: [
       { path: "/auditorias", label: "Auditorias" },
       { path: "/nao-conformidades", label: "Não Conformidades" },
       { path: "/capa", label: "CAPA" },
+      { path: "/qualidade/metrologia", label: "Metrologia / MSA" },
+      { path: "/qualidade/kpis-industriais", label: "KPIs Industriais" },
+      { path: "/qualidade/risco-sla", label: "Risco / SLA" },
+      { path: "/qualidade/auditorias-camadas", label: "Auditorias em Camadas" },
+      { path: "/qualidade/documentos", label: "Documentos" },
+      { path: "/qualidade/treinamentos", label: "Treinamentos" },
+      { path: "/qualidade/mudancas", label: "Mudanças" },
+      { path: "/qualidade/fornecedores", label: "Fornecedores / SCAR" },
+      { path: "/qualidade/core-tools", label: "Core Tools Fornecedor" },
+      { path: "/qualidade/iso-readiness", label: "ISO 9001 Readiness" },
     ],
   },
   {
-    path: "/assistencia/os/nova", label: "Assistência Técnica", icon: Wrench, modulo: "assistencia",
+    path: "/assistencia/dashboard", label: "Assistência Técnica", icon: Wrench, modulo: "assistencia",
     children: [
       { path: "/assistencia/os/nova", label: "Nova Ordem de Serviço" },
       { path: "/assistencia/os", label: "Ordens de Serviço" },
       { path: "/assistencia/requisicoes", label: "Requisições de Material" },
-      { path: "/assistencia/os/consumo", label: "Registrar Consumo" },
+      { path: "/assistencia/consumo", label: "Registrar Consumo" },
       { path: "/assistencia/estoque", label: "Estoque" },
     ],
   },
   {
     path: "/admin", label: "Administração", icon: Settings, modulo: "admin",
     children: [
-      { path: "/admin", label: "Administração" },
+      { path: "/admin", label: "Administração (home)" },
       { path: "/administracao/usuarios", label: "Usuários" },
       { path: "/administracao/perfis", label: "Perfis de Acesso" },
       { path: "/administracao/log-auditoria", label: "Log de Auditoria" },
@@ -81,79 +102,112 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const perfil = getCurrentPerfil();
   const papel = getCurrentPapel();
   const userName = getCurrentUserName();
-  const initials = userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  const initials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
-  // Filter nav items by role/permission
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const isPathActive = (path: string) => {
+    if (path === "/") return location.pathname === "/";
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const handlePrefetch = (path: string) => {
+    prefetchRoute(path);
+  };
+
   const navItems = useMemo(() => {
     return allNavItems
       .filter((item) => canSeeModulo(item.modulo))
       .map((item) => {
-        if (item.modulo === "assistencia" && item.children) {
-          return {
-            ...item,
-            children: item.children.filter((child) => canSeeAssistSubmenu(child.path)),
-          };
+        if (!item.children) return item;
+
+        let children = item.children;
+        if (item.modulo === "sac") {
+          children = children.filter((child) => canSeeSacSubmenu(child.path));
+        } else if (item.modulo === "qualidade") {
+          children = children.filter((child) => canSeeQualidadeSubmenu(child.path));
+        } else if (item.modulo === "assistencia") {
+          children = children.filter((child) => canSeeAssistSubmenu(child.path));
         }
-        return item;
-      });
+
+        return { ...item, children };
+      })
+      .filter((item) => !item.children || item.children.length > 0);
   }, [perfil]);
 
   return (
-    <div className="min-h-screen flex">
-      {/* Mobile overlay */}
+    <div className="h-screen overflow-hidden bg-background">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:shadow-lg"
+      >
+        Pular para o conteúdo
+      </a>
+
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-foreground/30 z-40 lg:hidden"
+          className="fixed inset-0 z-40 bg-foreground/30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar flex flex-col transition-transform duration-200",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col bg-sidebar transition-transform duration-200",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
-        {/* Logo */}
-        <div className="h-16 flex items-center gap-3 px-5 border-b border-sidebar-border">
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <Factory className="w-4 h-4 text-sidebar-primary-foreground" />
+        <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-5">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white/95 p-1">
+            <img
+              src="/rodrigues-colchoes-logo.png"
+              alt="Rodrigues Colchões"
+              className="h-full w-full object-contain"
+            />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-sidebar-primary">SGQ RODRIGUES</h1>
-            <p className="text-[10px] text-sidebar-foreground/60 leading-none">Sistema de Gestão da Qualidade</p>
+            <h1 className="text-sm font-bold text-sidebar-primary">SQI</h1>
+            <p className="text-[10px] leading-none text-sidebar-foreground/60">Sistema de Gestão Integrada</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="ml-auto lg:hidden text-sidebar-foreground/60 hover:text-sidebar-foreground"
+            className="ml-auto text-sidebar-foreground/60 hover:text-sidebar-foreground lg:hidden"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Plant selector */}
         <div className="px-3 py-3">
           <div className="relative">
             <button
               onClick={() => setPlantaOpen(!plantaOpen)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-sidebar-accent text-sidebar-accent-foreground text-sm hover:bg-sidebar-muted transition-colors"
+              className="flex w-full items-center gap-2 rounded-md bg-sidebar-accent px-3 py-2 text-sm text-sidebar-accent-foreground transition-colors hover:bg-sidebar-muted"
             >
-              <Factory className="w-4 h-4 text-sidebar-primary" />
+              <Factory className="h-4 w-4 text-sidebar-primary" />
               <span className="flex-1 text-left">
                 {selectedPlanta === "ALL" ? "Todas as Plantas" : `${selectedPlanta} – ${PLANTA_LABELS[selectedPlanta]}`}
               </span>
-              <ChevronDown className={cn("w-4 h-4 transition-transform", plantaOpen && "rotate-180")} />
+              <ChevronDown className={cn("h-4 w-4 transition-transform", plantaOpen && "rotate-180")} />
             </button>
             {plantaOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-sidebar-accent border border-sidebar-border rounded-md overflow-hidden z-10 shadow-lg">
+              <div className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-md border border-sidebar-border bg-sidebar-accent shadow-lg">
                 {(["ALL", "MAO", "BEL", "AGR"] as const).map((p) => (
                   <button
                     key={p}
-                    onClick={() => { setSelectedPlanta(p); setPlantaOpen(false); }}
+                    onClick={() => {
+                      setSelectedPlanta(p);
+                      setPlantaOpen(false);
+                    }}
                     className={cn(
-                      "w-full text-left px-3 py-2 text-sm hover:bg-sidebar-muted transition-colors",
-                      selectedPlanta === p ? "text-sidebar-primary font-medium" : "text-sidebar-foreground"
+                      "w-full px-3 py-2 text-left text-sm transition-colors hover:bg-sidebar-muted",
+                      selectedPlanta === p ? "font-medium text-sidebar-primary" : "text-sidebar-foreground",
                     )}
                   >
                     {p === "ALL" ? "Todas as Plantas" : `${p} – ${PLANTA_LABELS[p as Planta]}`}
@@ -164,37 +218,40 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           </div>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.children && item.children.some((c) => location.pathname === c.path || location.pathname.startsWith(c.path + "/")));
+            const isActive = isPathActive(item.path) || (item.children?.some((c) => isPathActive(c.path)) ?? false);
             return (
               <div key={item.path}>
                 <Link
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
+                  onMouseEnter={() => handlePrefetch(item.path)}
+                  onFocus={() => handlePrefetch(item.path)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
+                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
                     isActive
-                      ? "bg-sidebar-primary/15 text-sidebar-primary font-medium"
-                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                      ? "bg-sidebar-primary/15 font-medium text-sidebar-primary"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                   )}
                 >
-                  <item.icon className="w-4 h-4" />
+                  <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
                 {item.children && isActive && (
                   <div className="ml-7 mt-0.5 space-y-0.5">
                     {item.children.map((child) => (
                       <Link
-                        key={child.path}
+                        key={`${item.path}-${child.path}-${child.label}`}
                         to={child.path}
                         onClick={() => setSidebarOpen(false)}
+                        onMouseEnter={() => handlePrefetch(child.path)}
+                        onFocus={() => handlePrefetch(child.path)}
                         className={cn(
-                          "block px-3 py-1.5 rounded-md text-xs transition-colors",
-                          location.pathname === child.path || location.pathname.startsWith(child.path + "/")
-                            ? "text-sidebar-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground/80"
+                          "block rounded-md px-3 py-1.5 text-xs transition-colors",
+                          isPathActive(child.path)
+                            ? "font-medium text-sidebar-primary"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground/80",
                         )}
                       >
                         {child.label}
@@ -207,42 +264,47 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           })}
         </nav>
 
-        {/* User */}
-        <div className="p-3 border-t border-sidebar-border">
+        <div className="sticky bottom-0 shrink-0 border-t border-sidebar-border bg-sidebar px-3 pb-5 pt-3">
           <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary text-xs font-bold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-primary/20 text-xs font-bold text-sidebar-primary">
               {initials}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-sidebar-foreground">{userName}</p>
               <p className="text-xs text-sidebar-foreground/50">{perfil} — {PAPEL_LABELS[papel]}</p>
             </div>
-            <LogOut className="w-4 h-4 text-sidebar-foreground/40 hover:text-sidebar-foreground cursor-pointer" onClick={() => navigate("/login")} />
+            <LogOut
+              className="h-4 w-4 cursor-pointer text-sidebar-foreground/40 hover:text-sidebar-foreground"
+              onClick={() => {
+                clearAuthSession();
+                navigate("/login");
+              }}
+            />
           </div>
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="h-16 border-b border-border bg-card flex items-center px-4 lg:px-6 gap-4 shrink-0">
+      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden lg:ml-64">
+        <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-card px-4 lg:px-6">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground lg:hidden"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1" />
-          <span className="text-xs text-muted-foreground font-mono">
+          <span className="hidden text-xs text-muted-foreground md:inline">Ctrl+K para buscar</span>
+          <span className="font-mono text-xs text-muted-foreground">
             {selectedPlanta === "ALL" ? "MULTI-PLANTA" : selectedPlanta}
           </span>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6">
+        <main id="main-content" className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
         </main>
       </div>
+
+      <GlobalCommandPalette />
     </div>
   );
 };

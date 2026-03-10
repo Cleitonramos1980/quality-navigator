@@ -1,8 +1,8 @@
-// Workflow governance — controle de transição de status por papel operacional
+﻿// Workflow governance — controle de transição de status por papel operacional
 import type { OSStatus, OrdemServico, RequisicaoAssistencia } from "@/types/assistencia";
 import { getCurrentPerfil, hasPermission, type PerfilNome } from "@/lib/rbac";
 
-// ── Papéis operacionais ──
+// Papéis operacionais
 export type PapelOperacional = "SAC" | "ASSISTENCIA" | "INSPECAO" | "REPARO" | "ALMOX_CD" | "VALIDACAO" | "DIRETORIA" | "ADMIN";
 
 export const PAPEL_LABELS: Record<PapelOperacional, string> = {
@@ -29,7 +29,7 @@ export const PERFIL_TO_PAPEL: Record<PerfilNome, PapelOperacional> = {
   VALIDACAO: "VALIDACAO",
 };
 
-// ── Responsável por status ──
+// Responsável por status
 export const STATUS_RESPONSAVEL: Record<OSStatus, PapelOperacional> = {
   ABERTA: "SAC",
   AGUARDANDO_RECEBIMENTO: "ASSISTENCIA",
@@ -58,7 +58,7 @@ export const FILA_POR_PAPEL: Record<PapelOperacional, OSStatus[]> = {
 // Papéis que podem CRIAR OS
 export const PAPEIS_PODEM_CRIAR_OS: PapelOperacional[] = ["SAC", "ADMIN"];
 
-// ── Gates: campos obrigatórios por transição ──
+// Gates: campos obrigatórios por transição
 export interface GateResult {
   ok: boolean;
   missing: string[];
@@ -117,7 +117,7 @@ export function validateGate(
   return { ok: missing.length === 0, missing };
 }
 
-// ── Função central: pode transicionar? ──
+// Função central: pode transicionar?
 // DEPRECATED: Use dispatchOSEvent() from osStateMachine.ts instead.
 // Kept for backward compatibility.
 export interface TransitionResult {
@@ -202,12 +202,13 @@ export function getDefaultRouteForPerfil(perfil: PerfilNome): string {
   }
 }
 
-// ── Visibilidade de módulos no menu ──
-export type NavModulo = "dashboard" | "sac" | "assistencia" | "qualidade" | "admin";
+// Visibilidade de módulos no menu
+export type NavModulo = "dashboard" | "sac" | "qualidade" | "assistencia" | "admin";
 
 const MODULO_PAPEIS: Record<NavModulo, PapelOperacional[]> = {
   dashboard: ["SAC", "ASSISTENCIA", "INSPECAO", "REPARO", "ALMOX_CD", "VALIDACAO", "DIRETORIA", "ADMIN"],
   sac: ["SAC", "ADMIN", "DIRETORIA"],
+  // Mantém acesso existente de perfis operacionais a NC/CAPA/Auditorias, agora agrupados em "Qualidade"
   qualidade: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
   assistencia: ["ASSISTENCIA", "INSPECAO", "REPARO", "VALIDACAO", "ALMOX_CD", "ADMIN", "DIRETORIA"],
   admin: ["ADMIN"],
@@ -218,6 +219,18 @@ export function canSeeModulo(modulo: NavModulo): boolean {
   return MODULO_PAPEIS[modulo].includes(papel);
 }
 
+// Submenu visibility for SAC children
+export function canSeeSacSubmenu(_path: string): boolean {
+  const papel = getCurrentPapel();
+  return ["SAC", "ADMIN", "DIRETORIA"].includes(papel);
+}
+
+// Submenu visibility for Qualidade children
+export function canSeeQualidadeSubmenu(_path: string): boolean {
+  const papel = getCurrentPapel();
+  return MODULO_PAPEIS.qualidade.includes(papel);
+}
+
 // Submenu visibility for assistencia children
 export function canSeeAssistSubmenu(path: string): boolean {
   const papel = getCurrentPapel();
@@ -225,7 +238,13 @@ export function canSeeAssistSubmenu(path: string): boolean {
 
   if (path === "/assistencia/dashboard") return hasPermission("ASSIST_DASH_VIEW");
   if (path === "/assistencia/os") return hasPermission("ASSIST_OS_VIEW");
+  if (path === "/assistencia/os/nova") return hasPermission("ASSIST_OS_CREATE");
   if (path === "/assistencia/requisicoes") return hasPermission("ASSIST_REQ_VIEW");
   if (path === "/assistencia/estoque") return hasPermission("ASSIST_ESTOQUE_VIEW");
+  if (path === "/assistencia/consumo") {
+    return hasPermission("ASSIST_CONSUMO_VIEW") || hasPermission("ASSIST_CONSUMO_CREATE");
+  }
   return true;
 }
+
+

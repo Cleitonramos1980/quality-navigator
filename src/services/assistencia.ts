@@ -1,121 +1,123 @@
-// Mock service — preparado para integração futura com Oracle/WinThor
+﻿import { apiGet, apiPost, apiPut } from "@/services/api";
 import { OrdemServico, RequisicaoAssistencia, ConsumoMaterial, OSStatus, ReqAssistStatus } from "@/types/assistencia";
-import { mockOrdensServico, mockReqAssistencia, mockConsumos, mockEstoque, EstoqueItem } from "@/data/mockAssistenciaData";
 
-// ── OS ──
+export interface EstoqueItem {
+  codMaterial: string;
+  descricao: string;
+  un: string;
+  categoria: string;
+  estoqueMAO: number;
+  estoqueBEL: number;
+  estoqueAGR: number;
+}
+
+function toOptionalString(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  const normalized = String(value).trim();
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function toFiniteNumber(value: unknown, fallback: number): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const normalized = Number(value.replace(",", "."));
+    if (Number.isFinite(normalized)) return normalized;
+  }
+  return fallback;
+}
+
+function normalizeOSPayload(os: Omit<OrdemServico, "id">): Omit<OrdemServico, "id"> {
+  return {
+    ...os,
+    codcli: String(os.codcli || "").trim(),
+    clienteNome: String(os.clienteNome || "").trim(),
+    numPedido: toOptionalString(os.numPedido),
+    nfVenda: toOptionalString(os.nfVenda),
+    codprod: toOptionalString(os.codprod),
+    tecnicoResponsavel: String(os.tecnicoResponsavel || "").trim(),
+    descricaoProblema: String(os.descricaoProblema || "").trim(),
+  };
+}
+
+function normalizeReqPayload(req: Omit<RequisicaoAssistencia, "id">): Omit<RequisicaoAssistencia, "id"> {
+  return {
+    ...req,
+    observacao: toOptionalString(req.observacao),
+    itens: req.itens.map((item) => ({
+      ...item,
+      codMaterial: String(item.codMaterial || "").trim(),
+      descricao: String(item.descricao || "").trim(),
+      un: String(item.un || "").trim(),
+      observacao: toOptionalString(item.observacao),
+      observacaoAtendente: toOptionalString(item.observacaoAtendente),
+      qtdSolicitada: Math.max(1, toFiniteNumber(item.qtdSolicitada, 1)),
+      qtdAtendida: item.qtdAtendida == null ? undefined : Math.max(0, toFiniteNumber(item.qtdAtendida, 0)),
+      qtdRecebida: item.qtdRecebida == null ? undefined : Math.max(0, toFiniteNumber(item.qtdRecebida, 0)),
+    })),
+  };
+}
+
 export async function listarOS(): Promise<OrdemServico[]> {
-  return [...mockOrdensServico];
+  return apiGet<OrdemServico[]>("/assistencia/os");
 }
 
 export async function buscarOS(id: string): Promise<OrdemServico | undefined> {
-  return mockOrdensServico.find((os) => os.id === id);
+  return apiGet<OrdemServico | null>(`/assistencia/os/${id}`).then((r) => r || undefined);
 }
 
 export async function criarOS(os: Omit<OrdemServico, "id">): Promise<OrdemServico> {
-  const nova: OrdemServico = { ...os, id: `OS-${String(mockOrdensServico.length + 1).padStart(3, "0")}` };
-  mockOrdensServico.push(nova);
-  return nova;
+  return apiPost<OrdemServico>("/assistencia/os", normalizeOSPayload(os));
 }
 
 export async function atualizarStatusOS(id: string, status: OSStatus): Promise<void> {
-  const os = mockOrdensServico.find((o) => o.id === id);
-  if (os) os.status = status;
+  await apiPut(`/assistencia/os/${id}/status`, { status });
 }
 
-// ── Requisição Assistência ──
 export async function listarReqAssistencia(): Promise<RequisicaoAssistencia[]> {
-  return [...mockReqAssistencia];
+  return apiGet<RequisicaoAssistencia[]>("/assistencia/requisicoes");
 }
 
 export async function buscarReqAssistencia(id: string): Promise<RequisicaoAssistencia | undefined> {
-  return mockReqAssistencia.find((r) => r.id === id);
+  return apiGet<RequisicaoAssistencia | null>(`/assistencia/requisicoes/${id}`).then((r) => r || undefined);
 }
 
 export async function criarReqAssistencia(req: Omit<RequisicaoAssistencia, "id">): Promise<RequisicaoAssistencia> {
-  // Sanitize item quantities
-  const itensSanitizados = req.itens.map((item) => ({
-    ...item,
-    qtdSolicitada: Math.max(1, Math.round(Number(item.qtdSolicitada) || 1)),
-    qtdAtendida: item.qtdAtendida != null ? Math.max(0, Math.round(Number(item.qtdAtendida) || 0)) : undefined,
-    qtdRecebida: (item as any).qtdRecebida != null ? Math.max(0, Math.round(Number((item as any).qtdRecebida) || 0)) : undefined,
-  }));
-  const nova: RequisicaoAssistencia = { ...req, itens: itensSanitizados, id: `RA-${String(mockReqAssistencia.length + 1).padStart(3, "0")}` };
-  mockReqAssistencia.push(nova);
-  return nova;
+  return apiPost<RequisicaoAssistencia>("/assistencia/requisicoes", normalizeReqPayload(req));
 }
 
 export async function atualizarStatusReq(id: string, status: ReqAssistStatus): Promise<void> {
-  const req = mockReqAssistencia.find((r) => r.id === id);
-  if (req) {
-    req.status = status;
-    req.atualizadoAt = new Date().toISOString().slice(0, 10);
-  }
+  await apiPut(`/assistencia/requisicoes/${id}/status`, { status });
 }
 
-// ── Consumo ──
 export async function listarConsumos(): Promise<ConsumoMaterial[]> {
-  return [...mockConsumos];
+  return apiGet<ConsumoMaterial[]>("/assistencia/consumos");
 }
 
 export async function listarConsumosPorOS(osId: string): Promise<ConsumoMaterial[]> {
-  return mockConsumos.filter((c) => c.osId === osId);
+  return apiGet<ConsumoMaterial[]>(`/assistencia/consumos/${osId}`);
 }
 
 export async function registrarConsumo(consumo: Omit<ConsumoMaterial, "id">): Promise<ConsumoMaterial> {
-  const novo: ConsumoMaterial = { ...consumo, id: `CON-${String(mockConsumos.length + 1).padStart(3, "0")}` };
-  mockConsumos.push(novo);
-  return novo;
+  return apiPost<ConsumoMaterial>("/assistencia/consumos", consumo);
 }
 
-// ── Recebimento ──
 export async function receberRequisicao(id: string, itensRecebidos: { codMaterial: string; qtdRecebida: number }[], observacao?: string): Promise<void> {
-  const req = mockReqAssistencia.find((r) => r.id === id);
-  if (req) {
-    req.status = "RECEBIDA_ASSISTENCIA";
-    req.atualizadoAt = new Date().toISOString().slice(0, 10);
-    itensRecebidos.forEach((ir) => {
-      const item = req.itens.find((i) => i.codMaterial === ir.codMaterial);
-      if (item) {
-        item.qtdAtendida = ir.qtdRecebida;
-        item.situacao = ir.qtdRecebida >= item.qtdSolicitada ? "ATENDIDO" : ir.qtdRecebida > 0 ? "PARCIAL" : "INDISPONIVEL";
-      }
-    });
-  }
+  await apiPost(`/assistencia/requisicoes/${id}/receber`, { itensRecebidos, observacao: toOptionalString(observacao) });
 }
 
-// ── Estoque ──
 export async function listarEstoque(): Promise<EstoqueItem[]> {
-  return [...mockEstoque];
+  return apiGet<EstoqueItem[]>("/assistencia/estoque");
 }
 
-// ── Dashboard Counters ──
 export async function getDashboardCounters() {
-  const osList = mockOrdensServico;
-  const reqList = mockReqAssistencia;
-
-  return {
-    osAbertas: osList.filter((o) => !["CONCLUIDA", "ENCERRADA", "CANCELADA"].includes(o.status)).length,
-    osConcluidas: osList.filter((o) => o.status === "CONCLUIDA" || o.status === "ENCERRADA").length,
-    osCanceladas: osList.filter((o) => o.status === "CANCELADA").length,
-    reqPendentes: reqList.filter((r) => ["PENDENTE", "EM_SEPARACAO", "EM_TRANSFERENCIA"].includes(r.status)).length,
-    reqAtendidas: reqList.filter((r) => r.status === "ATENDIDA").length,
-    consumoTotal: mockConsumos.length,
-    osPorStatus: {
-      ABERTA: osList.filter((o) => o.status === "ABERTA").length,
-      AGUARDANDO_RECEBIMENTO: osList.filter((o) => o.status === "AGUARDANDO_RECEBIMENTO").length,
-      RECEBIDO: osList.filter((o) => o.status === "RECEBIDO").length,
-      EM_INSPECAO: osList.filter((o) => o.status === "EM_INSPECAO").length,
-      AGUARDANDO_PECAS: osList.filter((o) => o.status === "AGUARDANDO_PECAS").length,
-      EM_REPARO: osList.filter((o) => o.status === "EM_REPARO").length,
-      AGUARDANDO_VALIDACAO: osList.filter((o) => o.status === "AGUARDANDO_VALIDACAO").length,
-      CONCLUIDA: osList.filter((o) => o.status === "CONCLUIDA").length,
-      ENCERRADA: osList.filter((o) => o.status === "ENCERRADA").length,
-      CANCELADA: osList.filter((o) => o.status === "CANCELADA").length,
-    },
-    osPorPlanta: {
-      MAO: osList.filter((o) => o.planta === "MAO").length,
-      BEL: osList.filter((o) => o.planta === "BEL").length,
-      AGR: osList.filter((o) => o.planta === "AGR").length,
-    },
-  };
+  return apiGet<{
+    osAbertas: number;
+    osConcluidas: number;
+    osCanceladas: number;
+    reqPendentes: number;
+    reqAtendidas: number;
+    consumoTotal: number;
+    osPorStatus: Record<string, number>;
+    osPorPlanta: Record<string, number>;
+  }>("/assistencia/dashboard");
 }

@@ -1,32 +1,40 @@
-import { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { ReactNode, useEffect, useRef } from "react";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import { ShieldAlert, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { hasPermission, getCurrentPerfil } from "@/lib/rbac";
+import { hasPermission, getCurrentPerfil, isAuthenticated } from "@/lib/rbac";
 import { getCurrentPapel, type PapelOperacional } from "@/lib/workflowOs";
 import { registrarAuditoria } from "@/services/auditoria";
 import type { AssistPermission } from "@/types/assistencia";
-import { useEffect, useRef } from "react";
+
+interface RequireSessionProps {
+  children: ReactNode;
+}
+
+export function RequireSession({ children }: RequireSessionProps) {
+  const location = useLocation();
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+  return <>{children}</>;
+}
 
 interface RequirePermissionProps {
   perm: AssistPermission | "SAC_VIEW" | "ADMIN_VIEW";
   children: ReactNode;
 }
 
-const sacPerms: AssistPermission[] = [];
-const adminPerms: AssistPermission[] = [];
-
 function checkPerm(perm: string): boolean {
   const perfil = getCurrentPerfil();
-  if ((perfil as string) === "ADMIN") return true;
+  if (perfil === "ADMIN") return true;
 
   if (perm === "SAC_VIEW") {
     const papel = getCurrentPapel();
     return ["SAC", "ADMIN", "DIRETORIA"].includes(papel);
   }
   if (perm === "ADMIN_VIEW") {
-    return perfil === "ADMIN";
+    return false;
   }
   return hasPermission(perm as AssistPermission);
 }
@@ -42,9 +50,9 @@ function AccessDeniedCard({ perm }: { perm: string }) {
           </div>
           <h2 className="text-xl font-bold text-foreground">Acesso Negado</h2>
           <p className="text-sm text-muted-foreground">
-            Você não possui permissão para acessar esta página.
+            Voce nao possui permissao para acessar esta pagina.
           </p>
-          <p className="text-xs text-muted-foreground font-mono">Permissão necessária: {perm}</p>
+          <p className="text-xs text-muted-foreground font-mono">Permissao necessaria: {perm}</p>
           <Button variant="outline" onClick={() => navigate(-1 as any)} className="gap-2">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </Button>
@@ -56,7 +64,6 @@ function AccessDeniedCard({ perm }: { perm: string }) {
 
 export function RequirePermission({ perm, children }: RequirePermissionProps) {
   const logged = useRef(false);
-
   const allowed = checkPerm(perm);
 
   useEffect(() => {
@@ -66,7 +73,7 @@ export function RequirePermission({ perm, children }: RequirePermissionProps) {
         "ACESSO_NEGADO",
         "ROTA",
         window.location.pathname,
-        `Permissão: ${perm}. Perfil: ${getCurrentPerfil()}. Papel: ${getCurrentPapel()}`
+        `Permissao: ${perm}. Perfil: ${getCurrentPerfil()}. Papel: ${getCurrentPapel()}`,
       );
     }
   }, [allowed, perm]);
@@ -96,10 +103,10 @@ export function RequireRole({ roles, children }: RequireRoleProps) {
         "ACESSO_NEGADO",
         "ROTA",
         window.location.pathname,
-        `Papéis requeridos: ${roles.join(", ")}. Perfil: ${perfil}. Papel: ${papel}`
+        `Papeis requeridos: ${roles.join(", ")}. Perfil: ${perfil}. Papel: ${papel}`,
       );
     }
-  }, [allowed]);
+  }, [allowed, papel, perfil, roles]);
 
   if (!allowed) {
     return <AccessDeniedCard perm={`Papel: ${roles.join(" ou ")}`} />;

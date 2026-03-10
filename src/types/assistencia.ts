@@ -1,6 +1,6 @@
-import { Planta } from "./sgq";
+﻿import { Planta } from "./sgq";
 
-// ── Ordem de Serviço ──
+// â”€â”€ Ordem de Serviço â”€â”€
 
 export type OSStatus =
   | "ABERTA"
@@ -77,6 +77,7 @@ export interface OrdemServico {
   clienteNome: string;
   numPedido?: string;
   nfVenda?: string;
+  codprod?: string;
   planta: Planta;
   tipoOs: OSTipo;
   status: OSStatus;
@@ -95,7 +96,7 @@ export interface OrdemServico {
   mensagemEncerramento?: string;
 }
 
-// ── Requisição Assistência ──
+// â”€â”€ Requisição Assistência â”€â”€
 
 export type ReqAssistStatus =
   | "RASCUNHO"
@@ -135,7 +136,10 @@ export interface ItemReqAssist {
   un: string;
   qtdSolicitada: number;
   qtdAtendida?: number;
+  qtdRecebida?: number;
   situacao?: "ATENDIDO" | "PARCIAL" | "INDISPONIVEL";
+  observacao?: string;
+  observacaoAtendente?: string;
 }
 
 export interface RequisicaoAssistencia {
@@ -144,12 +148,14 @@ export interface RequisicaoAssistencia {
   cdResponsavel: Planta;
   plantaDestino: Planta;
   status: ReqAssistStatus;
+  prioridade?: OSPrioridade;
+  observacao?: string;
   itens: ItemReqAssist[];
   criadoAt: string;
   atualizadoAt: string;
 }
 
-// ── Consumo ──
+// â”€â”€ Consumo â”€â”€
 
 export interface ConsumoMaterial {
   id: string;
@@ -161,9 +167,20 @@ export interface ConsumoMaterial {
   qtdConsumida: number;
   tecnico: string;
   dataConsumo: string;
+  observacao?: string;
 }
 
-// ── RBAC ──
+export interface EstoqueItem {
+  codMaterial: string;
+  descricao: string;
+  un: string;
+  categoria: string;
+  estoqueMAO: number;
+  estoqueBEL: number;
+  estoqueAGR: number;
+}
+
+// â”€â”€ RBAC â”€â”€
 
 export const ASSIST_PERMISSIONS = [
   "ASSIST_OS_VIEW",
@@ -189,7 +206,7 @@ export const ASSIST_PERMISSIONS = [
 
 export type AssistPermission = typeof ASSIST_PERMISSIONS[number];
 
-// ── Log de Transição de OS ──
+// â”€â”€ Log de Transição de OS â”€â”€
 
 export interface OSTransitionLog {
   id: string;
@@ -204,3 +221,6 @@ export interface OSTransitionLog {
   motivo?: string;
   detalhes?: string; // JSON string
 }
+
+
+

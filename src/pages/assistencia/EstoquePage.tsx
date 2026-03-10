@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listarEstoque } from "@/services/assistencia";
-import type { EstoqueItem } from "@/data/mockAssistenciaData";
+import type { EstoqueItem } from "@/types/assistencia";
 
 const EstoquePage = () => {
   const navigate = useNavigate();
@@ -122,3 +122,6 @@ const EstoquePage = () => {
 };
 
 export default EstoquePage;
+
+
+

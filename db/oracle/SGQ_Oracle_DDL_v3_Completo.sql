@@ -1,0 +1,3 @@
+-- SGQ_Oracle_DDL_v3_Completo.sql
+-- Arquivo placeholder no workspace.
+-- Substituir pelo conteúdo oficial homologado antes de aplicar em produção.

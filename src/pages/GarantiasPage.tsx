@@ -1,17 +1,22 @@
-import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import StatusBadge from "@/components/StatusBadge";
-import { mockGarantias } from "@/data/mockData";
-import { PLANTA_LABELS } from "@/types/sgq";
+import { getGarantias } from "@/services/garantias";
+import type { GarantiaCaso } from "@/types/sgq";
 
 const GarantiasPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [garantias, setGarantias] = useState<GarantiaCaso[]>([]);
 
-  const filtered = mockGarantias.filter(
+  useEffect(() => {
+    getGarantias().then(setGarantias);
+  }, []);
+
+  const filtered = garantias.filter(
     (g) =>
       g.clienteNome.toLowerCase().includes(search.toLowerCase()) ||
       g.id.toLowerCase().includes(search.toLowerCase()) ||
@@ -71,13 +76,9 @@ const GarantiasPage = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3 capitalize">{g.defeito}</td>
-                  <td className="px-4 py-3">
-                    <span className="font-mono text-xs">{g.plantaResp}</span>
-                  </td>
+                  <td className="px-4 py-3"><span className="font-mono text-xs">{g.plantaResp}</span></td>
                   <td className="px-4 py-3"><StatusBadge status={g.status} /></td>
-                  <td className="px-4 py-3 font-mono text-xs">
-                    {g.custoEstimado ? `R$ ${g.custoEstimado.toFixed(2)}` : "—"}
-                  </td>
+                  <td className="px-4 py-3 font-mono text-xs">{g.custoEstimado ? `R$ ${g.custoEstimado.toFixed(2)}` : "-"}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{g.abertoAt}</td>
                 </tr>
               ))}
@@ -90,3 +91,5 @@ const GarantiasPage = () => {
 };
 
 export default GarantiasPage;
+
+
