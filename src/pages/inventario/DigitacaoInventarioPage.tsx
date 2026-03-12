@@ -200,6 +200,12 @@ const DigitacaoInventarioPage = () => {
                 <span className="font-medium font-mono text-warning">{recontagemState.recontagemOrigem}</span>
               </div>
             )}
+            {isRecontagem && recontagemState.solicitadoPor && (
+              <div>
+                <span className="text-muted-foreground text-xs block">Solicitado por</span>
+                <span className="font-medium text-primary">{recontagemState.solicitadoPor}</span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
