@@ -121,6 +121,14 @@ const App = () => (
           <Route path="/qualidade/auditorias-camadas" element={<AppLayout><Lazy><AuditoriasCamadasPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/core-tools" element={<AppLayout><Lazy><CoreToolsFornecedoresPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/iso-readiness" element={<AppLayout><Lazy><IsoReadinessPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario" element={<AppLayout><Lazy><InventarioDashboardPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/agenda" element={<AppLayout><Lazy><AgendaInventarioPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/contagens" element={<AppLayout><Lazy><ContagensPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/digitacao/:id" element={<AppLayout><Lazy><DigitacaoInventarioPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/validacao/:id" element={<AppLayout><Lazy><ValidacaoInventarioPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/divergencia" element={<AppLayout><Lazy><HistoricoDivergenciaPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/relatorios" element={<AppLayout><Lazy><RelatoriosInventarioPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/configuracao" element={<AppLayout><Lazy><ConfiguracaoInventarioPage /></Lazy></AppLayout>} />
 
           <Route path="/sac/dashboard" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><Lazy><SACDashboardPage /></Lazy></RequireRole></AppLayout>} />
           <Route path="/sac/atendimentos" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><Lazy><AtendimentosPage /></Lazy></RequireRole></AppLayout>} />
