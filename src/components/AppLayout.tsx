@@ -74,6 +74,11 @@ const allNavItems: NavItem[] = [
       { path: "/qualidade/fornecedores", label: "Fornecedores / SCAR" },
       { path: "/qualidade/core-tools", label: "Core Tools Fornecedor" },
       { path: "/qualidade/iso-readiness", label: "ISO 9001 Readiness" },
+    ],
+  },
+  {
+    path: "/qualidade/inventario", label: "Inventário", icon: PackageSearch, modulo: "inventario",
+    children: [
       { path: "/qualidade/inventario", label: "Dashboard de Inventário" },
       { path: "/qualidade/inventario/novo-plano", label: "Gerar Inventário" },
       { path: "/qualidade/inventario/digitacao", label: "Digitação de Inventário" },
