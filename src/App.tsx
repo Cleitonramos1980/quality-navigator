@@ -75,6 +75,7 @@ const VisitantesListPage = lazy(() => import("@/pages/visitantes/VisitantesListP
 const NovaPreAutorizacaoPage = lazy(() => import("@/pages/visitantes/NovaPreAutorizacaoPage"));
 const VeiculosVisitantesPage = lazy(() => import("@/pages/veiculos-visitantes/VeiculosVisitantesPage"));
 const FrotaPage = lazy(() => import("@/pages/frota/FrotaPage"));
+const VeiculoDetalhePage = lazy(() => import("@/pages/frota/VeiculoDetalhePage"));
 const TerceirosPage = lazy(() => import("@/pages/terceiros/TerceirosPage"));
 const PatioPage = lazy(() => import("@/pages/patio/PatioPage"));
 const MonitoramentoPage = lazy(() => import("@/pages/monitoramento/MonitoramentoPage"));
