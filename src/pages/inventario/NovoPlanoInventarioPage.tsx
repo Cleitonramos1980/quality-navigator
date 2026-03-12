@@ -121,8 +121,8 @@ const NovoPlanoInventarioPage = () => {
       {
         id: `PL-${Date.now()}`,
         lojaIds: lojasSelecionadas.length > 0 ? [...lojasSelecionadas] : [mockLojas[0].id],
-        departamentoId: mockDepartamentos[0].id,
-        frequencia: "DIARIA",
+        departamentoIds: [mockDepartamentos[0].id],
+        frequencias: ["DIARIA" as FrequenciaInventario],
         quantidadeItens: 10,
       },
     ]);
