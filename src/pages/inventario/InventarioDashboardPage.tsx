@@ -45,6 +45,9 @@ const InventarioDashboardPage = () => {
           <p className="text-sm text-muted-foreground">Acompanhamento de aderência e qualidade das contagens</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button size="sm" onClick={() => navigate("/qualidade/inventario/novo-plano")}>
+            <Plus className="h-4 w-4 mr-1" /> Novo Plano
+          </Button>
           <Select value={periodo} onValueChange={setPeriodo}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
