@@ -16,8 +16,8 @@ import { toast } from "@/hooks/use-toast";
 interface PlanoLinha {
   id: string;
   lojaIds: string[];
-  departamentoId: string;
-  frequencia: FrequenciaInventario;
+  departamentoIds: string[];
+  frequencias: FrequenciaInventario[];
   quantidadeItens: number;
 }
 
