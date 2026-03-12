@@ -127,8 +127,21 @@ const NovoPlanoInventarioPage = () => {
 
       {/* Seleção de lojas */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium">Lojas Participantes</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (lojasSelecionadas.length === mockLojas.length) {
+                setLojasSelecionadas([]);
+              } else {
+                setLojasSelecionadas(mockLojas.map((l) => l.id));
+              }
+            }}
+          >
+            {lojasSelecionadas.length === mockLojas.length ? "Desmarcar Todas" : "Selecionar Todas"}
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
