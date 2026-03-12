@@ -164,6 +164,79 @@ const DigitacaoInventarioPage = () => {
     </div>
   );
 
+  const comparisonData = useMemo(() => {
+    if (!isRecontagem || !contagemOriginal) return [];
+    return contagemOriginal.itens.map((origItem, idx) => {
+      const recItem = itens[idx];
+      const qtdContagem = origItem.quantidadeContada;
+      const qtdRecontagem = recItem?.quantidadeContada ?? null;
+      const diffContagem = qtdContagem !== null ? qtdContagem - origItem.estoqueSistema : null;
+      const diffRecontagem = qtdRecontagem !== null ? qtdRecontagem - origItem.estoqueSistema : null;
+      const variacao = qtdContagem !== null && qtdRecontagem !== null ? qtdRecontagem - qtdContagem : null;
+      return {
+        ...origItem,
+        qtdContagem,
+        qtdRecontagem,
+        diffContagem,
+        diffRecontagem,
+        variacao,
+      };
+    });
+  }, [isRecontagem, contagemOriginal, itens]);
+
+  const renderComparisonTable = () => (
+    <div className="glass-card rounded-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/30">
+              <th className="text-left p-3 font-medium text-muted-foreground">Código</th>
+              <th className="text-left p-3 font-medium text-muted-foreground">Descrição</th>
+              <th className="text-right p-3 font-medium text-muted-foreground">Est. Sistema</th>
+              <th className="text-right p-3 font-medium text-muted-foreground bg-muted/40">Qtd Contada</th>
+              <th className="text-right p-3 font-medium text-muted-foreground bg-warning/10">Qtd Recontagem</th>
+              <th className="text-right p-3 font-medium text-muted-foreground">Dif. Contagem</th>
+              <th className="text-right p-3 font-medium text-muted-foreground">Dif. Recontagem</th>
+              <th className="text-right p-3 font-medium text-muted-foreground bg-primary/10">Variação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparisonData.map((row) => (
+              <tr key={row.id} className="border-b border-border/50 hover:bg-muted/20">
+                <td className="p-3 font-mono text-xs">{row.codigoItem}</td>
+                <td className="p-3">{row.descricao}</td>
+                <td className="p-3 text-right font-medium">{row.estoqueSistema}</td>
+                <td className="p-3 text-right font-medium bg-muted/20">{row.qtdContagem ?? "—"}</td>
+                <td className="p-3 text-right font-medium bg-warning/5">{row.qtdRecontagem ?? "—"}</td>
+                <td className="p-3 text-right font-medium">
+                  {row.diffContagem !== null ? (
+                    <span className={row.diffContagem !== 0 ? "text-destructive font-bold" : "text-success"}>
+                      {row.diffContagem > 0 ? `+${row.diffContagem}` : row.diffContagem}
+                    </span>
+                  ) : "—"}
+                </td>
+                <td className="p-3 text-right font-medium">
+                  {row.diffRecontagem !== null ? (
+                    <span className={row.diffRecontagem !== 0 ? "text-destructive font-bold" : "text-success"}>
+                      {row.diffRecontagem > 0 ? `+${row.diffRecontagem}` : row.diffRecontagem}
+                    </span>
+                  ) : "—"}
+                </td>
+                <td className="p-3 text-right font-medium bg-primary/5">
+                  {row.variacao !== null ? (
+                    <span className={row.variacao !== 0 ? "text-primary font-bold" : "text-success"}>
+                      {row.variacao > 0 ? `+${row.variacao}` : row.variacao}
+                    </span>
+                  ) : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
