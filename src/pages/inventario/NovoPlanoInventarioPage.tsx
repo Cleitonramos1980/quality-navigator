@@ -16,8 +16,8 @@ import { toast } from "@/hooks/use-toast";
 interface PlanoLinha {
   id: string;
   lojaIds: string[];
-  departamentoId: string;
-  frequencia: FrequenciaInventario;
+  departamentoIds: string[];
+  frequencias: FrequenciaInventario[];
   quantidadeItens: number;
 }
 
@@ -100,6 +100,87 @@ const LojaMultiSelect = ({
   );
 };
 
+const MultiSelectPopover = ({
+  selectedIds,
+  options,
+  onChange,
+  placeholder = "Selecione...",
+  allLabel = "Selecionar Todos",
+}: {
+  selectedIds: string[];
+  options: { id: string; label: string }[];
+  onChange: (ids: string[]) => void;
+  placeholder?: string;
+  allLabel?: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const allSelected = options.length > 0 && selectedIds.length === options.length;
+
+  const toggleAll = () => {
+    onChange(allSelected ? [] : options.map((o) => o.id));
+  };
+
+  const toggle = (id: string) => {
+    onChange(
+      selectedIds.includes(id) ? selectedIds.filter((i) => i !== id) : [...selectedIds, id]
+    );
+  };
+
+  const label =
+    selectedIds.length === 0
+      ? placeholder
+      : selectedIds.length === options.length
+        ? allLabel
+        : selectedIds.length === 1
+          ? options.find((o) => o.id === selectedIds[0])?.label ?? "1 item"
+          : `${selectedIds.length} selecionados`;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm ring-offset-background hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          <span className="truncate">{label}</span>
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-1" align="start">
+        <button
+          type="button"
+          onClick={toggleAll}
+          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+        >
+          <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${allSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
+            {allSelected && <Check className="h-3 w-3" />}
+          </div>
+          <span className="font-medium">Selecionar Todos</span>
+        </button>
+        <div className="my-1 h-px bg-border" />
+        <div className="max-h-48 overflow-y-auto">
+          {options.map((opt) => {
+            const checked = selectedIds.includes(opt.id);
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => toggle(opt.id)}
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+              >
+                <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${checked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
+                  {checked && <Check className="h-3 w-3" />}
+                </div>
+                <span className="truncate">{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const NovoPlanoInventarioPage = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
@@ -121,8 +202,8 @@ const NovoPlanoInventarioPage = () => {
       {
         id: `PL-${Date.now()}`,
         lojaIds: lojasSelecionadas.length > 0 ? [...lojasSelecionadas] : [mockLojas[0].id],
-        departamentoId: mockDepartamentos[0].id,
-        frequencia: "DIARIA",
+        departamentoIds: [mockDepartamentos[0].id],
+        frequencias: ["DIARIA" as FrequenciaInventario],
         quantidadeItens: 10,
       },
     ]);
@@ -288,38 +369,22 @@ const NovoPlanoInventarioPage = () => {
                         />
                       </td>
                       <td className="p-2">
-                        <Select
-                          value={linha.departamentoId}
-                          onValueChange={(v) => updateLinha(linha.id, "departamentoId", v)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {mockDepartamentos.map((d) => (
-                              <SelectItem key={d.id} value={d.id}>
-                                {d.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <MultiSelectPopover
+                          selectedIds={linha.departamentoIds}
+                          options={mockDepartamentos.map((d) => ({ id: d.id, label: d.nome }))}
+                          onChange={(ids) => updateLinha(linha.id, "departamentoIds", ids)}
+                          placeholder="Selecione..."
+                          allLabel="Todos os departamentos"
+                        />
                       </td>
                       <td className="p-2">
-                        <Select
-                          value={linha.frequencia}
-                          onValueChange={(v) => updateLinha(linha.id, "frequencia", v)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(Object.keys(FREQUENCIA_LABELS) as FrequenciaInventario[]).map((f) => (
-                              <SelectItem key={f} value={f}>
-                                {FREQUENCIA_LABELS[f]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <MultiSelectPopover
+                          selectedIds={linha.frequencias}
+                          options={(Object.keys(FREQUENCIA_LABELS) as FrequenciaInventario[]).map((f) => ({ id: f, label: FREQUENCIA_LABELS[f] }))}
+                          onChange={(ids) => updateLinha(linha.id, "frequencias", ids)}
+                          placeholder="Selecione..."
+                          allLabel="Todas as frequências"
+                        />
                       </td>
                       <td className="p-2">
                         <Input
