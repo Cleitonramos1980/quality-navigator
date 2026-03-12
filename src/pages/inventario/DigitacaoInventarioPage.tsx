@@ -22,6 +22,7 @@ interface RecontagemState {
   frequencia: "DIARIA" | "SEMANAL" | "QUINZENAL" | "MENSAL";
   responsavel: string;
   supervisor: string;
+  solicitadoPor?: string;
 }
 
 const DigitacaoInventarioPage = () => {
@@ -197,6 +198,12 @@ const DigitacaoInventarioPage = () => {
               <div>
                 <span className="text-muted-foreground text-xs block">Origem</span>
                 <span className="font-medium font-mono text-warning">{recontagemState.recontagemOrigem}</span>
+              </div>
+            )}
+            {isRecontagem && recontagemState.solicitadoPor && (
+              <div>
+                <span className="text-muted-foreground text-xs block">Solicitado por</span>
+                <span className="font-medium text-primary">{recontagemState.solicitadoPor}</span>
               </div>
             )}
           </div>

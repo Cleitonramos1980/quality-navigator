@@ -35,8 +35,9 @@ const ValidacaoInventarioPage = () => {
         departamentoNome: contagem.departamentoNome,
         frequencia: contagem.frequencia,
         responsavel: contagem.responsavel,
-        supervisor: contagem.supervisor,
-      },
+      supervisor: contagem.supervisor,
+      solicitadoPor: contagem.supervisor,
+    },
     });
   };
 
