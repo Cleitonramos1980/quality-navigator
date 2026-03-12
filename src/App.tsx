@@ -145,6 +145,7 @@ const App = () => (
           <Route path="/portaria/presenca" element={<AppLayout><Lazy><PresencaPainelPage /></Lazy></AppLayout>} />
           <Route path="/portaria/:id" element={<AppLayout><Lazy><AcessoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/visitantes" element={<AppLayout><Lazy><VisitantesListPage /></Lazy></AppLayout>} />
+          <Route path="/visitantes/pre-autorizacao" element={<AppLayout><Lazy><NovaPreAutorizacaoPage /></Lazy></AppLayout>} />
           <Route path="/veiculos-visitantes" element={<AppLayout><Lazy><VeiculosVisitantesPage /></Lazy></AppLayout>} />
           <Route path="/frota" element={<AppLayout><Lazy><FrotaPage /></Lazy></AppLayout>} />
           <Route path="/terceiros" element={<AppLayout><Lazy><TerceirosPage /></Lazy></AppLayout>} />
