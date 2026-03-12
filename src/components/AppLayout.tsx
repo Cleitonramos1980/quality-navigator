@@ -15,6 +15,7 @@ import {
   Truck,
   Activity,
   FileText,
+  PackageSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
