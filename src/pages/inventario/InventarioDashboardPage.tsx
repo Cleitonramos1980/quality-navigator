@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, TrendingUp, Store } from "lucide-react";
+import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, TrendingUp, Store, Plus } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
 import { mockContagens, mockLojas } from "@/data/mockInventarioData";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -45,6 +46,9 @@ const InventarioDashboardPage = () => {
           <p className="text-sm text-muted-foreground">Acompanhamento de aderência e qualidade das contagens</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button size="sm" onClick={() => navigate("/qualidade/inventario/novo-plano")}>
+            <Plus className="h-4 w-4 mr-1" /> Novo Plano
+          </Button>
           <Select value={periodo} onValueChange={setPeriodo}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
