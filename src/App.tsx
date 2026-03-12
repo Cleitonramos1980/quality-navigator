@@ -56,6 +56,16 @@ const NovaOSPage = lazy(() => import("@/pages/assistencia/NovaOSPage"));
 const ReceberRequisicaoPage = lazy(() => import("@/pages/assistencia/ReceberRequisicaoPage"));
 const ConsumoOSPage = lazy(() => import("@/pages/assistencia/ConsumoOSPage"));
 
+// Inventory module
+const InventarioDashboardPage = lazy(() => import("@/pages/inventario/InventarioDashboardPage"));
+const AgendaInventarioPage = lazy(() => import("@/pages/inventario/AgendaInventarioPage"));
+const ContagensPage = lazy(() => import("@/pages/inventario/ContagensPage"));
+const DigitacaoInventarioPage = lazy(() => import("@/pages/inventario/DigitacaoInventarioPage"));
+const ValidacaoInventarioPage = lazy(() => import("@/pages/inventario/ValidacaoInventarioPage"));
+const HistoricoDivergenciaPage = lazy(() => import("@/pages/inventario/HistoricoDivergenciaPage"));
+const RelatoriosInventarioPage = lazy(() => import("@/pages/inventario/RelatoriosInventarioPage"));
+const ConfiguracaoInventarioPage = lazy(() => import("@/pages/inventario/ConfiguracaoInventarioPage"));
+
 // Operational modules
 const AcessosListPage = lazy(() => import("@/pages/portaria/AcessosListPage"));
 const AcessoDetalhePage = lazy(() => import("@/pages/portaria/AcessoDetalhePage"));
