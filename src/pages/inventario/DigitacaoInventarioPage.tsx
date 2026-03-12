@@ -22,6 +22,7 @@ interface RecontagemState {
   frequencia: "DIARIA" | "SEMANAL" | "QUINZENAL" | "MENSAL";
   responsavel: string;
   supervisor: string;
+  solicitadoPor?: string;
 }
 
 const DigitacaoInventarioPage = () => {
