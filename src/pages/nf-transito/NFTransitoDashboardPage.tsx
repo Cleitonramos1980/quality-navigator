@@ -48,10 +48,10 @@ const NFTransitoDashboardPage = () => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        <KPICard title="NFs em Trânsito" value={d.nfsEmTransito} icon={<FileText className="w-5 h-5" />} />
-        <KPICard title="Em Risco" value={d.nfsEmRisco} icon={<AlertTriangle className="w-5 h-5" />} subtitle="requerem ação" />
-        <KPICard title="Valor em Trânsito" value={`R$ ${(d.valorEmTransito / 1000).toFixed(0)}k`} icon={<DollarSign className="w-5 h-5" />} />
-        <KPICard title="Valor em Risco" value={`R$ ${(d.valorEmRisco / 1000).toFixed(0)}k`} icon={<DollarSign className="w-5 h-5" />} subtitle={`${d.nfsSemConfirmacao} sem confirmação`} />
+        <KPICard title="NFs em Trânsito" value={d.nfsEmTransito} icon={<FileText className="w-5 h-5" />} onClick={() => setTab("lista")} />
+        <KPICard title="Em Risco" value={d.nfsEmRisco} icon={<AlertTriangle className="w-5 h-5" />} subtitle="requerem ação" onClick={() => setTab("risco")} />
+        <KPICard title="Valor em Trânsito" value={`R$ ${(d.valorEmTransito / 1000).toFixed(0)}k`} icon={<DollarSign className="w-5 h-5" />} onClick={() => setTab("lista")} />
+        <KPICard title="Valor em Risco" value={`R$ ${(d.valorEmRisco / 1000).toFixed(0)}k`} icon={<DollarSign className="w-5 h-5" />} subtitle={`${d.nfsSemConfirmacao} sem confirmação`} onClick={() => setTab("risco")} />
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
