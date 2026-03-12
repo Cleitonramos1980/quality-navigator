@@ -284,22 +284,12 @@ const NovoPlanoInventarioPage = () => {
                 <tbody>
                   {linhas.map((linha) => (
                     <tr key={linha.id} className="border-b border-border/50">
-                      <td className="p-2">
-                        <Select
-                          value={linha.lojaId}
-                          onValueChange={(v) => updateLinha(linha.id, "lojaId", v)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {lojasFiltradas.map((l) => (
-                              <SelectItem key={l.id} value={l.id}>
-                                {l.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <td className="p-2 min-w-[200px]">
+                        <LojaMultiSelect
+                          lojaIds={linha.lojaIds}
+                          lojas={lojasFiltradas}
+                          onChange={(ids) => updateLinha(linha.id, "lojaIds", ids)}
+                        />
                       </td>
                       <td className="p-2">
                         <Select
