@@ -51,12 +51,12 @@ const FrotaPage = () => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KPICard title="Total" value={kpis.total} icon={<Truck className="w-5 h-5" />} />
-        <KPICard title="Disponíveis" value={kpis.disponiveis} icon={<CheckCircle className="w-5 h-5" />} />
-        <KPICard title="Deslocamento" value={kpis.emDeslocamento} icon={<MapPin className="w-5 h-5" />} />
-        <KPICard title="Parada N/P" value={kpis.paradosNP} icon={<AlertTriangle className="w-5 h-5" />} />
-        <KPICard title="Manutenção" value={kpis.emManutencao} icon={<Wrench className="w-5 h-5" />} />
-        <KPICard title="Bloqueados" value={kpis.bloqueados} icon={<Ban className="w-5 h-5" />} />
+        <KPICard title="Total" value={kpis.total} icon={<Truck className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
+        <KPICard title="Disponíveis" value={kpis.disponiveis} icon={<CheckCircle className="w-5 h-5" />} onClick={() => { setTab("veiculos"); setBusca(""); }} />
+        <KPICard title="Deslocamento" value={kpis.emDeslocamento} icon={<MapPin className="w-5 h-5" />} onClick={() => setTab("deslocamentos")} />
+        <KPICard title="Parada N/P" value={kpis.paradosNP} icon={<AlertTriangle className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
+        <KPICard title="Manutenção" value={kpis.emManutencao} icon={<Wrench className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
+        <KPICard title="Bloqueados" value={kpis.bloqueados} icon={<Ban className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
