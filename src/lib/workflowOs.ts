@@ -203,12 +203,13 @@ export function getDefaultRouteForPerfil(perfil: PerfilNome): string {
 }
 
 // Visibilidade de módulos no menu
-export type NavModulo = "dashboard" | "sac" | "qualidade" | "assistencia" | "admin" | "operacional";
+export type NavModulo = "dashboard" | "sac" | "qualidade" | "inventario" | "assistencia" | "admin" | "operacional";
 
 const MODULO_PAPEIS: Record<NavModulo, PapelOperacional[]> = {
   dashboard: ["SAC", "ASSISTENCIA", "INSPECAO", "REPARO", "ALMOX_CD", "VALIDACAO", "DIRETORIA", "ADMIN"],
   sac: ["SAC", "ADMIN", "DIRETORIA"],
   qualidade: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
+  inventario: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
   assistencia: ["ASSISTENCIA", "INSPECAO", "REPARO", "VALIDACAO", "ALMOX_CD", "ADMIN", "DIRETORIA"],
   admin: ["ADMIN"],
   operacional: ["SAC", "ASSISTENCIA", "INSPECAO", "REPARO", "ALMOX_CD", "VALIDACAO", "DIRETORIA", "ADMIN"],
@@ -229,6 +230,12 @@ export function canSeeSacSubmenu(_path: string): boolean {
 export function canSeeQualidadeSubmenu(_path: string): boolean {
   const papel = getCurrentPapel();
   return MODULO_PAPEIS.qualidade.includes(papel);
+}
+
+// Submenu visibility for inventario children
+export function canSeeInventarioSubmenu(_path: string): boolean {
+  const papel = getCurrentPapel();
+  return MODULO_PAPEIS.inventario.includes(papel);
 }
 
 // Submenu visibility for assistencia children
