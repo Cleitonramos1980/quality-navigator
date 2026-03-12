@@ -19,7 +19,7 @@ interface CommandRoute {
   label: string;
   path: string;
   icon: ComponentType<{ className?: string }>;
-  modulo: "dashboard" | "sac" | "qualidade" | "assistencia" | "admin";
+  modulo: "dashboard" | "sac" | "qualidade" | "inventario" | "assistencia" | "admin";
 }
 
 const COMMAND_ROUTES: CommandRoute[] = [

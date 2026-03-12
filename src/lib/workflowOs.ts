@@ -232,6 +232,12 @@ export function canSeeQualidadeSubmenu(_path: string): boolean {
   return MODULO_PAPEIS.qualidade.includes(papel);
 }
 
+// Submenu visibility for inventario children
+export function canSeeInventarioSubmenu(_path: string): boolean {
+  const papel = getCurrentPapel();
+  return MODULO_PAPEIS.inventario.includes(papel);
+}
+
 // Submenu visibility for assistencia children
 export function canSeeAssistSubmenu(path: string): boolean {
   const papel = getCurrentPapel();
