@@ -74,6 +74,7 @@ const allNavItems: NavItem[] = [
       { path: "/qualidade/core-tools", label: "Core Tools Fornecedor" },
       { path: "/qualidade/iso-readiness", label: "ISO 9001 Readiness" },
       { path: "/qualidade/inventario", label: "Acompanhamento de Inventário" },
+      { path: "/qualidade/inventario/digitacao", label: "Digitação de Inventário" },
     ],
   },
   {
