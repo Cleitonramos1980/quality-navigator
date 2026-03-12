@@ -181,6 +181,7 @@ const MultiSelectPopover = ({
   );
 };
 
+const NovoPlanoInventarioPage = () => {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
