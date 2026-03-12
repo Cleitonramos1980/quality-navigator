@@ -126,7 +126,7 @@ const App = () => (
           <Route path="/qualidade/inventario/agenda" element={<AppLayout><Lazy><AgendaInventarioPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/contagens" element={<AppLayout><Lazy><ContagensPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/novo-plano" element={<AppLayout><Lazy><NovoPlanoInventarioPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inventario/digitacao" element={<AppLayout><Lazy><ContagensPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/digitacao" element={<AppLayout><Lazy><DigitacaoInventarioPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/digitacao/:id" element={<AppLayout><Lazy><DigitacaoInventarioPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/validacao/:id" element={<AppLayout><Lazy><ValidacaoInventarioPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/divergencia" element={<AppLayout><Lazy><HistoricoDivergenciaPage /></Lazy></AppLayout>} />
