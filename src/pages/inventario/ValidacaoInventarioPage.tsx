@@ -24,7 +24,20 @@ const ValidacaoInventarioPage = () => {
   };
 
   const handleRecontagem = () => {
-    toast({ title: "Recontagem solicitada", description: "Uma nova contagem será agendada." });
+    toast({ title: "Recontagem solicitada", description: "Uma nova contagem será criada a partir desta." });
+    navigate("/qualidade/inventario/digitacao", {
+      state: {
+        recontagem: true,
+        recontagemOrigem: contagem.numero,
+        lojaId: contagem.lojaId,
+        lojaNome: contagem.lojaNome,
+        departamentoId: contagem.departamentoId,
+        departamentoNome: contagem.departamentoNome,
+        frequencia: contagem.frequencia,
+        responsavel: contagem.responsavel,
+        supervisor: contagem.supervisor,
+      },
+    });
   };
 
   return (
