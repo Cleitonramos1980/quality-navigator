@@ -56,6 +56,19 @@ const NovaOSPage = lazy(() => import("@/pages/assistencia/NovaOSPage"));
 const ReceberRequisicaoPage = lazy(() => import("@/pages/assistencia/ReceberRequisicaoPage"));
 const ConsumoOSPage = lazy(() => import("@/pages/assistencia/ConsumoOSPage"));
 
+// Operational modules
+const AcessosListPage = lazy(() => import("@/pages/portaria/AcessosListPage"));
+const AcessoDetalhePage = lazy(() => import("@/pages/portaria/AcessoDetalhePage"));
+const PresencaPainelPage = lazy(() => import("@/pages/portaria/PresencaPainelPage"));
+const VisitantesListPage = lazy(() => import("@/pages/visitantes/VisitantesListPage"));
+const VeiculosVisitantesPage = lazy(() => import("@/pages/veiculos-visitantes/VeiculosVisitantesPage"));
+const FrotaPage = lazy(() => import("@/pages/frota/FrotaPage"));
+const TerceirosPage = lazy(() => import("@/pages/terceiros/TerceirosPage"));
+const PatioPage = lazy(() => import("@/pages/patio/PatioPage"));
+const MonitoramentoPage = lazy(() => import("@/pages/monitoramento/MonitoramentoPage"));
+const NFTransitoDashboardPage = lazy(() => import("@/pages/nf-transito/NFTransitoDashboardPage"));
+const NFTransitoDetalhePage = lazy(() => import("@/pages/nf-transito/NFTransitoDetalhePage"));
+
 const queryClient = new QueryClient();
 
 const Lazy = ({ children }: { children: ReactNode }) => (
@@ -126,6 +139,18 @@ const App = () => (
           <Route path="/assistencia/requisicoes" element={<AppLayout><RequirePermission perm="ASSIST_REQ_VIEW"><Lazy><ReqAssistListPage /></Lazy></RequirePermission></AppLayout>} />
           <Route path="/assistencia/estoque" element={<AppLayout><RequirePermission perm="ASSIST_ESTOQUE_VIEW"><Lazy><EstoquePage /></Lazy></RequirePermission></AppLayout>} />
 
+          {/* Operational modules */}
+          <Route path="/portaria" element={<AppLayout><Lazy><AcessosListPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/presenca" element={<AppLayout><Lazy><PresencaPainelPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/:id" element={<AppLayout><Lazy><AcessoDetalhePage /></Lazy></AppLayout>} />
+          <Route path="/visitantes" element={<AppLayout><Lazy><VisitantesListPage /></Lazy></AppLayout>} />
+          <Route path="/veiculos-visitantes" element={<AppLayout><Lazy><VeiculosVisitantesPage /></Lazy></AppLayout>} />
+          <Route path="/frota" element={<AppLayout><Lazy><FrotaPage /></Lazy></AppLayout>} />
+          <Route path="/terceiros" element={<AppLayout><Lazy><TerceirosPage /></Lazy></AppLayout>} />
+          <Route path="/patio" element={<AppLayout><Lazy><PatioPage /></Lazy></AppLayout>} />
+          <Route path="/monitoramento" element={<AppLayout><Lazy><MonitoramentoPage /></Lazy></AppLayout>} />
+          <Route path="/nf-transito" element={<AppLayout><Lazy><NFTransitoDashboardPage /></Lazy></AppLayout>} />
+          <Route path="/nf-transito/:id" element={<AppLayout><Lazy><NFTransitoDetalhePage /></Lazy></AppLayout>} />
           <Route
             path="*"
             element={

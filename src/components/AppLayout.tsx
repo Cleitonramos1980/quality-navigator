@@ -11,6 +11,10 @@ import {
   Settings,
   Wrench,
   X,
+  DoorOpen,
+  Truck,
+  Activity,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
@@ -90,6 +94,29 @@ const allNavItems: NavItem[] = [
       { path: "/administracao/log-auditoria", label: "Log de Auditoria" },
       { path: "/administracao/parametros", label: "Parâmetros" },
     ],
+  },
+  {
+    path: "/portaria", label: "Acessos / Portaria", icon: DoorOpen, modulo: "operacional",
+    children: [
+      { path: "/portaria", label: "Lista de Acessos" },
+      { path: "/portaria/presenca", label: "Presença / Evacuação" },
+      { path: "/visitantes", label: "Visitantes" },
+      { path: "/veiculos-visitantes", label: "Veículos Visitantes" },
+    ],
+  },
+  {
+    path: "/frota", label: "Frota", icon: Truck, modulo: "operacional",
+    children: [
+      { path: "/frota", label: "Visão Geral" },
+      { path: "/terceiros", label: "Terceiros / Transportadoras" },
+      { path: "/patio", label: "Pátio e Docas" },
+    ],
+  },
+  {
+    path: "/monitoramento", label: "Monitoramento", icon: Activity, modulo: "operacional",
+  },
+  {
+    path: "/nf-transito", label: "NF em Trânsito", icon: FileText, modulo: "operacional",
   },
 ];
 

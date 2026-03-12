@@ -203,15 +203,15 @@ export function getDefaultRouteForPerfil(perfil: PerfilNome): string {
 }
 
 // Visibilidade de módulos no menu
-export type NavModulo = "dashboard" | "sac" | "qualidade" | "assistencia" | "admin";
+export type NavModulo = "dashboard" | "sac" | "qualidade" | "assistencia" | "admin" | "operacional";
 
 const MODULO_PAPEIS: Record<NavModulo, PapelOperacional[]> = {
   dashboard: ["SAC", "ASSISTENCIA", "INSPECAO", "REPARO", "ALMOX_CD", "VALIDACAO", "DIRETORIA", "ADMIN"],
   sac: ["SAC", "ADMIN", "DIRETORIA"],
-  // Mantém acesso existente de perfis operacionais a NC/CAPA/Auditorias, agora agrupados em "Qualidade"
   qualidade: ["SAC", "ASSISTENCIA", "INSPECAO", "ADMIN", "DIRETORIA"],
   assistencia: ["ASSISTENCIA", "INSPECAO", "REPARO", "VALIDACAO", "ALMOX_CD", "ADMIN", "DIRETORIA"],
   admin: ["ADMIN"],
+  operacional: ["SAC", "ASSISTENCIA", "INSPECAO", "REPARO", "ALMOX_CD", "VALIDACAO", "DIRETORIA", "ADMIN"],
 };
 
 export function canSeeModulo(modulo: NavModulo): boolean {
