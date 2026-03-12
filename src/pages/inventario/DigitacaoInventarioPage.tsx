@@ -213,13 +213,17 @@ const DigitacaoInventarioPage = () => {
       {/* Tabs for Recontagem vs Contagem Original */}
       {isRecontagem && contagemOriginal ? (
         <Tabs defaultValue="recontagem" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-xl">
             <TabsTrigger value="recontagem" className="flex items-center gap-1.5">
               <AlertTriangle className="h-3.5 w-3.5" />
               Recontagem
             </TabsTrigger>
             <TabsTrigger value="contagem-original">
               Contagem Original
+            </TabsTrigger>
+            <TabsTrigger value="analise" className="flex items-center gap-1.5">
+              <GitCompare className="h-3.5 w-3.5" />
+              Análise Comparativa
             </TabsTrigger>
           </TabsList>
 
@@ -239,6 +243,14 @@ const DigitacaoInventarioPage = () => {
               Dados da contagem original <strong>{contagemOriginal.numero}</strong> — somente leitura.
             </div>
             {renderItemsTable(contagemOriginal.itens, false)}
+          </TabsContent>
+
+          <TabsContent value="analise" className="mt-4">
+            <div className="mb-3 p-3 rounded-lg bg-primary/10 border border-primary/20 text-sm flex items-center gap-2 text-primary">
+              <GitCompare className="h-4 w-4 shrink-0" />
+              <span>Comparação entre <strong>{contagemOriginal.numero}</strong> (contagem) e <strong>Recontagem</strong>.</span>
+            </div>
+            {renderComparisonTable()}
           </TabsContent>
         </Tabs>
       ) : (
