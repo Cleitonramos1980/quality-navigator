@@ -56,6 +56,19 @@ const NovaOSPage = lazy(() => import("@/pages/assistencia/NovaOSPage"));
 const ReceberRequisicaoPage = lazy(() => import("@/pages/assistencia/ReceberRequisicaoPage"));
 const ConsumoOSPage = lazy(() => import("@/pages/assistencia/ConsumoOSPage"));
 
+// Operational modules
+const AcessosListPage = lazy(() => import("@/pages/portaria/AcessosListPage"));
+const AcessoDetalhePage = lazy(() => import("@/pages/portaria/AcessoDetalhePage"));
+const PresencaPainelPage = lazy(() => import("@/pages/portaria/PresencaPainelPage"));
+const VisitantesListPage = lazy(() => import("@/pages/visitantes/VisitantesListPage"));
+const VeiculosVisitantesPage = lazy(() => import("@/pages/veiculos-visitantes/VeiculosVisitantesPage"));
+const FrotaPage = lazy(() => import("@/pages/frota/FrotaPage"));
+const TerceirosPage = lazy(() => import("@/pages/terceiros/TerceirosPage"));
+const PatioPage = lazy(() => import("@/pages/patio/PatioPage"));
+const MonitoramentoPage = lazy(() => import("@/pages/monitoramento/MonitoramentoPage"));
+const NFTransitoDashboardPage = lazy(() => import("@/pages/nf-transito/NFTransitoDashboardPage"));
+const NFTransitoDetalhePage = lazy(() => import("@/pages/nf-transito/NFTransitoDetalhePage"));
+
 const queryClient = new QueryClient();
 
 const Lazy = ({ children }: { children: ReactNode }) => (
