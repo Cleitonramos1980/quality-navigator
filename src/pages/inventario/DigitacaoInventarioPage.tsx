@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Save, CheckCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle, AlertTriangle, GitCompare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -164,6 +164,79 @@ const DigitacaoInventarioPage = () => {
     </div>
   );
 
+  const comparisonData = useMemo(() => {
+    if (!isRecontagem || !contagemOriginal) return [];
+    return contagemOriginal.itens.map((origItem, idx) => {
+      const recItem = itens[idx];
+      const qtdContagem = origItem.quantidadeContada;
+      const qtdRecontagem = recItem?.quantidadeContada ?? null;
+      const diffContagem = qtdContagem !== null ? qtdContagem - origItem.estoqueSistema : null;
+      const diffRecontagem = qtdRecontagem !== null ? qtdRecontagem - origItem.estoqueSistema : null;
+      const variacao = qtdContagem !== null && qtdRecontagem !== null ? qtdRecontagem - qtdContagem : null;
+      return {
+        ...origItem,
+        qtdContagem,
+        qtdRecontagem,
+        diffContagem,
+        diffRecontagem,
+        variacao,
+      };
+    });
+  }, [isRecontagem, contagemOriginal, itens]);
+
+  const renderComparisonTable = () => (
+    <div className="glass-card rounded-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/30">
+              <th className="text-left p-3 font-medium text-muted-foreground">Código</th>
+              <th className="text-left p-3 font-medium text-muted-foreground">Descrição</th>
+              <th className="text-right p-3 font-medium text-muted-foreground">Est. Sistema</th>
+              <th className="text-right p-3 font-medium text-muted-foreground bg-muted/40">Qtd Contada</th>
+              <th className="text-right p-3 font-medium text-muted-foreground bg-warning/10">Qtd Recontagem</th>
+              <th className="text-right p-3 font-medium text-muted-foreground">Dif. Contagem</th>
+              <th className="text-right p-3 font-medium text-muted-foreground">Dif. Recontagem</th>
+              <th className="text-right p-3 font-medium text-muted-foreground bg-primary/10">Variação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparisonData.map((row) => (
+              <tr key={row.id} className="border-b border-border/50 hover:bg-muted/20">
+                <td className="p-3 font-mono text-xs">{row.codigoItem}</td>
+                <td className="p-3">{row.descricao}</td>
+                <td className="p-3 text-right font-medium">{row.estoqueSistema}</td>
+                <td className="p-3 text-right font-medium bg-muted/20">{row.qtdContagem ?? "—"}</td>
+                <td className="p-3 text-right font-medium bg-warning/5">{row.qtdRecontagem ?? "—"}</td>
+                <td className="p-3 text-right font-medium">
+                  {row.diffContagem !== null ? (
+                    <span className={row.diffContagem !== 0 ? "text-destructive font-bold" : "text-success"}>
+                      {row.diffContagem > 0 ? `+${row.diffContagem}` : row.diffContagem}
+                    </span>
+                  ) : "—"}
+                </td>
+                <td className="p-3 text-right font-medium">
+                  {row.diffRecontagem !== null ? (
+                    <span className={row.diffRecontagem !== 0 ? "text-destructive font-bold" : "text-success"}>
+                      {row.diffRecontagem > 0 ? `+${row.diffRecontagem}` : row.diffRecontagem}
+                    </span>
+                  ) : "—"}
+                </td>
+                <td className="p-3 text-right font-medium bg-primary/5">
+                  {row.variacao !== null ? (
+                    <span className={row.variacao !== 0 ? "text-primary font-bold" : "text-success"}>
+                      {row.variacao > 0 ? `+${row.variacao}` : row.variacao}
+                    </span>
+                  ) : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
@@ -213,13 +286,17 @@ const DigitacaoInventarioPage = () => {
       {/* Tabs for Recontagem vs Contagem Original */}
       {isRecontagem && contagemOriginal ? (
         <Tabs defaultValue="recontagem" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-xl">
             <TabsTrigger value="recontagem" className="flex items-center gap-1.5">
               <AlertTriangle className="h-3.5 w-3.5" />
               Recontagem
             </TabsTrigger>
             <TabsTrigger value="contagem-original">
               Contagem Original
+            </TabsTrigger>
+            <TabsTrigger value="analise" className="flex items-center gap-1.5">
+              <GitCompare className="h-3.5 w-3.5" />
+              Análise Comparativa
             </TabsTrigger>
           </TabsList>
 
@@ -239,6 +316,14 @@ const DigitacaoInventarioPage = () => {
               Dados da contagem original <strong>{contagemOriginal.numero}</strong> — somente leitura.
             </div>
             {renderItemsTable(contagemOriginal.itens, false)}
+          </TabsContent>
+
+          <TabsContent value="analise" className="mt-4">
+            <div className="mb-3 p-3 rounded-lg bg-primary/10 border border-primary/20 text-sm flex items-center gap-2 text-primary">
+              <GitCompare className="h-4 w-4 shrink-0" />
+              <span>Comparação entre <strong>{contagemOriginal.numero}</strong> (contagem) e <strong>Recontagem</strong>.</span>
+            </div>
+            {renderComparisonTable()}
           </TabsContent>
         </Tabs>
       ) : (
