@@ -288,38 +288,22 @@ const NovoPlanoInventarioPage = () => {
                         />
                       </td>
                       <td className="p-2">
-                        <Select
-                          value={linha.departamentoId}
-                          onValueChange={(v) => updateLinha(linha.id, "departamentoId", v)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {mockDepartamentos.map((d) => (
-                              <SelectItem key={d.id} value={d.id}>
-                                {d.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <MultiSelectPopover
+                          selectedIds={linha.departamentoIds}
+                          options={mockDepartamentos.map((d) => ({ id: d.id, label: d.nome }))}
+                          onChange={(ids) => updateLinha(linha.id, "departamentoIds", ids)}
+                          placeholder="Selecione..."
+                          allLabel="Todos os departamentos"
+                        />
                       </td>
                       <td className="p-2">
-                        <Select
-                          value={linha.frequencia}
-                          onValueChange={(v) => updateLinha(linha.id, "frequencia", v)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(Object.keys(FREQUENCIA_LABELS) as FrequenciaInventario[]).map((f) => (
-                              <SelectItem key={f} value={f}>
-                                {FREQUENCIA_LABELS[f]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <MultiSelectPopover
+                          selectedIds={linha.frequencias}
+                          options={(Object.keys(FREQUENCIA_LABELS) as FrequenciaInventario[]).map((f) => ({ id: f, label: FREQUENCIA_LABELS[f] }))}
+                          onChange={(ids) => updateLinha(linha.id, "frequencias", ids)}
+                          placeholder="Selecione..."
+                          allLabel="Todas as frequências"
+                        />
                       </td>
                       <td className="p-2">
                         <Input
