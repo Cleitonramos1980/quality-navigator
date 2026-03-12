@@ -5,6 +5,7 @@ import KPICard from "@/components/KPICard";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
 import { mockContagens, mockLojas } from "@/data/mockInventarioData";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
