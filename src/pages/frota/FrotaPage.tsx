@@ -15,6 +15,7 @@ const COLORS = ["hsl(152, 60%, 40%)", "hsl(220, 70%, 45%)", "hsl(200, 80%, 50%)"
 const FrotaPage = () => {
   const [tab, setTab] = useState("visao");
   const [busca, setBusca] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   const statusData = useMemo(() => {
     const counts: Record<string, number> = {};
