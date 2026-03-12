@@ -139,6 +139,18 @@ const App = () => (
           <Route path="/assistencia/requisicoes" element={<AppLayout><RequirePermission perm="ASSIST_REQ_VIEW"><Lazy><ReqAssistListPage /></Lazy></RequirePermission></AppLayout>} />
           <Route path="/assistencia/estoque" element={<AppLayout><RequirePermission perm="ASSIST_ESTOQUE_VIEW"><Lazy><EstoquePage /></Lazy></RequirePermission></AppLayout>} />
 
+          {/* Operational modules */}
+          <Route path="/portaria" element={<AppLayout><Lazy><AcessosListPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/presenca" element={<AppLayout><Lazy><PresencaPainelPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/:id" element={<AppLayout><Lazy><AcessoDetalhePage /></Lazy></AppLayout>} />
+          <Route path="/visitantes" element={<AppLayout><Lazy><VisitantesListPage /></Lazy></AppLayout>} />
+          <Route path="/veiculos-visitantes" element={<AppLayout><Lazy><VeiculosVisitantesPage /></Lazy></AppLayout>} />
+          <Route path="/frota" element={<AppLayout><Lazy><FrotaPage /></Lazy></AppLayout>} />
+          <Route path="/terceiros" element={<AppLayout><Lazy><TerceirosPage /></Lazy></AppLayout>} />
+          <Route path="/patio" element={<AppLayout><Lazy><PatioPage /></Lazy></AppLayout>} />
+          <Route path="/monitoramento" element={<AppLayout><Lazy><MonitoramentoPage /></Lazy></AppLayout>} />
+          <Route path="/nf-transito" element={<AppLayout><Lazy><NFTransitoDashboardPage /></Lazy></AppLayout>} />
+          <Route path="/nf-transito/:id" element={<AppLayout><Lazy><NFTransitoDetalhePage /></Lazy></AppLayout>} />
           <Route
             path="*"
             element={
