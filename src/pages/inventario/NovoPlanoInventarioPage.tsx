@@ -31,7 +31,6 @@ const LojaMultiSelect = ({
   onChange: (ids: string[]) => void;
 }) => {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
   const allSelected = lojas.length > 0 && lojaIds.length === lojas.length;
 
@@ -55,53 +54,49 @@ const LojaMultiSelect = ({
           : `${lojaIds.length} lojas`;
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm ring-offset-background hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      >
-        <span className="truncate">{label}</span>
-        <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-md border border-border bg-popover p-1 shadow-md">
-            <button
-              type="button"
-              onClick={toggleAll}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-            >
-              <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${allSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
-                {allSelected && <Check className="h-3 w-3" />}
-              </div>
-              <span className="font-medium">Selecionar Todas</span>
-            </button>
-            <div className="my-1 h-px bg-border" />
-            <div className="max-h-48 overflow-y-auto">
-              {lojas.map((loja) => {
-                const checked = lojaIds.includes(loja.id);
-                return (
-                  <button
-                    key={loja.id}
-                    type="button"
-                    onClick={() => toggle(loja.id)}
-                    className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                  >
-                    <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${checked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
-                      {checked && <Check className="h-3 w-3" />}
-                    </div>
-                    <span className="truncate">{loja.nome}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{loja.regional}</span>
-                  </button>
-                );
-              })}
-            </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm ring-offset-background hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          <span className="truncate">{label}</span>
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-1" align="start">
+        <button
+          type="button"
+          onClick={toggleAll}
+          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+        >
+          <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${allSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
+            {allSelected && <Check className="h-3 w-3" />}
           </div>
-        </>
-      )}
-    </div>
+          <span className="font-medium">Selecionar Todas</span>
+        </button>
+        <div className="my-1 h-px bg-border" />
+        <div className="max-h-48 overflow-y-auto">
+          {lojas.map((loja) => {
+            const checked = lojaIds.includes(loja.id);
+            return (
+              <button
+                key={loja.id}
+                type="button"
+                onClick={() => toggle(loja.id)}
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+              >
+                <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${checked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
+                  {checked && <Check className="h-3 w-3" />}
+                </div>
+                <span className="truncate">{loja.nome}</span>
+                <span className="ml-auto text-xs text-muted-foreground">{loja.regional}</span>
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 
