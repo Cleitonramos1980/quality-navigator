@@ -11,6 +11,10 @@ import {
   Settings,
   Wrench,
   X,
+  DoorOpen,
+  Truck,
+  Activity,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
