@@ -1,21 +1,32 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { Truck, CheckCircle, AlertTriangle, Wrench, Ban, MapPin, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Truck, CheckCircle, AlertTriangle, Wrench, Ban, MapPin, Eye, PlusCircle } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockFrota, mockDeslocamentos } from "@/data/mockOperacionalData";
+import { mockFrota, mockDeslocamentos, mockDocas } from "@/data/mockOperacionalData";
+import RegistrarMovimentacaoModal from "@/components/frota/RegistrarMovimentacaoModal";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import type { VeiculoFrota } from "@/types/operacional";
 
 const COLORS = ["hsl(152, 60%, 40%)", "hsl(220, 70%, 45%)", "hsl(200, 80%, 50%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(280, 60%, 50%)"];
 
+const getLocalizacao = (v: VeiculoFrota) => {
+  const doca = mockDocas.find((d) => d.placaAtual === v.placa);
+  if (doca) return { local: doca.nome, doca: doca.nome };
+  if (v.status === "EM_DESLOCAMENTO") return { local: "Em rota", doca: null };
+  if (v.status === "EM_MANUTENCAO") return { local: "Oficina", doca: null };
+  return { local: "Garagem", doca: null };
+};
+
 const FrotaPage = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState("visao");
   const [busca, setBusca] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [movVeiculo, setMovVeiculo] = useState<VeiculoFrota | null>(null);
 
   const statusData = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -41,7 +52,7 @@ const FrotaPage = () => {
     emDeslocamento: mockFrota.filter((v) => v.status === "EM_DESLOCAMENTO").length,
     emManutencao: mockFrota.filter((v) => v.status === "EM_MANUTENCAO").length,
     bloqueados: mockFrota.filter((v) => v.status === "BLOQUEADO").length,
-    paradosNP: mockFrota.filter((v) => v.status === "PARADA_NAO_PROGRAMADA").length,
+    paradosNP: mockFrota.filter((v) => v.status === "PARADA_NAO_PROGRAMADA" || v.status === "PARADA_PROGRAMADA").length,
   };
 
   return (
@@ -55,7 +66,7 @@ const FrotaPage = () => {
         <KPICard title="Total" value={kpis.total} icon={<Truck className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
         <KPICard title="Disponíveis" value={kpis.disponiveis} icon={<CheckCircle className="w-5 h-5" />} onClick={() => { setTab("veiculos"); setBusca(""); }} />
         <KPICard title="Deslocamento" value={kpis.emDeslocamento} icon={<MapPin className="w-5 h-5" />} onClick={() => setTab("deslocamentos")} />
-        <KPICard title="Parada N/P" value={kpis.paradosNP} icon={<AlertTriangle className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
+        <KPICard title="Parados" value={kpis.paradosNP} icon={<AlertTriangle className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
         <KPICard title="Manutenção" value={kpis.emManutencao} icon={<Wrench className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
         <KPICard title="Bloqueados" value={kpis.bloqueados} icon={<Ban className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
       </div>
@@ -65,6 +76,7 @@ const FrotaPage = () => {
           <TabsTrigger value="visao">Visão Geral</TabsTrigger>
           <TabsTrigger value="veiculos">Veículos</TabsTrigger>
           <TabsTrigger value="deslocamentos">Deslocamentos</TabsTrigger>
+          <TabsTrigger value="localizacao">Localização</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -137,7 +149,16 @@ const FrotaPage = () => {
                       <span className="flex items-center gap-1 text-xs text-warning"><AlertTriangle className="h-3 w-3" />{v.alertas.length}</span>
                     ) : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
-                  <TableCell><Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => setMovVeiculo(v)} title="Registrar Movimentação">
+                        <PlusCircle className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/frota/${v.id}`)} title="Ver Detalhe">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -175,6 +196,48 @@ const FrotaPage = () => {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {tab === "localizacao" && (
+        <div className="glass-card rounded-lg p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-primary" /> Painel de Localização da Frota
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {mockFrota.map((v) => {
+              const loc = getLocalizacao(v);
+              return (
+                <div
+                  key={v.id}
+                  className="rounded-lg border bg-card p-4 cursor-pointer hover:shadow-md transition-all"
+                  onClick={() => navigate(`/frota/${v.id}`)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono font-bold text-sm text-foreground">{v.placa}</span>
+                    <StatusSemaphore status={v.status} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">{v.modelo} • {v.tipo}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{v.motoristaResponsavel}</p>
+                  <div className="mt-3 flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-sm font-medium text-primary">{loc.local}</span>
+                  </div>
+                  {loc.doca && (
+                    <p className="text-xs text-foreground/70 mt-1">Doca: {loc.doca}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {movVeiculo && (
+        <RegistrarMovimentacaoModal
+          veiculo={movVeiculo}
+          open={!!movVeiculo}
+          onClose={() => setMovVeiculo(null)}
+        />
       )}
     </div>
   );

@@ -157,6 +157,29 @@ export const mockExcecoesFiscais: ExcecaoFiscal[] = [
   { id: "EXF-004", tipo: "Sem Checkpoint", nfId: "NFT-2026-0004", nfNumero: "NF-113100", descricao: "Nenhum checkpoint registrado desde a saída há 7 dias", criticidade: "CRITICO", status: "ABERTA", criadoEm: "2026-03-12T06:00:00" },
 ];
 
+// ── MOVIMENTAÇÕES FROTA ──
+export interface MovimentacaoFrota {
+  id: string;
+  veiculoId: string;
+  statusAnterior: string;
+  statusNovo: string;
+  descricao: string;
+  dataHora: string;
+  usuario: string;
+  docaNome?: string;
+  km?: number;
+}
+
+export const mockMovimentacoesFrota: MovimentacaoFrota[] = [
+  { id: "MOV-001", veiculoId: "FRT-2026-0001", statusAnterior: "DISPONIVEL", statusNovo: "EM_DESLOCAMENTO", descricao: "Saída para entrega — Cliente Magazine Luiza Centro", dataHora: "2026-03-12T07:30:00", usuario: "Antônio Souza", km: 45218 },
+  { id: "MOV-002", veiculoId: "FRT-2026-0001", statusAnterior: "EM_MANUTENCAO", statusNovo: "DISPONIVEL", descricao: "Retorno da manutenção preventiva", dataHora: "2026-03-11T16:00:00", usuario: "Oficina Central", docaNome: "Doca 02" },
+  { id: "MOV-003", veiculoId: "FRT-2026-0001", statusAnterior: "DISPONIVEL", statusNovo: "EM_MANUTENCAO", descricao: "Entrada para manutenção preventiva 50.000 km", dataHora: "2026-03-10T08:00:00", usuario: "Paulo Roberto" },
+  { id: "MOV-004", veiculoId: "FRT-2026-0002", statusAnterior: "EM_DESLOCAMENTO", statusNovo: "DISPONIVEL", descricao: "Retorno de entrega — CD Belém", dataHora: "2026-03-11T17:00:00", usuario: "Paulo Roberto", docaNome: "Doca 01", km: 78500 },
+  { id: "MOV-005", veiculoId: "FRT-2026-0004", statusAnterior: "DISPONIVEL", statusNovo: "EM_MANUTENCAO", descricao: "Troca de embreagem — defeito identificado", dataHora: "2026-03-10T14:00:00", usuario: "Mecânica Externa" },
+  { id: "MOV-006", veiculoId: "FRT-2026-0005", statusAnterior: "DISPONIVEL", statusNovo: "EM_DESLOCAMENTO", descricao: "Saída para Filial Iranduba", dataHora: "2026-03-12T05:30:00", usuario: "Raimundo Costa", km: 31180 },
+  { id: "MOV-007", veiculoId: "FRT-2026-0007", statusAnterior: "EM_DESLOCAMENTO", statusNovo: "BLOQUEADO", descricao: "Veículo bloqueado — IPVA atrasado e seguro vencido", dataHora: "2026-03-08T10:00:00", usuario: "Administrativo" },
+];
+
 // ── TIMELINE DE EVENTOS ──
 export const mockTimelinePortaria: EventoTimeline[] = [
   { id: "EVT-001", tipo: "PRE_AUTORIZACAO", descricao: "Pré-autorização criada", dataHora: "2026-03-11T15:00:00", usuario: "Ana Paula Soares" },
