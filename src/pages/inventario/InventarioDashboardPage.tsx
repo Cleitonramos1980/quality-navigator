@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, TrendingUp, Store } from "lucide-react";
+import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, TrendingUp, Store, Plus } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
