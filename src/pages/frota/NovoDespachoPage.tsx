@@ -120,7 +120,7 @@ const NovoDespachoPage = () => {
       </SectionCard>
 
       {/* Notas Fiscais */}
-      <SectionCard title={`Notas Fiscais (${notasValidas.length})`} icon={<FileText className="h-4 w-4" />}>
+      <SectionCard title={`Notas Fiscais (${notasValidas.length})`}>
         <div className="space-y-3">
           {notas.map((n, idx) => (
             <div key={idx} className="flex items-start gap-3">
