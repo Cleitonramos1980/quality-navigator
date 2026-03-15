@@ -169,10 +169,14 @@ const App = () => (
 
           {/* Operational modules */}
           <Route path="/portaria" element={<AppLayout><Lazy><AcessosListPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/novo" element={<AppLayout><Lazy><NovoAcessoPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/qr" element={<AppLayout><Lazy><LeituraQrPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/placa" element={<AppLayout><Lazy><LeituraPlacaPage /></Lazy></AppLayout>} />
           <Route path="/portaria/presenca" element={<AppLayout><Lazy><PresencaPainelPage /></Lazy></AppLayout>} />
           <Route path="/portaria/:id" element={<AppLayout><Lazy><AcessoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/visitantes" element={<AppLayout><Lazy><VisitantesListPage /></Lazy></AppLayout>} />
           <Route path="/visitantes/pre-autorizacao" element={<AppLayout><Lazy><NovaPreAutorizacaoPage /></Lazy></AppLayout>} />
+          <Route path="/visitantes/:id" element={<AppLayout><Lazy><VisitanteDetalhePage /></Lazy></AppLayout>} />
           <Route path="/veiculos-visitantes" element={<AppLayout><Lazy><VeiculosVisitantesPage /></Lazy></AppLayout>} />
           <Route path="/frota" element={<AppLayout><Lazy><FrotaPage /></Lazy></AppLayout>} />
           <Route path="/frota/despacho" element={<AppLayout><Lazy><NovoDespachoPage /></Lazy></AppLayout>} />
