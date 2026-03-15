@@ -64,7 +64,7 @@ const NovoDespachoPage = () => {
       </div>
 
       {/* Veículo e Motorista */}
-      <SectionCard title="Veículo e Motorista" icon={<Truck className="h-4 w-4" />}>
+      <SectionCard title="Veículo e Motorista">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>Veículo *</Label>
