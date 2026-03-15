@@ -46,9 +46,9 @@ export const mockFrota: VeiculoFrota[] = [
 ];
 
 export const mockDeslocamentos: DeslocamentoFrota[] = [
-  { id: "DSL-001", veiculoId: "FRT-2026-0001", placa: "ROD-1A01", motorista: "Antônio Souza", origem: "Fábrica MAO", destino: "Cliente Magazine Luiza - Centro", horarioSaida: "2026-03-12T07:30:00", horarioPrevistoChegada: "2026-03-12T08:30:00", status: "EM_ROTA", kmPercorrido: 12 },
-  { id: "DSL-002", veiculoId: "FRT-2026-0005", placa: "ROD-5E05", motorista: "Raimundo Costa", origem: "CD Manaus", destino: "Filial Iranduba", horarioSaida: "2026-03-12T05:30:00", horarioPrevistoChegada: "2026-03-12T07:00:00", status: "ATRASADO", kmPercorrido: 35 },
-  { id: "DSL-003", veiculoId: "FRT-2026-0002", placa: "ROD-2B02", motorista: "Paulo Roberto", origem: "Fábrica MAO", destino: "CD Belém", horarioSaida: "2026-03-11T06:00:00", horarioPrevistoChegada: "2026-03-13T18:00:00", horarioRealChegada: "2026-03-13T16:30:00", status: "CONCLUIDO", kmPercorrido: 1650 },
+  { id: "DSL-001", veiculoId: "FRT-2026-0001", placa: "ROD-1A01", motorista: "Antônio Souza", origem: "Fábrica MAO", destino: "Cliente Magazine Luiza - Centro", horarioSaida: "2026-03-12T07:30:00", horarioPrevistoChegada: "2026-03-12T08:30:00", status: "EM_ROTA", kmPercorrido: 12, notasFiscais: [{ numero: "NF-112500", descricao: "Colchões King - Loja Centro" }, { numero: "NF-112501", descricao: "Estofados Premium" }] },
+  { id: "DSL-002", veiculoId: "FRT-2026-0005", placa: "ROD-5E05", motorista: "Raimundo Costa", origem: "CD Manaus", destino: "Filial Iranduba", horarioSaida: "2026-03-12T05:30:00", horarioPrevistoChegada: "2026-03-12T07:00:00", status: "ATRASADO", kmPercorrido: 35, notasFiscais: [{ numero: "NF-113200", descricao: "Transferência de estoque" }] },
+  { id: "DSL-003", veiculoId: "FRT-2026-0002", placa: "ROD-2B02", motorista: "Paulo Roberto", origem: "Fábrica MAO", destino: "CD Belém", horarioSaida: "2026-03-11T06:00:00", horarioPrevistoChegada: "2026-03-13T18:00:00", horarioRealChegada: "2026-03-13T16:30:00", status: "CONCLUIDO", kmPercorrido: 1650, notasFiscais: [{ numero: "NF-111800", descricao: "Carga mista - Belém" }, { numero: "NF-111801", descricao: "Colchões Casal" }, { numero: "NF-111802", descricao: "Acessórios" }] },
 ];
 
 // ── TRANSPORTADORAS ──
