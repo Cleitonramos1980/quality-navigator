@@ -57,9 +57,14 @@ const FrotaPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Frota</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gestão da frota própria — veículos, deslocamentos e manutenções</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Frota</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gestão da frota própria — veículos, deslocamentos e manutenções</p>
+        </div>
+        <Button onClick={() => navigate("/frota/despacho")} className="gap-2">
+          <Send className="h-4 w-4" /> Novo Despacho
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
