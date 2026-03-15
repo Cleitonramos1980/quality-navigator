@@ -71,8 +71,12 @@ const NovoPlanoInventarioPage = lazy(() => import("@/pages/inventario/NovoPlanoI
 const AcessosListPage = lazy(() => import("@/pages/portaria/AcessosListPage"));
 const AcessoDetalhePage = lazy(() => import("@/pages/portaria/AcessoDetalhePage"));
 const PresencaPainelPage = lazy(() => import("@/pages/portaria/PresencaPainelPage"));
+const NovoAcessoPage = lazy(() => import("@/pages/portaria/NovoAcessoPage"));
+const LeituraQrPage = lazy(() => import("@/pages/portaria/LeituraQrPage"));
+const LeituraPlacaPage = lazy(() => import("@/pages/portaria/LeituraPlacaPage"));
 const VisitantesListPage = lazy(() => import("@/pages/visitantes/VisitantesListPage"));
 const NovaPreAutorizacaoPage = lazy(() => import("@/pages/visitantes/NovaPreAutorizacaoPage"));
+const VisitanteDetalhePage = lazy(() => import("@/pages/visitantes/VisitanteDetalhePage"));
 const VeiculosVisitantesPage = lazy(() => import("@/pages/veiculos-visitantes/VeiculosVisitantesPage"));
 const FrotaPage = lazy(() => import("@/pages/frota/FrotaPage"));
 const VeiculoDetalhePage = lazy(() => import("@/pages/frota/VeiculoDetalhePage"));
@@ -165,10 +169,14 @@ const App = () => (
 
           {/* Operational modules */}
           <Route path="/portaria" element={<AppLayout><Lazy><AcessosListPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/novo" element={<AppLayout><Lazy><NovoAcessoPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/qr" element={<AppLayout><Lazy><LeituraQrPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/placa" element={<AppLayout><Lazy><LeituraPlacaPage /></Lazy></AppLayout>} />
           <Route path="/portaria/presenca" element={<AppLayout><Lazy><PresencaPainelPage /></Lazy></AppLayout>} />
           <Route path="/portaria/:id" element={<AppLayout><Lazy><AcessoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/visitantes" element={<AppLayout><Lazy><VisitantesListPage /></Lazy></AppLayout>} />
           <Route path="/visitantes/pre-autorizacao" element={<AppLayout><Lazy><NovaPreAutorizacaoPage /></Lazy></AppLayout>} />
+          <Route path="/visitantes/:id" element={<AppLayout><Lazy><VisitanteDetalhePage /></Lazy></AppLayout>} />
           <Route path="/veiculos-visitantes" element={<AppLayout><Lazy><VeiculosVisitantesPage /></Lazy></AppLayout>} />
           <Route path="/frota" element={<AppLayout><Lazy><FrotaPage /></Lazy></AppLayout>} />
           <Route path="/frota/despacho" element={<AppLayout><Lazy><NovoDespachoPage /></Lazy></AppLayout>} />

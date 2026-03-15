@@ -120,6 +120,7 @@ export interface DeslocamentoFrota {
   horarioRealChegada?: string;
   status: "EM_ROTA" | "ATRASADO" | "CONCLUIDO" | "PARADO";
   kmPercorrido?: number;
+  notasFiscais?: Array<{ numero: string; descricao?: string }>;
 }
 
 // ── Terceiros / Transportadoras ──
