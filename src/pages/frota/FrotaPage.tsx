@@ -181,6 +181,7 @@ const FrotaPage = () => {
                 <TableHead>Motorista</TableHead>
                 <TableHead>Origem</TableHead>
                 <TableHead>Destino</TableHead>
+                <TableHead>NFs</TableHead>
                 <TableHead>Saída</TableHead>
                 <TableHead>Previsão</TableHead>
                 <TableHead>Status</TableHead>
@@ -193,6 +194,11 @@ const FrotaPage = () => {
                   <TableCell>{d.motorista}</TableCell>
                   <TableCell>{d.origem}</TableCell>
                   <TableCell>{d.destino}</TableCell>
+                  <TableCell className="text-xs">
+                    {d.notasFiscais && d.notasFiscais.length > 0
+                      ? d.notasFiscais.map((nf) => nf.numero).join(", ")
+                      : "—"}
+                  </TableCell>
                   <TableCell className="text-xs">{new Date(d.horarioSaida).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
                   <TableCell className="text-xs">{new Date(d.horarioPrevistoChegada).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
                   <TableCell><StatusSemaphore status={d.status} /></TableCell>
