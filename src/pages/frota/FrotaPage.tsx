@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Truck, CheckCircle, AlertTriangle, Wrench, Ban, MapPin, Eye, PlusCircle } from "lucide-react";
+import { Truck, CheckCircle, AlertTriangle, Wrench, Ban, MapPin, Eye, PlusCircle, Send } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import { Button } from "@/components/ui/button";
