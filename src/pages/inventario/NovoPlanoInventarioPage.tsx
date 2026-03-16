@@ -190,6 +190,13 @@ const NovoPlanoInventarioPage = () => {
   const [dataFim, setDataFim] = useState("2026-06-15");
   const [lojasSelecionadas, setLojasSelecionadas] = useState<string[]>([]);
   const [linhas, setLinhas] = useState<PlanoLinha[]>([]);
+  const [allLojas, setAllLojas] = useState<LojaInventario[]>([]);
+  const [allDepartamentos, setAllDepartamentos] = useState<DepartamentoInventario[]>([]);
+
+  useEffect(() => {
+    getLojas().then(setAllLojas);
+    getDepartamentos().then(setAllDepartamentos);
+  }, []);
 
   const toggleLoja = (lojaId: string) => {
     setLojasSelecionadas((prev) =>
