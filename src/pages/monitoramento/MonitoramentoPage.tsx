@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Activity, Users, Truck, Layers, AlertTriangle, Bell, Shield, Eye, Clock } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -7,13 +7,23 @@ import RelatedActionsPanel from "@/components/operacional/RelatedActionsPanel";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getDashboardOperacional, getAlertas, getExcecoes, getAcessos } from "@/services/operacional";
-import type { AlertaOperacional, ExcecaoOperacional, Acesso } from "@/types/operacional";
+import { getDashboardOperacional, getAlertas, getExcecoes } from "@/services/operacional";
+import type { AlertaOperacional, ExcecaoOperacional } from "@/types/operacional";
 import type { DashboardOperacionalData } from "@/services/operacional";
+
+const defaultDash: DashboardOperacionalData = { visitantesPresentes: 0, veiculosVisitantesPresentes: 0, terceirosNaUnidade: 0, frotaEmDeslocamento: 0, docasOcupadas: 0, docasTotal: 0, alertasAtivos: 0, nfsEmTransito: 0, nfsEmRisco: 0, nfsSemConfirmacao: 0, valorEmTransito: 0, valorEmRisco: 0, mediaDiasTransito: 0, filaExterna: 0, filaInterna: 0, veiculosParados: 0, tempoMedioPatio: 0, slaGeral: 0 };
 
 const MonitoramentoPage = () => {
   const [tab, setTab] = useState("tempo-real");
-  const d = dashboardOperacional;
+  const [d, setD] = useState<DashboardOperacionalData>(defaultDash);
+  const [alertas, setAlertas] = useState<AlertaOperacional[]>([]);
+  const [excecoes, setExcecoes] = useState<ExcecaoOperacional[]>([]);
+
+  useEffect(() => {
+    getDashboardOperacional().then(setD);
+    getAlertas().then(setAlertas);
+    getExcecoes().then(setExcecoes);
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -33,8 +43,8 @@ const MonitoramentoPage = () => {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="tempo-real">Operação</TabsTrigger>
-          <TabsTrigger value="alertas">Alertas ({mockAlertas.filter(a => a.status === "ATIVO").length})</TabsTrigger>
-          <TabsTrigger value="excecoes">Exceções ({mockExcecoes.filter(e => e.status !== "RESOLVIDA").length})</TabsTrigger>
+          <TabsTrigger value="alertas">Alertas ({alertas.filter(a => a.status === "ATIVO").length})</TabsTrigger>
+          <TabsTrigger value="excecoes">Exceções ({excecoes.filter(e => e.status !== "RESOLVIDA").length})</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -70,7 +80,7 @@ const MonitoramentoPage = () => {
           <div className="glass-card rounded-lg p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-4"><Clock className="h-4 w-4 text-primary" />Prioridades do Turno</h3>
             <div className="space-y-2">
-              {mockAlertas.filter(a => a.status === "ATIVO" && a.criticidade !== "BAIXA").slice(0, 4).map((a) => (
+              {alertas.filter(a => a.status === "ATIVO" && a.criticidade !== "BAIXA").slice(0, 4).map((a) => (
                 <div key={a.id} className="flex items-start gap-2 rounded-md border border-border p-2">
                   <StatusSemaphore status={a.criticidade} />
                   <p className="text-xs text-foreground flex-1">{a.descricao}</p>
@@ -88,7 +98,7 @@ const MonitoramentoPage = () => {
               <TableHead>Tipo</TableHead><TableHead>Descrição</TableHead><TableHead>Origem</TableHead><TableHead>Criticidade</TableHead><TableHead>Responsável</TableHead><TableHead>Status</TableHead><TableHead>Criado em</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {mockAlertas.map((a) => (
+              {alertas.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell className="text-xs font-medium">{a.tipo.replace(/_/g, " ")}</TableCell>
                   <TableCell className="text-xs max-w-xs">{a.descricao}</TableCell>
@@ -112,7 +122,7 @@ const MonitoramentoPage = () => {
                 <TableHead>Código</TableHead><TableHead>Tipo</TableHead><TableHead>Descrição</TableHead><TableHead>Criticidade</TableHead><TableHead>Responsável</TableHead><TableHead>Prazo</TableHead><TableHead>Status</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {mockExcecoes.map((e) => (
+                {excecoes.map((e) => (
                   <TableRow key={e.id}>
                     <TableCell className="font-mono text-xs">{e.id}</TableCell>
                     <TableCell className="text-xs font-medium">{e.tipo}</TableCell>

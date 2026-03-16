@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Truck, Building2, Users, Clock, AlertTriangle, Calendar, Eye } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
@@ -11,6 +11,19 @@ import { Progress } from "@/components/ui/progress";
 
 const TerceirosPage = () => {
   const [tab, setTab] = useState("transportadoras");
+  const [transportadoras, setTransportadoras] = useState<Transportadora[]>([]);
+  const [motoristas, setMotoristas] = useState<MotoristaTerceiro[]>([]);
+  const [veiculos, setVeiculos] = useState<VeiculoTerceiro[]>([]);
+  const [operacoes, setOperacoes] = useState<OperacaoTerceiro[]>([]);
+  const [agendamentos, setAgendamentos] = useState<AgendamentoDoca[]>([]);
+
+  useEffect(() => {
+    getTransportadoras().then(setTransportadoras);
+    getMotoristasTerceiros().then(setMotoristas);
+    getVeiculosTerceiros().then(setVeiculos);
+    getOperacoes().then(setOperacoes);
+    getAgendamentos().then(setAgendamentos);
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -20,11 +33,11 @@ const TerceirosPage = () => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <KPICard title="Transportadoras" value={mockTransportadoras.filter(t => t.status === "ATIVA").length} icon={<Building2 className="w-5 h-5" />} subtitle="ativas" />
-        <KPICard title="Motoristas" value={mockMotoristasTerceiros.filter(m => m.status === "ATIVO").length} icon={<Users className="w-5 h-5" />} subtitle="ativos" />
-        <KPICard title="Veículos na Unidade" value={mockVeiculosTerceiros.length} icon={<Truck className="w-5 h-5" />} />
-        <KPICard title="Operações Hoje" value={mockOperacoes.length} icon={<Clock className="w-5 h-5" />} />
-        <KPICard title="Janelas Perdidas" value={mockAgendamentos.filter(a => a.status === "JANELA_PERDIDA").length} icon={<AlertTriangle className="w-5 h-5" />} />
+        <KPICard title="Transportadoras" value={transportadoras.filter(t => t.status === "ATIVA").length} icon={<Building2 className="w-5 h-5" />} subtitle="ativas" />
+        <KPICard title="Motoristas" value={motoristas.filter(m => m.status === "ATIVO").length} icon={<Users className="w-5 h-5" />} subtitle="ativos" />
+        <KPICard title="Veículos na Unidade" value={veiculos.length} icon={<Truck className="w-5 h-5" />} />
+        <KPICard title="Operações Hoje" value={operacoes.length} icon={<Clock className="w-5 h-5" />} />
+        <KPICard title="Janelas Perdidas" value={agendamentos.filter(a => a.status === "JANELA_PERDIDA").length} icon={<AlertTriangle className="w-5 h-5" />} />
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -40,20 +53,11 @@ const TerceirosPage = () => {
       {tab === "transportadoras" && (
         <div className="glass-card rounded-lg p-5">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>CNPJ</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>RNTRC</TableHead>
-                <TableHead>Operações</TableHead>
-                <TableHead>Atraso Médio</TableHead>
-                <TableHead>SLA Score</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow>
+              <TableHead>Nome</TableHead><TableHead>CNPJ</TableHead><TableHead>Contato</TableHead><TableHead>RNTRC</TableHead><TableHead>Operações</TableHead><TableHead>Atraso Médio</TableHead><TableHead>SLA Score</TableHead><TableHead>Status</TableHead>
+            </TableRow></TableHeader>
             <TableBody>
-              {mockTransportadoras.map((t) => (
+              {transportadoras.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.nome}</TableCell>
                   <TableCell className="font-mono text-xs">{t.cnpj}</TableCell>
@@ -78,18 +82,11 @@ const TerceirosPage = () => {
       {tab === "motoristas" && (
         <div className="glass-card rounded-lg p-5">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Documento</TableHead>
-                <TableHead>Transportadora</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Última Entrada</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow>
+              <TableHead>Nome</TableHead><TableHead>Documento</TableHead><TableHead>Transportadora</TableHead><TableHead>Telefone</TableHead><TableHead>Última Entrada</TableHead><TableHead>Status</TableHead>
+            </TableRow></TableHeader>
             <TableBody>
-              {mockMotoristasTerceiros.map((m) => (
+              {motoristas.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell className="font-medium">{m.nome}</TableCell>
                   <TableCell className="text-xs">{m.documento}</TableCell>
@@ -107,19 +104,11 @@ const TerceirosPage = () => {
       {tab === "veiculos" && (
         <div className="glass-card rounded-lg p-5">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Placa</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Transportadora</TableHead>
-                <TableHead>Motorista</TableHead>
-                <TableHead>Localização</TableHead>
-                <TableHead>Doca</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow>
+              <TableHead>Placa</TableHead><TableHead>Tipo</TableHead><TableHead>Transportadora</TableHead><TableHead>Motorista</TableHead><TableHead>Localização</TableHead><TableHead>Doca</TableHead><TableHead>Status</TableHead>
+            </TableRow></TableHeader>
             <TableBody>
-              {mockVeiculosTerceiros.map((v) => (
+              {veiculos.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell className="font-mono font-medium">{v.placa}</TableCell>
                   <TableCell>{v.tipo}</TableCell>
@@ -138,22 +127,11 @@ const TerceirosPage = () => {
       {tab === "operacoes" && (
         <div className="glass-card rounded-lg p-5">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Transportadora</TableHead>
-                <TableHead>Motorista</TableHead>
-                <TableHead>Placa</TableHead>
-                <TableHead>Doca</TableHead>
-                <TableHead>Previsto</TableHead>
-                <TableHead>Chegada</TableHead>
-                <TableHead>NF</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow>
+              <TableHead>Código</TableHead><TableHead>Tipo</TableHead><TableHead>Transportadora</TableHead><TableHead>Motorista</TableHead><TableHead>Placa</TableHead><TableHead>Doca</TableHead><TableHead>Previsto</TableHead><TableHead>Chegada</TableHead><TableHead>NF</TableHead><TableHead>Status</TableHead>
+            </TableRow></TableHeader>
             <TableBody>
-              {mockOperacoes.map((o) => (
+              {operacoes.map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono text-xs">{o.id}</TableCell>
                   <TableCell><span className="status-badge bg-secondary text-secondary-foreground">{o.tipo}</span></TableCell>
@@ -176,21 +154,11 @@ const TerceirosPage = () => {
         <div className="glass-card rounded-lg p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Agendamento de Docas</h3>
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Doca</TableHead>
-                <TableHead>Transportadora</TableHead>
-                <TableHead>Operação</TableHead>
-                <TableHead>Placa</TableHead>
-                <TableHead>Motorista</TableHead>
-                <TableHead>Previsto</TableHead>
-                <TableHead>ETA</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader><TableRow>
+              <TableHead>Código</TableHead><TableHead>Doca</TableHead><TableHead>Transportadora</TableHead><TableHead>Operação</TableHead><TableHead>Placa</TableHead><TableHead>Motorista</TableHead><TableHead>Previsto</TableHead><TableHead>ETA</TableHead><TableHead>Status</TableHead>
+            </TableRow></TableHeader>
             <TableBody>
-              {mockAgendamentos.map((a) => (
+              {agendamentos.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell className="font-mono text-xs">{a.id}</TableCell>
                   <TableCell className="font-medium">{a.docaNome}</TableCell>
