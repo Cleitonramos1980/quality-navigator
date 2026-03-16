@@ -197,7 +197,7 @@ const FrotaPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockDeslocamentos.map((d) => (
+              {allDeslocamentos.map((d) => (
                 <TableRow key={d.id}>
                   <TableCell className="font-mono">{d.placa}</TableCell>
                   <TableCell>{d.motorista}</TableCell>
