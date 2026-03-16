@@ -121,6 +121,15 @@ const AvaliacoesPage = () => {
         </Button>
       </div>
 
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <KPICard title="Total Enviadas" value={kpis.total} icon={<MessageSquare className="w-5 h-5" />} />
+        <KPICard title="Respondidas" value={kpis.respondidas} icon={<Star className="w-5 h-5" />} />
+        <KPICard title="Pendentes" value={kpis.pendentes} icon={<Clock className="w-5 h-5" />} />
+        <KPICard title="Taxa Resposta" value={`${kpis.taxaResposta}%`} icon={<TrendingUp className="w-5 h-5" />} />
+        <KPICard title="Nota Média" value={kpis.notaMedia} icon={<Star className="w-5 h-5" />} />
+        <KPICard title="Expiradas / Falha" value={kpis.expiradas + kpis.falhas} icon={<XCircle className="w-5 h-5" />} />
+      </div>
+
       <Card>
         <CardContent className="pt-4">
           <div className="grid gap-3 md:grid-cols-4">
