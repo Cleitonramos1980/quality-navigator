@@ -11,14 +11,16 @@ import type {
   Acesso, Visitante, VeiculoVisitante, VeiculoFrota, DeslocamentoFrota,
   Transportadora, MotoristaTerceiro, VeiculoTerceiro, OperacaoTerceiro,
   AgendamentoDoca, Doca, FilaPatio, AlertaOperacional, ExcecaoOperacional,
-  NFTransito, ExcecaoFiscal,
+  NFTransito, ExcecaoFiscal, EventoTimeline,
 } from "@/types/operacional";
 import {
   mockAcessos, mockVisitantes, mockVeiculosVisitantes, mockFrota, mockDeslocamentos,
   mockTransportadoras, mockMotoristasTerceiros, mockVeiculosTerceiros, mockOperacoes,
   mockAgendamentos, mockDocas, mockFilaPatio, mockAlertas, mockExcecoes,
   mockNFsTransito, mockExcecoesFiscais, dashboardOperacional,
+  mockMovimentacoesFrota, mockTimelinePortaria,
 } from "@/data/mockOperacionalData";
+import type { MovimentacaoFrota } from "@/data/mockOperacionalData";
 
 // ══════════════════════════════════════════════
 // PORTARIA / ACESSOS
