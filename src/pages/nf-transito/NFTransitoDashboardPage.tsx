@@ -11,7 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getNFsTransito, getExcecoesFiscais, getDashboardOperacional } from "@/services/operacional";
 import type { NFTransito, ExcecaoFiscal } from "@/types/operacional";
 import type { DashboardOperacionalData } from "@/services/operacional";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import AgingChart, { type AgingBucket } from "@/components/dashboard/AgingChart";
 
 const COLORS = ["hsl(152, 60%, 40%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(220, 25%, 20%)"];
 
