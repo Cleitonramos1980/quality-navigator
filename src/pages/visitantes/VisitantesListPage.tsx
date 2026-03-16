@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Users, UserCheck, Clock, XCircle, Plus, Eye, Send, QrCode } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockVisitantes } from "@/data/mockOperacionalData";
+import { getVisitantes } from "@/services/operacional";
+import type { Visitante } from "@/types/operacional";
 
 const TABS = [
   { value: "todos", label: "Todos" },
@@ -20,24 +21,27 @@ const TABS = [
 const VisitantesListPage = () => {
   const [tab, setTab] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [allVisitantes, setAllVisitantes] = useState<Visitante[]>([]);
+
+  useEffect(() => { getVisitantes().then(setAllVisitantes); }, []);
 
   const visitantes = useMemo(() => {
     const activeTab = TABS.find((t) => t.value === tab);
-    let filtered = mockVisitantes;
+    let filtered = allVisitantes;
     if (activeTab?.filter) filtered = filtered.filter((v) => activeTab.filter!(v.status));
     if (busca) {
       const q = busca.toLowerCase();
       filtered = filtered.filter((v) => v.nome.toLowerCase().includes(q) || v.empresa.toLowerCase().includes(q) || v.id.toLowerCase().includes(q));
     }
     return filtered;
-  }, [tab, busca]);
+  }, [tab, busca, allVisitantes]);
 
   const kpis = useMemo(() => ({
-    total: mockVisitantes.length,
-    pendentes: mockVisitantes.filter((v) => ["CONVITE_CRIADO", "LINK_ENVIADO", "CADASTRO_PREENCHIDO", "AGUARDANDO_VALIDACAO"].includes(v.status)).length,
-    presentes: mockVisitantes.filter((v) => ["ENTRADA_REALIZADA", "VISITA_EM_ANDAMENTO"].includes(v.status)).length,
-    expirados: mockVisitantes.filter((v) => v.status === "EXPIRADO").length,
-  }), []);
+    total: allVisitantes.length,
+    pendentes: allVisitantes.filter((v) => ["CONVITE_CRIADO", "LINK_ENVIADO", "CADASTRO_PREENCHIDO", "AGUARDANDO_VALIDACAO"].includes(v.status)).length,
+    presentes: allVisitantes.filter((v) => ["ENTRADA_REALIZADA", "VISITA_EM_ANDAMENTO"].includes(v.status)).length,
+    expirados: allVisitantes.filter((v) => v.status === "EXPIRADO").length,
+  }), [allVisitantes]);
 
   return (
     <div className="space-y-6 animate-fade-in">

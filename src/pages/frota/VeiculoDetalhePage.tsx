@@ -1,23 +1,36 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ArrowLeft, Truck, MapPin, Clock, AlertTriangle, Wrench, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockFrota, mockDeslocamentos, mockDocas, mockMovimentacoesFrota } from "@/data/mockOperacionalData";
+import { getVeiculosFrota, getDeslocamentos, getDocas, getMovimentacoesFrota } from "@/services/operacional";
+import type { VeiculoFrota, DeslocamentoFrota, Doca } from "@/types/operacional";
+import type { MovimentacaoFrota } from "@/services/operacional";
 
 const VeiculoDetalhePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [allFrota, setAllFrota] = useState<VeiculoFrota[]>([]);
+  const [allDeslocamentos, setAllDeslocamentos] = useState<DeslocamentoFrota[]>([]);
+  const [allDocas, setAllDocas] = useState<Doca[]>([]);
+  const [allMovimentacoes, setAllMovimentacoes] = useState<MovimentacaoFrota[]>([]);
 
-  const veiculo = useMemo(() => mockFrota.find((v) => v.id === id), [id]);
-  const deslocamentos = useMemo(() => mockDeslocamentos.filter((d) => d.veiculoId === id), [id]);
-  const movimentacoes = useMemo(() => mockMovimentacoesFrota.filter((m) => m.veiculoId === id), [id]);
+  useEffect(() => {
+    getVeiculosFrota().then(setAllFrota);
+    getDeslocamentos().then(setAllDeslocamentos);
+    getDocas().then(setAllDocas);
+    getMovimentacoesFrota().then(setAllMovimentacoes);
+  }, []);
+
+  const veiculo = useMemo(() => allFrota.find((v) => v.id === id), [id, allFrota]);
+  const deslocamentos = useMemo(() => allDeslocamentos.filter((d) => d.veiculoId === id), [id, allDeslocamentos]);
+  const movimentacoes = useMemo(() => allMovimentacoes.filter((m) => m.veiculoId === id), [id, allMovimentacoes]);
 
   const docaAtual = useMemo(() => {
     if (!veiculo) return null;
-    return mockDocas.find((d) => d.placaAtual === veiculo.placa) || null;
-  }, [veiculo]);
+    return allDocas.find((d) => d.placaAtual === veiculo.placa) || null;
+  }, [veiculo, allDocas]);
 
   if (!veiculo) {
     return (

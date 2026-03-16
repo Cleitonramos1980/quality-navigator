@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
-import { mockFrequenciaConfigs, mockLojas } from "@/data/mockInventarioData";
+import { getFrequenciaConfigs } from "@/services/inventario";
+import type { FrequenciaConfig } from "@/types/inventario";
 import { FREQUENCIA_LABELS } from "@/types/inventario";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 
 const ConfiguracaoInventarioPage = () => {
   const [busca, setBusca] = useState("");
-  const [configs, setConfigs] = useState(mockFrequenciaConfigs);
+  const [configs, setConfigs] = useState<FrequenciaConfig[]>([]);
+
+  useEffect(() => { getFrequenciaConfigs().then(setConfigs); }, []);
 
   const filtered = configs.filter((c) => {
     if (!busca) return true;

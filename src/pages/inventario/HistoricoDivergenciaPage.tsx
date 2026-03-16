@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,19 +7,26 @@ import KPICard from "@/components/KPICard";
 import InventoryDivergenceHeatmap from "@/components/inventario/InventoryDivergenceHeatmap";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
-import { mockDivergencias, mockLojas } from "@/data/mockInventarioData";
+import { getDivergencias, getLojas } from "@/services/inventario";
 import { AlertTriangle, BarChart3, Store, RotateCcw, TrendingDown, ShieldAlert } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import type { DivergenciaDiaria, InventarioStatus } from "@/types/inventario";
+import type { DivergenciaDiaria, InventarioStatus, LojaInventario } from "@/types/inventario";
 
 const HistoricoDivergenciaPage = () => {
   const navigate = useNavigate();
   const [lojaFilter, setLojaFilter] = useState("TODAS");
+  const [divergencias, setDivergencias] = useState<DivergenciaDiaria[]>([]);
+  const [lojas, setLojas] = useState<LojaInventario[]>([]);
+
+  useEffect(() => {
+    getDivergencias().then(setDivergencias);
+    getLojas().then(setLojas);
+  }, []);
 
   const filtered = useMemo(() => {
-    if (lojaFilter === "TODAS") return mockDivergencias;
-    return mockDivergencias.filter((d) => d.lojaId === lojaFilter);
-  }, [lojaFilter]);
+    if (lojaFilter === "TODAS") return divergencias;
+    return divergencias.filter((d) => d.lojaId === lojaFilter);
+  }, [lojaFilter, divergencias]);
 
   const comDivergencia = filtered.filter((d) => d.nivel === "alta" || d.nivel === "atencao").length;
   const totalDiv = filtered.reduce((s, d) => s + d.itensDivergentes, 0);
@@ -46,7 +53,7 @@ const HistoricoDivergenciaPage = () => {
     }));
 
   // Ranking lojas
-  const lojaRanking = mockLojas.map((l) => {
+  const lojaRanking = lojas.map((l) => {
     const ld = filtered.filter((d) => d.lojaId === l.id);
     const total = ld.reduce((s, d) => s + d.itensDivergentes, 0);
     return { nome: l.nome, divergentes: total };
@@ -71,7 +78,7 @@ const HistoricoDivergenciaPage = () => {
           <SelectTrigger className="w-52"><SelectValue placeholder="Loja" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="TODAS">Todas as Lojas</SelectItem>
-            {mockLojas.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
+            {lojas.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>

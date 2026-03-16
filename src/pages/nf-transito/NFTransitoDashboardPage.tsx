@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FileText, AlertTriangle, DollarSign, Clock, TrendingUp, Eye, Truck } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -8,37 +8,49 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockNFsTransito, mockExcecoesFiscais, dashboardOperacional } from "@/data/mockOperacionalData";
+import { getNFsTransito, getExcecoesFiscais, getDashboardOperacional } from "@/services/operacional";
+import type { NFTransito, ExcecaoFiscal } from "@/types/operacional";
+import type { DashboardOperacionalData } from "@/services/operacional";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const COLORS = ["hsl(152, 60%, 40%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(220, 25%, 20%)"];
 
+const defaultDash: DashboardOperacionalData = { visitantesPresentes: 0, veiculosVisitantesPresentes: 0, terceirosNaUnidade: 0, frotaEmDeslocamento: 0, docasOcupadas: 0, docasTotal: 0, alertasAtivos: 0, nfsEmTransito: 0, nfsEmRisco: 0, nfsSemConfirmacao: 0, valorEmTransito: 0, valorEmRisco: 0, mediaDiasTransito: 0, filaExterna: 0, filaInterna: 0, veiculosParados: 0, tempoMedioPatio: 0, slaGeral: 0 };
+
 const NFTransitoDashboardPage = () => {
   const [tab, setTab] = useState("dashboard");
   const [busca, setBusca] = useState("");
-  const d = dashboardOperacional;
+  const [d, setD] = useState<DashboardOperacionalData>(defaultDash);
+  const [allNFs, setAllNFs] = useState<NFTransito[]>([]);
+  const [excecoesFiscais, setExcecoesFiscais] = useState<ExcecaoFiscal[]>([]);
+
+  useEffect(() => {
+    getDashboardOperacional().then(setD);
+    getNFsTransito().then(setAllNFs);
+    getExcecoesFiscais().then(setExcecoesFiscais);
+  }, []);
 
   const nfsFiltradas = useMemo(() => {
-    let list = mockNFsTransito;
+    let list = allNFs;
     if (tab === "risco") list = list.filter((nf) => ["EM_RISCO", "CRITICA"].includes(nf.status));
     if (busca) {
       const q = busca.toLowerCase();
       list = list.filter((nf) => nf.numero.toLowerCase().includes(q) || nf.cliente.toLowerCase().includes(q) || nf.transportadoraNome.toLowerCase().includes(q));
     }
     return list;
-  }, [tab, busca]);
+  }, [tab, busca, allNFs]);
 
   const criticidadeData = useMemo(() => {
     const counts: Record<string, number> = {};
-    mockNFsTransito.forEach((nf) => { counts[nf.criticidade] = (counts[nf.criticidade] || 0) + 1; });
+    allNFs.forEach((nf) => { counts[nf.criticidade] = (counts[nf.criticidade] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, []);
+  }, [allNFs]);
 
   const transportadoraData = useMemo(() => {
     const counts: Record<string, number> = {};
-    mockNFsTransito.forEach((nf) => { counts[nf.transportadoraNome] = (counts[nf.transportadoraNome] || 0) + 1; });
+    allNFs.forEach((nf) => { counts[nf.transportadoraNome] = (counts[nf.transportadoraNome] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name: name.length > 15 ? name.slice(0, 15) + "…" : name, value }));
-  }, []);
+  }, [allNFs]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -59,7 +71,7 @@ const NFTransitoDashboardPage = () => {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="lista">Documentos</TabsTrigger>
           <TabsTrigger value="risco">Painel de Risco</TabsTrigger>
-          <TabsTrigger value="excecoes">Exceções Fiscais ({mockExcecoesFiscais.length})</TabsTrigger>
+          <TabsTrigger value="excecoes">Exceções Fiscais ({excecoesFiscais.length})</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -96,9 +108,9 @@ const NFTransitoDashboardPage = () => {
             <h3 className="text-sm font-semibold text-foreground mb-4">KPIs Adicionais</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="text-center"><p className="text-2xl font-bold text-foreground">{d.mediaDiasTransito}</p><p className="text-xs text-muted-foreground">Média dias trânsito</p></div>
-              <div className="text-center"><p className="text-2xl font-bold text-success">{mockNFsTransito.filter(n => n.status === "RECEBIMENTO_CONFIRMADO").length}</p><p className="text-xs text-muted-foreground">Entregas concluídas</p></div>
-              <div className="text-center"><p className="text-2xl font-bold text-warning">{mockNFsTransito.filter(n => n.status === "AGUARDANDO_CONFIRMACAO").length}</p><p className="text-xs text-muted-foreground">Aguardando confirmação</p></div>
-              <div className="text-center"><p className="text-2xl font-bold text-destructive">{mockExcecoesFiscais.filter(e => e.status === "ABERTA").length}</p><p className="text-xs text-muted-foreground">Exceções abertas</p></div>
+              <div className="text-center"><p className="text-2xl font-bold text-success">{allNFs.filter(n => n.status === "RECEBIMENTO_CONFIRMADO").length}</p><p className="text-xs text-muted-foreground">Entregas concluídas</p></div>
+              <div className="text-center"><p className="text-2xl font-bold text-warning">{allNFs.filter(n => n.status === "AGUARDANDO_CONFIRMACAO").length}</p><p className="text-xs text-muted-foreground">Aguardando confirmação</p></div>
+              <div className="text-center"><p className="text-2xl font-bold text-destructive">{excecoesFiscais.filter(e => e.status === "ABERTA").length}</p><p className="text-xs text-muted-foreground">Exceções abertas</p></div>
             </div>
           </div>
         </div>
@@ -141,7 +153,7 @@ const NFTransitoDashboardPage = () => {
               <TableHead>Código</TableHead><TableHead>Tipo</TableHead><TableHead>NF</TableHead><TableHead>Descrição</TableHead><TableHead>Criticidade</TableHead><TableHead>Status</TableHead><TableHead>Responsável</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {mockExcecoesFiscais.map((e) => (
+              {excecoesFiscais.map((e) => (
                 <TableRow key={e.id}>
                   <TableCell className="font-mono text-xs">{e.id}</TableCell>
                   <TableCell className="text-xs font-medium">{e.tipo}</TableCell>

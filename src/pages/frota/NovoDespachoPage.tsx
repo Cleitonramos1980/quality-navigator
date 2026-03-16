@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2, Truck, MapPin, FileText, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import SectionCard from "@/components/forms/SectionCard";
-import { mockFrota } from "@/data/mockOperacionalData";
+import { getVeiculosFrota } from "@/services/operacional";
+import type { VeiculoFrota } from "@/types/operacional";
 import { toast } from "sonner";
 
 const motoristas = [
@@ -23,12 +24,15 @@ const NovoDespachoPage = () => {
   const [destino, setDestino] = useState("");
   const [observacao, setObservacao] = useState("");
   const [notas, setNotas] = useState<{ numero: string; descricao: string }[]>([{ numero: "", descricao: "" }]);
+  const [allFrota, setAllFrota] = useState<VeiculoFrota[]>([]);
 
-  const veiculosDisponiveis = mockFrota.filter(
+  useEffect(() => { getVeiculosFrota().then(setAllFrota); }, []);
+
+  const veiculosDisponiveis = allFrota.filter(
     (v) => v.status === "DISPONIVEL" || v.status === "PARADA_PROGRAMADA"
   );
 
-  const veiculoSelecionado = mockFrota.find((v) => v.id === veiculoId);
+  const veiculoSelecionado = allFrota.find((v) => v.id === veiculoId);
 
   const addNota = () => setNotas([...notas, { numero: "", descricao: "" }]);
   const removeNota = (idx: number) => setNotas(notas.filter((_, i) => i !== idx));

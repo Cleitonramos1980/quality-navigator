@@ -11,14 +11,16 @@ import type {
   Acesso, Visitante, VeiculoVisitante, VeiculoFrota, DeslocamentoFrota,
   Transportadora, MotoristaTerceiro, VeiculoTerceiro, OperacaoTerceiro,
   AgendamentoDoca, Doca, FilaPatio, AlertaOperacional, ExcecaoOperacional,
-  NFTransito, ExcecaoFiscal,
+  NFTransito, ExcecaoFiscal, EventoTimeline,
 } from "@/types/operacional";
 import {
   mockAcessos, mockVisitantes, mockVeiculosVisitantes, mockFrota, mockDeslocamentos,
   mockTransportadoras, mockMotoristasTerceiros, mockVeiculosTerceiros, mockOperacoes,
   mockAgendamentos, mockDocas, mockFilaPatio, mockAlertas, mockExcecoes,
   mockNFsTransito, mockExcecoesFiscais, dashboardOperacional,
+  mockMovimentacoesFrota, mockTimelinePortaria,
 } from "@/data/mockOperacionalData";
+import type { MovimentacaoFrota } from "@/data/mockOperacionalData";
 
 // ══════════════════════════════════════════════
 // PORTARIA / ACESSOS
@@ -203,4 +205,27 @@ export async function getExcecoesFiscais(): Promise<ExcecaoFiscal[]> {
 // Backend: PUT /operacional/nf-transito/:id/confirmar-recebimento
 export async function confirmarRecebimentoNF(id: string): Promise<NFTransito> {
   try { return await apiPut<NFTransito>(`/operacional/nf-transito/${id}/confirmar-recebimento`, {}); } catch { return mockNFsTransito[0]; }
+}
+
+// ══════════════════════════════════════════════
+// MOVIMENTAÇÕES FROTA
+// Backend: GET /operacional/frota/movimentacoes
+// ══════════════════════════════════════════════
+export type { MovimentacaoFrota };
+
+export async function getMovimentacoesFrota(veiculoId?: string): Promise<MovimentacaoFrota[]> {
+  try {
+    const all = await apiGet<MovimentacaoFrota[]>("/operacional/frota/movimentacoes");
+    return veiculoId ? all.filter((m) => m.veiculoId === veiculoId) : all;
+  } catch {
+    return veiculoId ? mockMovimentacoesFrota.filter((m) => m.veiculoId === veiculoId) : mockMovimentacoesFrota;
+  }
+}
+
+// ══════════════════════════════════════════════
+// TIMELINE PORTARIA
+// Backend: GET /operacional/timeline/:acessoId
+// ══════════════════════════════════════════════
+export async function getTimelinePortaria(acessoId?: string): Promise<EventoTimeline[]> {
+  try { return await apiGet<EventoTimeline[]>(`/operacional/timeline/${acessoId || ""}`); } catch { return mockTimelinePortaria; }
 }

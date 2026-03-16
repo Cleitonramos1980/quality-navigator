@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2, Save, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { mockLojas, mockDepartamentos } from "@/data/mockInventarioData";
+import { getLojas, getDepartamentos } from "@/services/inventario";
+import type { LojaInventario, DepartamentoInventario } from "@/types/inventario";
 import { FREQUENCIA_LABELS, type FrequenciaInventario } from "@/types/inventario";
 import { toast } from "@/hooks/use-toast";
 
@@ -27,7 +28,7 @@ const LojaMultiSelect = ({
   onChange,
 }: {
   lojaIds: string[];
-  lojas: typeof mockLojas;
+  lojas: LojaInventario[];
   onChange: (ids: string[]) => void;
 }) => {
   const [open, setOpen] = useState(false);
@@ -189,6 +190,13 @@ const NovoPlanoInventarioPage = () => {
   const [dataFim, setDataFim] = useState("2026-06-15");
   const [lojasSelecionadas, setLojasSelecionadas] = useState<string[]>([]);
   const [linhas, setLinhas] = useState<PlanoLinha[]>([]);
+  const [allLojas, setAllLojas] = useState<LojaInventario[]>([]);
+  const [allDepartamentos, setAllDepartamentos] = useState<DepartamentoInventario[]>([]);
+
+  useEffect(() => {
+    getLojas().then(setAllLojas);
+    getDepartamentos().then(setAllDepartamentos);
+  }, []);
 
   const toggleLoja = (lojaId: string) => {
     setLojasSelecionadas((prev) =>
@@ -201,8 +209,8 @@ const NovoPlanoInventarioPage = () => {
       ...prev,
       {
         id: `PL-${Date.now()}`,
-        lojaIds: lojasSelecionadas.length > 0 ? [...lojasSelecionadas] : [mockLojas[0].id],
-        departamentoIds: [mockDepartamentos[0].id],
+        lojaIds: lojasSelecionadas.length > 0 ? [...lojasSelecionadas] : allLojas.length > 0 ? [allLojas[0].id] : [],
+        departamentoIds: allDepartamentos.length > 0 ? [allDepartamentos[0].id] : [],
         frequencias: ["DIARIA" as FrequenciaInventario],
         quantidadeItens: 10,
       },
@@ -231,8 +239,8 @@ const NovoPlanoInventarioPage = () => {
   };
 
   const lojasFiltradas = lojasSelecionadas.length > 0
-    ? mockLojas.filter((l) => lojasSelecionadas.includes(l.id))
-    : mockLojas;
+    ? allLojas.filter((l) => lojasSelecionadas.includes(l.id))
+    : allLojas;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -294,19 +302,19 @@ const NovoPlanoInventarioPage = () => {
             variant="outline"
             size="sm"
             onClick={() => {
-              if (lojasSelecionadas.length === mockLojas.length) {
+               if (lojasSelecionadas.length === allLojas.length) {
                 setLojasSelecionadas([]);
               } else {
-                setLojasSelecionadas(mockLojas.map((l) => l.id));
+                setLojasSelecionadas(allLojas.map((l) => l.id));
               }
             }}
           >
-            {lojasSelecionadas.length === mockLojas.length ? "Desmarcar Todas" : "Selecionar Todas"}
+            {lojasSelecionadas.length === allLojas.length ? "Desmarcar Todas" : "Selecionar Todas"}
           </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            {mockLojas.map((loja) => (
+            {allLojas.map((loja) => (
               <label
                 key={loja.id}
                 className="flex items-center gap-2 p-2.5 rounded-md border border-border hover:bg-muted/30 cursor-pointer transition-colors"
@@ -371,7 +379,7 @@ const NovoPlanoInventarioPage = () => {
                       <td className="p-2">
                         <MultiSelectPopover
                           selectedIds={linha.departamentoIds}
-                          options={mockDepartamentos.map((d) => ({ id: d.id, label: d.nome }))}
+                          options={allDepartamentos.map((d) => ({ id: d.id, label: d.nome }))}
                           onChange={(ids) => updateLinha(linha.id, "departamentoIds", ids)}
                           placeholder="Selecione..."
                           allLabel="Todos os departamentos"

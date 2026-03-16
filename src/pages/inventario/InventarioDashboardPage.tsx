@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, TrendingUp, Store, Plus } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
-import { mockContagens, mockLojas } from "@/data/mockInventarioData";
+import { getContagens, getLojas } from "@/services/inventario";
+import type { Contagem, LojaInventario } from "@/types/inventario";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,9 +14,16 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 const InventarioDashboardPage = () => {
   const navigate = useNavigate();
   const [periodo, setPeriodo] = useState("hoje");
+  const [contagens, setContagens] = useState<Contagem[]>([]);
+  const [lojas, setLojas] = useState<LojaInventario[]>([]);
+
+  useEffect(() => {
+    getContagens().then(setContagens);
+    getLojas().then(setLojas);
+  }, []);
 
   const hoje = "2026-03-12";
-  const contagensHoje = mockContagens.filter((c) => c.data === hoje);
+  const contagensHoje = contagens.filter((c) => c.data === hoje);
   const previstas = contagensHoje.length;
   const concluidas = contagensHoje.filter((c) => c.status === "CONCLUIDO" || c.status === "VALIDADO").length;
   const emAndamento = contagensHoje.filter((c) => c.status === "EM_ANDAMENTO").length;
@@ -32,8 +40,8 @@ const InventarioDashboardPage = () => {
     { name: "Não Feito", value: naoFeitas, fill: "hsl(var(--destructive))" },
   ].filter((d) => d.value > 0);
 
-  const lojaRanking = mockLojas.slice(0, 6).map((l) => {
-    const cs = mockContagens.filter((c) => c.lojaId === l.id);
+  const lojaRanking = lojas.slice(0, 6).map((l) => {
+    const cs = contagens.filter((c) => c.lojaId === l.id);
     const done = cs.filter((c) => c.status === "VALIDADO" || c.status === "CONCLUIDO").length;
     return { nome: l.nome.replace("Loja ", ""), aderencia: cs.length > 0 ? Math.round((done / cs.length) * 100) : 0 };
   });
@@ -127,7 +135,7 @@ const InventarioDashboardPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockContagens.slice(0, 6).map((c) => (
+                {contagens.slice(0, 6).map((c) => (
                   <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => navigate(`/qualidade/inventario/contagens`)}>
                     <td className="py-2.5 font-mono text-xs">{c.numero}</td>
                     <td className="py-2.5">{c.lojaNome}</td>

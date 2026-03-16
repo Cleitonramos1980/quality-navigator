@@ -1,22 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, QrCode, Search, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
-import { mockAcessos, mockVisitantes } from "@/data/mockOperacionalData";
+import { getAcessos, getVisitantes } from "@/services/operacional";
+import type { Acesso, Visitante } from "@/types/operacional";
 import { toast } from "@/hooks/use-toast";
 
 const LeituraQrPage = () => {
   const navigate = useNavigate();
   const [codigoManual, setCodigoManual] = useState("");
   const [resultado, setResultado] = useState<any>(null);
+  const [allAcessos, setAllAcessos] = useState<Acesso[]>([]);
+  const [allVisitantes, setAllVisitantes] = useState<Visitante[]>([]);
+
+  useEffect(() => {
+    getAcessos().then(setAllAcessos);
+    getVisitantes().then(setAllVisitantes);
+  }, []);
 
   const buscarPorCodigo = () => {
     const q = codigoManual.trim().toUpperCase();
-    const acesso = mockAcessos.find((a) => a.id === q || a.qrCode === q);
-    const visitante = mockVisitantes.find((v) => v.id === q || v.qrCodeUrl === q);
+    const acesso = allAcessos.find((a) => a.id === q || a.qrCode === q);
+    const visitante = allVisitantes.find((v) => v.id === q || v.qrCodeUrl === q);
 
     if (acesso) {
       setResultado({ tipo: "ACESSO", dados: acesso });

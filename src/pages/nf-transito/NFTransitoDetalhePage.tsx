@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, FileText, Truck, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,12 +8,18 @@ import OperationalTimeline from "@/components/operacional/OperationalTimeline";
 import RelatedActionsPanel from "@/components/operacional/RelatedActionsPanel";
 import RiskScoreCard from "@/components/operacional/RiskScoreCard";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
-import { mockNFsTransito } from "@/data/mockOperacionalData";
-import type { EventoTimeline } from "@/types/operacional";
+import { getNFTransitoById } from "@/services/operacional";
+import type { NFTransito, EventoTimeline } from "@/types/operacional";
 
 const NFTransitoDetalhePage = () => {
   const { id } = useParams();
-  const nf = mockNFsTransito.find((n) => n.id === id) ?? mockNFsTransito[0];
+  const [nf, setNf] = useState<NFTransito | null>(null);
+
+  useEffect(() => {
+    if (id) getNFTransitoById(id).then((data) => setNf(data || null));
+  }, [id]);
+
+  if (!nf) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
 
   const timeline: EventoTimeline[] = nf.checkpoints.map((ck) => ({
     id: ck.id, tipo: ck.tipo, descricao: ck.descricao, dataHora: ck.dataHora, usuario: ck.responsavel || "Sistema", detalhes: ck.localizacao,

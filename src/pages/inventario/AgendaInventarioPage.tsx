@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
-import { mockTarefas, mockLojas } from "@/data/mockInventarioData";
+import { getTarefas, getLojas } from "@/services/inventario";
+import type { TarefaInventario, LojaInventario } from "@/types/inventario";
 import { FREQUENCIA_LABELS, type InventarioStatus } from "@/types/inventario";
 
 const AgendaInventarioPage = () => {
@@ -14,9 +15,16 @@ const AgendaInventarioPage = () => {
   const [busca, setBusca] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("TODOS");
   const [lojaFilter, setLojaFilter] = useState<string>("TODAS");
+  const [tarefas, setTarefas] = useState<TarefaInventario[]>([]);
+  const [lojas, setLojas] = useState<LojaInventario[]>([]);
+
+  useEffect(() => {
+    getTarefas().then(setTarefas);
+    getLojas().then(setLojas);
+  }, []);
 
   const filtered = useMemo(() => {
-    return mockTarefas.filter((t) => {
+    return tarefas.filter((t) => {
       if (statusFilter !== "TODOS" && t.status !== statusFilter) return false;
       if (lojaFilter !== "TODAS" && t.lojaId !== lojaFilter) return false;
       if (busca) {
@@ -56,7 +64,7 @@ const AgendaInventarioPage = () => {
           <SelectTrigger className="w-52"><SelectValue placeholder="Loja" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="TODAS">Todas as Lojas</SelectItem>
-            {mockLojas.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
+            {lojas.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
