@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, RefreshCw, Send, Search } from "lucide-react";
+import { Copy, RefreshCw, Send, Search, MessageSquare, Star, TrendingUp, Clock, XCircle } from "lucide-react";
 import { getAvaliacoes, reenviarAvaliacao } from "@/services/sac";
 import type { SACAvaliacao } from "@/types/sac";
+import KPICard from "@/components/KPICard";
+import { cn } from "@/lib/utils";
 
 const STATUS_ENVIO_LABEL: Record<string, string> = {
   NAO_ENVIADA: "Não enviada",
