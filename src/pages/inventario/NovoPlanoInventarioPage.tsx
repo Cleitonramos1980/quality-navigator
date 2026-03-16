@@ -239,8 +239,8 @@ const NovoPlanoInventarioPage = () => {
   };
 
   const lojasFiltradas = lojasSelecionadas.length > 0
-    ? mockLojas.filter((l) => lojasSelecionadas.includes(l.id))
-    : mockLojas;
+    ? allLojas.filter((l) => lojasSelecionadas.includes(l.id))
+    : allLojas;
 
   return (
     <div className="space-y-6 animate-fade-in">
