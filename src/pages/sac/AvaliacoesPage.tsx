@@ -209,9 +209,33 @@ const AvaliacoesPage = () => {
                     </Link>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{item.encerradoAt || "-"}</TableCell>
-                  <TableCell>{STATUS_ENVIO_LABEL[item.statusEnvio] || item.statusEnvio}</TableCell>
-                  <TableCell>{STATUS_RESPOSTA_LABEL[item.statusResposta] || item.statusResposta}</TableCell>
-                  <TableCell>{typeof item.nota === "number" ? item.nota : "-"}</TableCell>
+                  <TableCell>
+                    <span className={cn("status-badge", 
+                      item.statusEnvio === "RESPONDIDA" ? "bg-success/15 text-success" :
+                      item.statusEnvio === "FALHA" ? "bg-destructive/15 text-destructive" :
+                      item.statusEnvio === "EXPIRADA" ? "bg-muted text-muted-foreground" :
+                      item.statusEnvio === "ENVIADA" || item.statusEnvio === "ENTREGUE" ? "bg-info/15 text-info" :
+                      "bg-secondary text-secondary-foreground"
+                    )}>
+                      {STATUS_ENVIO_LABEL[item.statusEnvio] || item.statusEnvio}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={cn("status-badge",
+                      item.statusResposta === "RESPONDIDA" ? "bg-success/15 text-success" :
+                      item.statusResposta === "EXPIRADA" ? "bg-destructive/15 text-destructive" :
+                      "bg-warning/15 text-warning"
+                    )}>
+                      {STATUS_RESPOSTA_LABEL[item.statusResposta] || item.statusResposta}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {typeof item.nota === "number" ? (
+                      <span className={cn("font-bold", item.nota >= 4 ? "text-success" : item.nota >= 3 ? "text-warning" : "text-destructive")}>
+                        {"★".repeat(item.nota)}{"☆".repeat(5 - item.nota)}
+                      </span>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell className="hidden max-w-[320px] truncate xl:table-cell text-muted-foreground">
                     {item.comentario || "-"}
                   </TableCell>
