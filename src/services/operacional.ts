@@ -211,8 +211,6 @@ export async function confirmarRecebimentoNF(id: string): Promise<NFTransito> {
 // MOVIMENTAÇÕES FROTA
 // Backend: GET /operacional/frota/movimentacoes
 // ══════════════════════════════════════════════
-import type { MovimentacaoFrota } from "@/data/mockOperacionalData";
-import { mockMovimentacoesFrota, mockTimelinePortaria } from "@/data/mockOperacionalData";
 export type { MovimentacaoFrota };
 
 export async function getMovimentacoesFrota(veiculoId?: string): Promise<MovimentacaoFrota[]> {
@@ -228,8 +226,6 @@ export async function getMovimentacoesFrota(veiculoId?: string): Promise<Movimen
 // TIMELINE PORTARIA
 // Backend: GET /operacional/timeline/:acessoId
 // ══════════════════════════════════════════════
-import type { EventoTimeline } from "@/types/operacional";
-
 export async function getTimelinePortaria(acessoId?: string): Promise<EventoTimeline[]> {
   try { return await apiGet<EventoTimeline[]>(`/operacional/timeline/${acessoId || ""}`); } catch { return mockTimelinePortaria; }
 }
