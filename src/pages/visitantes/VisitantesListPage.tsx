@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Users, UserCheck, Clock, XCircle, Plus, Eye, Send, QrCode } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockVisitantes } from "@/data/mockOperacionalData";
+import { getVisitantes } from "@/services/operacional";
+import type { Visitante } from "@/types/operacional";
 
 const TABS = [
   { value: "todos", label: "Todos" },

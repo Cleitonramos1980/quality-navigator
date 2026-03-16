@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { DoorOpen, UserCheck, Clock, XCircle, Shield, Users, Plus, QrCode, Camera, Eye } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockAcessos } from "@/data/mockOperacionalData";
+import { getAcessos } from "@/services/operacional";
+import type { Acesso } from "@/types/operacional";
 import type { AcessoStatus } from "@/types/operacional";
 
 const TABS: { value: string; label: string; filter?: (s: AcessoStatus) => boolean }[] = [
@@ -22,24 +23,27 @@ const TABS: { value: string; label: string; filter?: (s: AcessoStatus) => boolea
 const AcessosListPage = () => {
   const [tab, setTab] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [allAcessos, setAllAcessos] = useState<Acesso[]>([]);
+
+  useEffect(() => { getAcessos().then(setAllAcessos); }, []);
 
   const acessos = useMemo(() => {
     const activeTab = TABS.find((t) => t.value === tab);
-    let filtered = mockAcessos;
+    let filtered = allAcessos;
     if (activeTab?.filter) filtered = filtered.filter((a) => activeTab.filter!(a.status));
     if (busca) {
       const q = busca.toLowerCase();
       filtered = filtered.filter((a) => a.nome.toLowerCase().includes(q) || a.empresa.toLowerCase().includes(q) || a.id.toLowerCase().includes(q) || (a.placa?.toLowerCase().includes(q)));
     }
     return filtered;
-  }, [tab, busca]);
+  }, [tab, busca, allAcessos]);
 
   const kpis = useMemo(() => ({
-    presentes: mockAcessos.filter((a) => ["ENTRADA_REGISTRADA", "EM_PERMANENCIA"].includes(a.status)).length,
-    pendentes: mockAcessos.filter((a) => ["PRE_AUTORIZADO", "AGUARDANDO_PREENCHIMENTO", "AGUARDANDO_VALIDACAO"].includes(a.status)).length,
-    encerradosHoje: mockAcessos.filter((a) => a.status === "ENCERRADO").length,
-    recusados: mockAcessos.filter((a) => ["RECUSADO", "EXPIRADO"].includes(a.status)).length,
-  }), []);
+    presentes: allAcessos.filter((a) => ["ENTRADA_REGISTRADA", "EM_PERMANENCIA"].includes(a.status)).length,
+    pendentes: allAcessos.filter((a) => ["PRE_AUTORIZADO", "AGUARDANDO_PREENCHIMENTO", "AGUARDANDO_VALIDACAO"].includes(a.status)).length,
+    encerradosHoje: allAcessos.filter((a) => a.status === "ENCERRADO").length,
+    recusados: allAcessos.filter((a) => ["RECUSADO", "EXPIRADO"].includes(a.status)).length,
+  }), [allAcessos]);
 
   return (
     <div className="space-y-6 animate-fade-in">

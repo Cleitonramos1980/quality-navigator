@@ -78,7 +78,7 @@ const AcessoDetalhePage = () => {
 
           <div className="glass-card rounded-lg p-5">
             <h3 className="mb-4 text-sm font-semibold text-foreground">Timeline de Eventos</h3>
-            <OperationalTimeline eventos={mockTimelinePortaria} />
+            <OperationalTimeline eventos={timeline} />
           </div>
         </div>
 

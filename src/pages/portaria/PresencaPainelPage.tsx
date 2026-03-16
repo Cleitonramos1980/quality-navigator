@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Users, Shield, AlertTriangle, Clock, Eye } from "lucide-react";
-import { mockAcessos } from "@/data/mockOperacionalData";
+import { getAcessos } from "@/services/operacional";
+import type { Acesso } from "@/types/operacional";
 import { Button } from "@/components/ui/button";
 import KPICard from "@/components/KPICard";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const PresencaPainelPage = () => {
-  const presentes = mockAcessos.filter((a) => ["ENTRADA_REGISTRADA", "EM_PERMANENCIA"].includes(a.status));
+  const [allAcessos, setAllAcessos] = useState<Acesso[]>([]);
+  useEffect(() => { getAcessos().then(setAllAcessos); }, []);
+
+  const presentes = allAcessos.filter((a) => ["ENTRADA_REGISTRADA", "EM_PERMANENCIA"].includes(a.status));
   const visitantes = presentes.filter((a) => a.tipo === "VISITANTE");
   const motoristas = presentes.filter((a) => a.tipo === "MOTORISTA");
   const prestadores = presentes.filter((a) => a.tipo === "PRESTADOR");

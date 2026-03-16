@@ -1,26 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Camera, Search, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
-import { mockAcessos, mockVeiculosVisitantes, mockFrota, mockVeiculosTerceiros } from "@/data/mockOperacionalData";
+import { getAcessos, getVeiculosVisitantes, getVeiculosFrota, getVeiculosTerceiros } from "@/services/operacional";
+import type { Acesso, VeiculoVisitante, VeiculoFrota, VeiculoTerceiro } from "@/types/operacional";
 import { toast } from "@/hooks/use-toast";
 
 const LeituraPlacaPage = () => {
   const navigate = useNavigate();
   const [placa, setPlaca] = useState("");
   const [resultado, setResultado] = useState<any>(null);
+  const [allAcessos, setAllAcessos] = useState<Acesso[]>([]);
+  const [allVeiculosVisitantes, setAllVeiculosVisitantes] = useState<VeiculoVisitante[]>([]);
+  const [allFrota, setAllFrota] = useState<VeiculoFrota[]>([]);
+  const [allVeiculosTerceiros, setAllVeiculosTerceiros] = useState<VeiculoTerceiro[]>([]);
+
+  useEffect(() => {
+    getAcessos().then(setAllAcessos);
+    getVeiculosVisitantes().then(setAllVeiculosVisitantes);
+    getVeiculosFrota().then(setAllFrota);
+    getVeiculosTerceiros().then(setAllVeiculosTerceiros);
+  }, []);
 
   const buscarPlaca = () => {
     const q = placa.trim().toUpperCase();
     if (!q) return;
 
-    const acesso = mockAcessos.find((a) => a.placa?.toUpperCase() === q);
-    const veiculoVisitante = mockVeiculosVisitantes.find((v) => v.placa.toUpperCase() === q);
-    const veiculoFrota = mockFrota.find((v) => v.placa.toUpperCase() === q);
-    const veiculoTerceiro = mockVeiculosTerceiros.find((v) => v.placa.toUpperCase() === q);
+    const acesso = allAcessos.find((a) => a.placa?.toUpperCase() === q);
+    const veiculoVisitante = allVeiculosVisitantes.find((v) => v.placa.toUpperCase() === q);
+    const veiculoFrota = allFrota.find((v) => v.placa.toUpperCase() === q);
+    const veiculoTerceiro = allVeiculosTerceiros.find((v) => v.placa.toUpperCase() === q);
 
     if (acesso) {
       setResultado({ tipo: "ACESSO", dados: { nome: acesso.nome, empresa: acesso.empresa, documento: acesso.documento, placa: acesso.placa, status: acesso.status, tipoVeiculo: acesso.tipoVeiculo } });
