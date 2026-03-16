@@ -24,12 +24,15 @@ const NovoDespachoPage = () => {
   const [destino, setDestino] = useState("");
   const [observacao, setObservacao] = useState("");
   const [notas, setNotas] = useState<{ numero: string; descricao: string }[]>([{ numero: "", descricao: "" }]);
+  const [allFrota, setAllFrota] = useState<VeiculoFrota[]>([]);
 
-  const veiculosDisponiveis = mockFrota.filter(
+  useEffect(() => { getVeiculosFrota().then(setAllFrota); }, []);
+
+  const veiculosDisponiveis = allFrota.filter(
     (v) => v.status === "DISPONIVEL" || v.status === "PARADA_PROGRAMADA"
   );
 
-  const veiculoSelecionado = mockFrota.find((v) => v.id === veiculoId);
+  const veiculoSelecionado = allFrota.find((v) => v.id === veiculoId);
 
   const addNota = () => setNotas([...notas, { numero: "", descricao: "" }]);
   const removeNota = (idx: number) => setNotas(notas.filter((_, i) => i !== idx));

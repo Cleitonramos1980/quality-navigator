@@ -224,7 +224,7 @@ const FrotaPage = () => {
             <MapPin className="h-4 w-4 text-primary" /> Painel de Localização da Frota
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {mockFrota.map((v) => {
+            {allFrota.map((v) => {
               const loc = getLocalizacao(v);
               return (
                 <div
