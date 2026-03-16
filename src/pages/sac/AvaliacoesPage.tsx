@@ -55,6 +55,18 @@ const AvaliacoesPage = () => {
     void load();
   }, []);
 
+  const kpis = useMemo(() => {
+    const total = items.length;
+    const respondidas = items.filter((i) => i.statusResposta === "RESPONDIDA").length;
+    const pendentes = items.filter((i) => i.statusResposta === "NAO_RESPONDIDA").length;
+    const expiradas = items.filter((i) => i.statusResposta === "EXPIRADA" || i.statusEnvio === "EXPIRADA").length;
+    const falhas = items.filter((i) => i.statusEnvio === "FALHA").length;
+    const taxaResposta = total > 0 ? Math.round((respondidas / total) * 100) : 0;
+    const comNota = items.filter((i) => typeof i.nota === "number");
+    const notaMedia = comNota.length > 0 ? (comNota.reduce((s, i) => s + (i.nota || 0), 0) / comNota.length).toFixed(1) : "—";
+    return { total, respondidas, pendentes, expiradas, falhas, taxaResposta, notaMedia };
+  }, [items]);
+
   const filtered = useMemo(() => {
     return items.filter((item) => {
       const searchNormalized = search.trim().toLowerCase();
