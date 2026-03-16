@@ -100,6 +100,7 @@ const NFTransitoDashboardPage = () => {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="lista">Documentos</TabsTrigger>
           <TabsTrigger value="risco">Painel de Risco</TabsTrigger>
+          <TabsTrigger value="aging">Aging & SLA</TabsTrigger>
           <TabsTrigger value="excecoes">Exceções Fiscais ({excecoesFiscais.length})</TabsTrigger>
         </TabsList>
       </Tabs>
