@@ -24,6 +24,8 @@ import { getNCs } from "@/services/nc";
 import { getCurrentPapel, PAPEL_LABELS } from "@/lib/workflowOs";
 import { useUxMetrics } from "@/hooks/useUxMetrics";
 
+const ExecutiveSummaryPanel = lazy(() => import("@/components/dashboard/ExecutiveSummaryPanel"));
+
 interface InboxItem {
   title: string;
   value: number;
