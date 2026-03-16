@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, AlertTriangle, TrendingDown, Clock, Inbox, MessageSquare, Star } from "lucide-react";
 import {
