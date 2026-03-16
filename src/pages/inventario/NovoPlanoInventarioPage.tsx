@@ -302,19 +302,19 @@ const NovoPlanoInventarioPage = () => {
             variant="outline"
             size="sm"
             onClick={() => {
-              if (lojasSelecionadas.length === mockLojas.length) {
+               if (lojasSelecionadas.length === allLojas.length) {
                 setLojasSelecionadas([]);
               } else {
-                setLojasSelecionadas(mockLojas.map((l) => l.id));
+                setLojasSelecionadas(allLojas.map((l) => l.id));
               }
             }}
           >
-            {lojasSelecionadas.length === mockLojas.length ? "Desmarcar Todas" : "Selecionar Todas"}
+            {lojasSelecionadas.length === allLojas.length ? "Desmarcar Todas" : "Selecionar Todas"}
           </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            {mockLojas.map((loja) => (
+            {allLojas.map((loja) => (
               <label
                 key={loja.id}
                 className="flex items-center gap-2 p-2.5 rounded-md border border-border hover:bg-muted/30 cursor-pointer transition-colors"
