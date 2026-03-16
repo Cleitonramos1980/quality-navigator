@@ -16,8 +16,8 @@ const VeiculosVisitantesPage = () => {
   const veiculos = useMemo(() => {
     if (!busca) return allVeiculos;
     const q = busca.toLowerCase();
-    return mockVeiculosVisitantes.filter((v) => v.placa.toLowerCase().includes(q) || v.visitanteNome.toLowerCase().includes(q) || v.modelo.toLowerCase().includes(q));
-  }, [busca]);
+    return allVeiculos.filter((v) => v.placa.toLowerCase().includes(q) || v.visitanteNome.toLowerCase().includes(q) || v.modelo.toLowerCase().includes(q));
+  }, [busca, allVeiculos]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -27,10 +27,10 @@ const VeiculosVisitantesPage = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title="Total" value={mockVeiculosVisitantes.length} icon={<Car className="w-5 h-5" />} />
-        <KPICard title="Estacionados" value={mockVeiculosVisitantes.filter((v) => v.status === "ESTACIONADO").length} icon={<Car className="w-5 h-5" />} />
-        <KPICard title="Aguardando" value={mockVeiculosVisitantes.filter((v) => v.status === "AGUARDANDO_CHEGADA").length} icon={<Car className="w-5 h-5" />} />
-        <KPICard title="Saíram" value={mockVeiculosVisitantes.filter((v) => v.status === "SAIU").length} icon={<Car className="w-5 h-5" />} />
+        <KPICard title="Total" value={allVeiculos.length} icon={<Car className="w-5 h-5" />} />
+        <KPICard title="Estacionados" value={allVeiculos.filter((v) => v.status === "ESTACIONADO").length} icon={<Car className="w-5 h-5" />} />
+        <KPICard title="Aguardando" value={allVeiculos.filter((v) => v.status === "AGUARDANDO_CHEGADA").length} icon={<Car className="w-5 h-5" />} />
+        <KPICard title="Saíram" value={allVeiculos.filter((v) => v.status === "SAIU").length} icon={<Car className="w-5 h-5" />} />
       </div>
 
       <div className="glass-card rounded-lg p-5">

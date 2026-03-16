@@ -29,8 +29,8 @@ const VeiculoDetalhePage = () => {
 
   const docaAtual = useMemo(() => {
     if (!veiculo) return null;
-    return mockDocas.find((d) => d.placaAtual === veiculo.placa) || null;
-  }, [veiculo]);
+    return allDocas.find((d) => d.placaAtual === veiculo.placa) || null;
+  }, [veiculo, allDocas]);
 
   if (!veiculo) {
     return (
