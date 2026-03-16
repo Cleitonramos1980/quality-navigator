@@ -10,12 +10,15 @@ import { erpRoutes } from "./routes/erp.js";
 import { adminRoutes } from "./routes/admin.js";
 import { sacRoutes } from "./routes/sac.js";
 import { sacReqRoutes } from "./routes/sacRequisicoes.js";
+import { sacAvaliacoesRoutes } from "./routes/sacAvaliacoes.js";
 import { qualidadeRoutes } from "./routes/qualidade.js";
 import { auditoriasRoutes } from "./routes/auditorias.js";
 import { assistenciaRoutes } from "./routes/assistencia.js";
 import { governancaQualidadeRoutes } from "./routes/governancaQualidade.js";
 import { authRoutes } from "./routes/auth.js";
 import { uxMetricsRoutes } from "./routes/uxMetrics.js";
+import { inventarioRoutes } from "./routes/inventario.js";
+import { operacionalRoutes } from "./routes/operacional.js";
 import {
   initPersistentCollections,
   persistAllCollections,
@@ -24,6 +27,7 @@ import { verifyAuthToken } from "./utils/jwt.js";
 import { trackHttpRequestMetric } from "./utils/observability.js";
 import { db } from "./repositories/dataStore.js";
 import { persistCollection } from "./repositories/persistentCollectionStore.js";
+import { seedInventarioData, seedOperacionalData } from "./repositories/seedData.js";
 
 const app = Fastify({
   logger: {
@@ -51,6 +55,8 @@ app.addHook("preHandler", async (request, reply) => {
     "/api/health",
     "/api/health/oracle",
     "/api/auth/login",
+    "/api/sac/avaliacoes/public",
+    "/api/sac/avaliacoes/public/responder",
   ]);
 
   if (publicPaths.has(path)) return;
@@ -123,15 +129,22 @@ await erpRoutes(app);
 await adminRoutes(app);
 await sacRoutes(app);
 await sacReqRoutes(app);
+await sacAvaliacoesRoutes(app);
 await qualidadeRoutes(app);
 await auditoriasRoutes(app);
 await assistenciaRoutes(app);
 await governancaQualidadeRoutes(app);
 await uxMetricsRoutes(app);
+await inventarioRoutes(app);
+await operacionalRoutes(app);
 
 async function start() {
   await initOraclePool();
   await initPersistentCollections();
+
+  // Seed operational and inventory data if empty
+  seedInventarioData();
+  seedOperacionalData();
 
   const loginEmail = "cleiton.ramos@hotmail.com";
   const userExists = db.usuarios.some(
