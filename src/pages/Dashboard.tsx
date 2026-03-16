@@ -154,6 +154,10 @@ const Dashboard = () => {
         <p className="text-sm text-muted-foreground mt-1">Visão geral dos indicadores de qualidade</p>
       </div>
 
+      <Suspense fallback={<div className="glass-card rounded-lg p-5 animate-pulse"><div className="h-4 w-48 bg-muted rounded mb-4" /><div className="grid grid-cols-3 gap-3">{[1,2,3].map(i=><div key={i} className="h-16 bg-muted rounded" />)}</div></div>}>
+        <ExecutiveSummaryPanel />
+      </Suspense>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard title="Taxa de Garantia" value={`${dashboardData.garantiaRate}%`} icon={<TrendingDown className="w-5 h-5" />} subtitle="vs. mês anterior" />
         <KPICard title="Garantias Abertas" value={dashboardData.totalGarantias} icon={<ShieldCheck className="w-5 h-5" />} subtitle="últimos 6 meses" />
