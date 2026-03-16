@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockNFsTransito, mockExcecoesFiscais, dashboardOperacional } from "@/data/mockOperacionalData";
+import { getNFsTransito, getExcecoesFiscais, getDashboardOperacional } from "@/services/operacional";
+import type { NFTransito, ExcecaoFiscal } from "@/types/operacional";
+import type { DashboardOperacionalData } from "@/services/operacional";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const COLORS = ["hsl(152, 60%, 40%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(220, 25%, 20%)"];

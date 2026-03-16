@@ -5,7 +5,8 @@ import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockTransportadoras, mockMotoristasTerceiros, mockVeiculosTerceiros, mockOperacoes, mockAgendamentos } from "@/data/mockOperacionalData";
+import { getTransportadoras, getMotoristasTerceiros, getVeiculosTerceiros, getOperacoes, getAgendamentos } from "@/services/operacional";
+import type { Transportadora, MotoristaTerceiro, VeiculoTerceiro, OperacaoTerceiro, AgendamentoDoca } from "@/types/operacional";
 import { Progress } from "@/components/ui/progress";
 
 const TerceirosPage = () => {

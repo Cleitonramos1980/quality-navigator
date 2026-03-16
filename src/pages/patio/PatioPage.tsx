@@ -4,9 +4,10 @@ import KPICard from "@/components/KPICard";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import DockStatusCard from "@/components/operacional/DockStatusCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockDocas, mockFilaPatio, mockOperacoes, mockTransportadoras } from "@/data/mockOperacionalData";
+import { getDocas, getFilaPatio, getOperacoes, getTransportadoras } from "@/services/operacional";
+import type { Doca, FilaPatio as FilaPatioType, OperacaoTerceiro, Transportadora } from "@/types/operacional";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 const PatioPage = () => {
   const [tab, setTab] = useState("visao");

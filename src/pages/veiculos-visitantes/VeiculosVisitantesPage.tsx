@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Car, Eye } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -6,12 +6,15 @@ import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockVeiculosVisitantes } from "@/data/mockOperacionalData";
+import { getVeiculosVisitantes } from "@/services/operacional";
+import type { VeiculoVisitante } from "@/types/operacional";
 
 const VeiculosVisitantesPage = () => {
   const [busca, setBusca] = useState("");
+  const [allVeiculos, setAllVeiculos] = useState<VeiculoVisitante[]>([]);
+  useEffect(() => { getVeiculosVisitantes().then(setAllVeiculos); }, []);
   const veiculos = useMemo(() => {
-    if (!busca) return mockVeiculosVisitantes;
+    if (!busca) return allVeiculos;
     const q = busca.toLowerCase();
     return mockVeiculosVisitantes.filter((v) => v.placa.toLowerCase().includes(q) || v.visitanteNome.toLowerCase().includes(q) || v.modelo.toLowerCase().includes(q));
   }, [busca]);

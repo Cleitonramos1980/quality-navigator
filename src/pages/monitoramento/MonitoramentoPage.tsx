@@ -7,7 +7,9 @@ import RelatedActionsPanel from "@/components/operacional/RelatedActionsPanel";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { dashboardOperacional, mockAlertas, mockExcecoes, mockAcessos } from "@/data/mockOperacionalData";
+import { getDashboardOperacional, getAlertas, getExcecoes, getAcessos } from "@/services/operacional";
+import type { AlertaOperacional, ExcecaoOperacional, Acesso } from "@/types/operacional";
+import type { DashboardOperacionalData } from "@/services/operacional";
 
 const MonitoramentoPage = () => {
   const [tab, setTab] = useState("tempo-real");
