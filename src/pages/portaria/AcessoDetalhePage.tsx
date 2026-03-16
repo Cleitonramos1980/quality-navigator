@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Clock, MapPin, User, Building2, Car, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,11 +7,21 @@ import TraceabilityCard from "@/components/operacional/TraceabilityCard";
 import OperationalTimeline from "@/components/operacional/OperationalTimeline";
 import RelatedActionsPanel from "@/components/operacional/RelatedActionsPanel";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
-import { mockAcessos, mockTimelinePortaria } from "@/data/mockOperacionalData";
+import { getAcessoById, getTimelinePortaria } from "@/services/operacional";
+import type { Acesso, EventoTimeline } from "@/types/operacional";
 
 const AcessoDetalhePage = () => {
   const { id } = useParams();
-  const acesso = mockAcessos.find((a) => a.id === id) ?? mockAcessos[0];
+  const [acesso, setAcesso] = useState<Acesso | null>(null);
+  const [timeline, setTimeline] = useState<EventoTimeline[]>([]);
+
+  useEffect(() => {
+    if (!id) return;
+    getAcessoById(id).then((a) => setAcesso(a || null));
+    getTimelinePortaria(id).then(setTimeline);
+  }, [id]);
+
+  if (!acesso) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
 
   const bannerTipo = acesso.criticidade === "CRITICA" ? "danger" : acesso.criticidade === "ALTA" ? "warning" : "info";
 
