@@ -379,7 +379,7 @@ const NovoPlanoInventarioPage = () => {
                       <td className="p-2">
                         <MultiSelectPopover
                           selectedIds={linha.departamentoIds}
-                          options={mockDepartamentos.map((d) => ({ id: d.id, label: d.nome }))}
+                          options={allDepartamentos.map((d) => ({ id: d.id, label: d.nome }))}
                           onChange={(ids) => updateLinha(linha.id, "departamentoIds", ids)}
                           placeholder="Selecione..."
                           allLabel="Todos os departamentos"
