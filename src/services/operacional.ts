@@ -204,3 +204,30 @@ export async function getExcecoesFiscais(): Promise<ExcecaoFiscal[]> {
 export async function confirmarRecebimentoNF(id: string): Promise<NFTransito> {
   try { return await apiPut<NFTransito>(`/operacional/nf-transito/${id}/confirmar-recebimento`, {}); } catch { return mockNFsTransito[0]; }
 }
+
+// ══════════════════════════════════════════════
+// MOVIMENTAÇÕES FROTA
+// Backend: GET /operacional/frota/movimentacoes
+// ══════════════════════════════════════════════
+import type { MovimentacaoFrota } from "@/data/mockOperacionalData";
+import { mockMovimentacoesFrota, mockTimelinePortaria } from "@/data/mockOperacionalData";
+export type { MovimentacaoFrota };
+
+export async function getMovimentacoesFrota(veiculoId?: string): Promise<MovimentacaoFrota[]> {
+  try {
+    const all = await apiGet<MovimentacaoFrota[]>("/operacional/frota/movimentacoes");
+    return veiculoId ? all.filter((m) => m.veiculoId === veiculoId) : all;
+  } catch {
+    return veiculoId ? mockMovimentacoesFrota.filter((m) => m.veiculoId === veiculoId) : mockMovimentacoesFrota;
+  }
+}
+
+// ══════════════════════════════════════════════
+// TIMELINE PORTARIA
+// Backend: GET /operacional/timeline/:acessoId
+// ══════════════════════════════════════════════
+import type { EventoTimeline } from "@/types/operacional";
+
+export async function getTimelinePortaria(acessoId?: string): Promise<EventoTimeline[]> {
+  try { return await apiGet<EventoTimeline[]>(`/operacional/timeline/${acessoId || ""}`); } catch { return mockTimelinePortaria; }
+}
