@@ -220,6 +220,7 @@ const NFTransitoDashboardPage = () => {
         </div>
       )}
 
+      {tab === "excecoes" && (
         <div className="glass-card rounded-lg p-5">
           <Table>
             <TableHeader><TableRow>
