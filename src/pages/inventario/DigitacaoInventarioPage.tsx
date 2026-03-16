@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Save, CheckCircle, AlertTriangle, GitCompare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
-import { mockContagens } from "@/data/mockInventarioData";
+import { getContagens } from "@/services/inventario";
 import { FREQUENCIA_LABELS } from "@/types/inventario";
 import type { ItemContagem, Contagem } from "@/types/inventario";
 import { toast } from "@/hooks/use-toast";
