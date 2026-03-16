@@ -176,7 +176,50 @@ const NFTransitoDashboardPage = () => {
         </div>
       )}
 
-      {tab === "excecoes" && (
+      {tab === "aging" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <AgingChart data={agingData} title="Aging — Dias em Trânsito" />
+          <div className="glass-card rounded-lg p-5">
+            <h3 className="text-sm font-semibold text-foreground mb-4">SLA por Destino</h3>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={slaByDestino} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
+                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} />
+                <Tooltip formatter={(v: number) => `${v}%`} />
+                <Bar dataKey="sla" radius={[0, 4, 4, 0]}>
+                  {slaByDestino.map((entry, idx) => (
+                    <Cell key={idx} fill={entry.sla >= 80 ? "hsl(152, 60%, 40%)" : entry.sla >= 60 ? "hsl(38, 92%, 50%)" : "hsl(0, 72%, 51%)"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="glass-card rounded-lg p-5 lg:col-span-2">
+            <h3 className="text-sm font-semibold text-foreground mb-4">NFs com Maior Tempo em Trânsito</h3>
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>NF</TableHead><TableHead>Cliente</TableHead><TableHead>Destino</TableHead><TableHead>Transportadora</TableHead><TableHead>Dias</TableHead><TableHead>Risco</TableHead><TableHead>Status</TableHead><TableHead>Ações</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {[...allNFs].sort((a, b) => b.diasEmTransito - a.diasEmTransito).slice(0, 8).map((nf) => (
+                  <TableRow key={nf.id}>
+                    <TableCell className="font-mono font-medium">{nf.numero}</TableCell>
+                    <TableCell className="text-xs">{nf.cliente}</TableCell>
+                    <TableCell className="text-xs">{nf.destino}</TableCell>
+                    <TableCell className="text-xs">{nf.transportadoraNome}</TableCell>
+                    <TableCell className={`font-bold ${nf.diasEmTransito > 5 ? "text-destructive" : nf.diasEmTransito > 3 ? "text-warning" : "text-foreground"}`}>{nf.diasEmTransito}d</TableCell>
+                    <TableCell><span className={`text-xs font-bold ${nf.scoreRisco > 50 ? "text-destructive" : nf.scoreRisco > 25 ? "text-warning" : "text-success"}`}>{nf.scoreRisco}</span></TableCell>
+                    <TableCell><StatusSemaphore status={nf.status} /></TableCell>
+                    <TableCell><Button variant="ghost" size="sm" asChild><Link to={`/nf-transito/${nf.id}`}><Eye className="h-4 w-4" /></Link></Button></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
         <div className="glass-card rounded-lg p-5">
           <Table>
             <TableHeader><TableRow>
