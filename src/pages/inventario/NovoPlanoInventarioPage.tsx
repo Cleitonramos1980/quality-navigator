@@ -209,8 +209,8 @@ const NovoPlanoInventarioPage = () => {
       ...prev,
       {
         id: `PL-${Date.now()}`,
-        lojaIds: lojasSelecionadas.length > 0 ? [...lojasSelecionadas] : [mockLojas[0].id],
-        departamentoIds: [mockDepartamentos[0].id],
+        lojaIds: lojasSelecionadas.length > 0 ? [...lojasSelecionadas] : allLojas.length > 0 ? [allLojas[0].id] : [],
+        departamentoIds: allDepartamentos.length > 0 ? [allDepartamentos[0].id] : [],
         frequencias: ["DIARIA" as FrequenciaInventario],
         quantidadeItens: 10,
       },
