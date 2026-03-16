@@ -53,7 +53,7 @@ const HistoricoDivergenciaPage = () => {
     }));
 
   // Ranking lojas
-  const lojaRanking = mockLojas.map((l) => {
+  const lojaRanking = lojas.map((l) => {
     const ld = filtered.filter((d) => d.lojaId === l.id);
     const total = ld.reduce((s, d) => s + d.itensDivergentes, 0);
     return { nome: l.nome, divergentes: total };
