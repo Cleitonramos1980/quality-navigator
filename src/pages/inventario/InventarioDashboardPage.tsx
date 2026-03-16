@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, TrendingUp, Store, Plus } from "lucide-react";
+import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, TrendingUp, Store, Plus, RefreshCw, Target } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
@@ -115,6 +115,84 @@ const InventarioDashboardPage = () => {
                 <Bar dataKey="aderencia" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Premium: Critical Items & Operational Panels */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><RefreshCw className="h-4 w-4 text-warning" />Em Recontagem / 3ª Contagem</CardTitle></CardHeader>
+          <CardContent>
+            {(() => {
+              const recontagens = contagens.filter((c) => c.status === "RECONTAGEM");
+              return recontagens.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma recontagem pendente</p>
+              ) : (
+                <div className="space-y-2">
+                  {recontagens.slice(0, 5).map((c) => (
+                    <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                      <div>
+                        <span className="text-sm font-mono">{c.numero}</span>
+                        <p className="text-xs text-muted-foreground">{c.lojaNome} — {c.departamentoNome}</p>
+                      </div>
+                      <InventoryStatusPill status={c.status} />
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" />Aguardando Validação</CardTitle></CardHeader>
+          <CardContent>
+            {(() => {
+              const aguardando = contagens.filter((c) => c.status === "CONCLUIDO");
+              return aguardando.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Todas validadas</p>
+              ) : (
+                <div className="space-y-2">
+                  {aguardando.slice(0, 5).map((c) => (
+                    <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0 cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/qualidade/inventario/validacao/${c.id}`)}>
+                      <div>
+                        <span className="text-sm font-mono">{c.numero}</span>
+                        <p className="text-xs text-muted-foreground">{c.lojaNome}</p>
+                      </div>
+                      <span className="text-sm font-medium">{c.acuracidade > 0 ? `${c.acuracidade}%` : "—"}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><Target className="h-4 w-4 text-destructive" />Itens com Maior Divergência</CardTitle></CardHeader>
+          <CardContent>
+            {(() => {
+              const comDivergencia = contagens.filter((c) => c.itensDivergentes > 0).sort((a, b) => b.itensDivergentes - a.itensDivergentes).slice(0, 5);
+              return comDivergencia.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Sem divergências relevantes</p>
+              ) : (
+                <div className="space-y-2">
+                  {comDivergencia.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                      <div>
+                        <span className="text-sm font-mono">{c.numero}</span>
+                        <p className="text-xs text-muted-foreground">{c.lojaNome}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-bold text-destructive">{c.itensDivergentes}</span>
+                        <p className="text-xs text-muted-foreground">de {c.itensContados}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>

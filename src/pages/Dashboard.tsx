@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, AlertTriangle, TrendingDown, Clock, Inbox, MessageSquare, Star } from "lucide-react";
 import {
@@ -23,6 +23,8 @@ import { listarOS } from "@/services/assistencia";
 import { getNCs } from "@/services/nc";
 import { getCurrentPapel, PAPEL_LABELS } from "@/lib/workflowOs";
 import { useUxMetrics } from "@/hooks/useUxMetrics";
+
+const ExecutiveSummaryPanel = lazy(() => import("@/components/dashboard/ExecutiveSummaryPanel"));
 
 interface InboxItem {
   title: string;
@@ -151,6 +153,10 @@ const Dashboard = () => {
         <h1 className="text-2xl font-bold text-foreground">Dashboard da Qualidade</h1>
         <p className="text-sm text-muted-foreground mt-1">Visão geral dos indicadores de qualidade</p>
       </div>
+
+      <Suspense fallback={<div className="glass-card rounded-lg p-5 animate-pulse"><div className="h-4 w-48 bg-muted rounded mb-4" /><div className="grid grid-cols-3 gap-3">{[1,2,3].map(i=><div key={i} className="h-16 bg-muted rounded" />)}</div></div>}>
+        <ExecutiveSummaryPanel />
+      </Suspense>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard title="Taxa de Garantia" value={`${dashboardData.garantiaRate}%`} icon={<TrendingDown className="w-5 h-5" />} subtitle="vs. mês anterior" />

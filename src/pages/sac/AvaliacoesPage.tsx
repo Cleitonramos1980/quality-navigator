@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, RefreshCw, Send, Search } from "lucide-react";
+import { Copy, RefreshCw, Send, Search, MessageSquare, Star, TrendingUp, Clock, XCircle } from "lucide-react";
 import { getAvaliacoes, reenviarAvaliacao } from "@/services/sac";
 import type { SACAvaliacao } from "@/types/sac";
+import KPICard from "@/components/KPICard";
+import { cn } from "@/lib/utils";
 
 const STATUS_ENVIO_LABEL: Record<string, string> = {
   NAO_ENVIADA: "Não enviada",
@@ -54,6 +56,18 @@ const AvaliacoesPage = () => {
   useEffect(() => {
     void load();
   }, []);
+
+  const kpis = useMemo(() => {
+    const total = items.length;
+    const respondidas = items.filter((i) => i.statusResposta === "RESPONDIDA").length;
+    const pendentes = items.filter((i) => i.statusResposta === "NAO_RESPONDIDA").length;
+    const expiradas = items.filter((i) => i.statusResposta === "EXPIRADA" || i.statusEnvio === "EXPIRADA").length;
+    const falhas = items.filter((i) => i.statusEnvio === "FALHA").length;
+    const taxaResposta = total > 0 ? Math.round((respondidas / total) * 100) : 0;
+    const comNota = items.filter((i) => typeof i.nota === "number");
+    const notaMedia = comNota.length > 0 ? (comNota.reduce((s, i) => s + (i.nota || 0), 0) / comNota.length).toFixed(1) : "—";
+    return { total, respondidas, pendentes, expiradas, falhas, taxaResposta, notaMedia };
+  }, [items]);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -105,6 +119,15 @@ const AvaliacoesPage = () => {
           <RefreshCw className="mr-2 h-4 w-4" />
           Atualizar
         </Button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <KPICard title="Total Enviadas" value={kpis.total} icon={<MessageSquare className="w-5 h-5" />} />
+        <KPICard title="Respondidas" value={kpis.respondidas} icon={<Star className="w-5 h-5" />} />
+        <KPICard title="Pendentes" value={kpis.pendentes} icon={<Clock className="w-5 h-5" />} />
+        <KPICard title="Taxa Resposta" value={`${kpis.taxaResposta}%`} icon={<TrendingUp className="w-5 h-5" />} />
+        <KPICard title="Nota Média" value={kpis.notaMedia} icon={<Star className="w-5 h-5" />} />
+        <KPICard title="Expiradas / Falha" value={kpis.expiradas + kpis.falhas} icon={<XCircle className="w-5 h-5" />} />
       </div>
 
       <Card>
@@ -186,9 +209,33 @@ const AvaliacoesPage = () => {
                     </Link>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">{item.encerradoAt || "-"}</TableCell>
-                  <TableCell>{STATUS_ENVIO_LABEL[item.statusEnvio] || item.statusEnvio}</TableCell>
-                  <TableCell>{STATUS_RESPOSTA_LABEL[item.statusResposta] || item.statusResposta}</TableCell>
-                  <TableCell>{typeof item.nota === "number" ? item.nota : "-"}</TableCell>
+                  <TableCell>
+                    <span className={cn("status-badge", 
+                      item.statusEnvio === "RESPONDIDA" ? "bg-success/15 text-success" :
+                      item.statusEnvio === "FALHA" ? "bg-destructive/15 text-destructive" :
+                      item.statusEnvio === "EXPIRADA" ? "bg-muted text-muted-foreground" :
+                      item.statusEnvio === "ENVIADA" || item.statusEnvio === "ENTREGUE" ? "bg-info/15 text-info" :
+                      "bg-secondary text-secondary-foreground"
+                    )}>
+                      {STATUS_ENVIO_LABEL[item.statusEnvio] || item.statusEnvio}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={cn("status-badge",
+                      item.statusResposta === "RESPONDIDA" ? "bg-success/15 text-success" :
+                      item.statusResposta === "EXPIRADA" ? "bg-destructive/15 text-destructive" :
+                      "bg-warning/15 text-warning"
+                    )}>
+                      {STATUS_RESPOSTA_LABEL[item.statusResposta] || item.statusResposta}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {typeof item.nota === "number" ? (
+                      <span className={cn("font-bold", item.nota >= 4 ? "text-success" : item.nota >= 3 ? "text-warning" : "text-destructive")}>
+                        {"★".repeat(item.nota)}{"☆".repeat(5 - item.nota)}
+                      </span>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell className="hidden max-w-[320px] truncate xl:table-cell text-muted-foreground">
                     {item.comentario || "-"}
                   </TableCell>
