@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { mockDocas } from "@/data/mockOperacionalData";
-import type { VeiculoFrota, FrotaStatus } from "@/types/operacional";
+import { getDocas } from "@/services/operacional";
+import type { VeiculoFrota, FrotaStatus, Doca } from "@/types/operacional";
 import { toast } from "sonner";
 
 interface Props {
@@ -24,15 +24,24 @@ const STATUS_OPTIONS: { value: FrotaStatus; label: string }[] = [
   { value: "BLOQUEADO", label: "Bloqueado" },
 ];
 
-const docasLivres = mockDocas.filter((d) => d.status === "LIVRE");
-
 const RegistrarMovimentacaoModal = ({ veiculo, open, onClose }: Props) => {
   const [novoStatus, setNovoStatus] = useState<FrotaStatus>(veiculo.status);
   const [docaSelecionada, setDocaSelecionada] = useState("");
   const [km, setKm] = useState(String(veiculo.quilometragem));
   const [observacao, setObservacao] = useState("");
+  const [docasLivres, setDocasLivres] = useState<Doca[]>([]);
+  const [loadingDocas, setLoadingDocas] = useState(false);
 
   const needsDoca = novoStatus === "DISPONIVEL" || novoStatus === "PARADA_PROGRAMADA";
+
+  useEffect(() => {
+    if (!open || !needsDoca) return;
+    setLoadingDocas(true);
+    getDocas()
+      .then((all) => setDocasLivres(all.filter((d) => d.status === "LIVRE")))
+      .catch(() => setDocasLivres([]))
+      .finally(() => setLoadingDocas(false));
+  }, [open, needsDoca]);
 
   const handleSubmit = () => {
     toast.success(`Movimentação registrada — ${veiculo.placa} → ${novoStatus.replace(/_/g, " ")}${docaSelecionada ? ` (${docaSelecionada})` : ""}`);
@@ -66,15 +75,19 @@ const RegistrarMovimentacaoModal = ({ veiculo, open, onClose }: Props) => {
           {needsDoca && (
             <div className="space-y-1.5">
               <Label>Vincular a Doca (opcional)</Label>
-              <Select value={docaSelecionada} onValueChange={setDocaSelecionada}>
-                <SelectTrigger><SelectValue placeholder="Selecione uma doca" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nenhuma">Nenhuma</SelectItem>
-                  {docasLivres.map((d) => (
-                    <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {loadingDocas ? (
+                <p className="text-xs text-muted-foreground">Carregando docas...</p>
+              ) : (
+                <Select value={docaSelecionada} onValueChange={setDocaSelecionada}>
+                  <SelectTrigger><SelectValue placeholder="Selecione uma doca" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nenhuma">Nenhuma</SelectItem>
+                    {docasLivres.map((d) => (
+                      <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           )}
 

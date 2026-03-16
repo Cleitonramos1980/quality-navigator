@@ -1,17 +1,52 @@
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, User, Building2, Phone, Mail, Car, MapPin, Clock, QrCode, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, User, Building2, Phone, Mail, Car, MapPin, Clock, QrCode, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
-import { mockVisitantes, mockVeiculosVisitantes } from "@/data/mockOperacionalData";
+import { getVisitanteById, getVeiculosVisitantes, aprovarVisitante } from "@/services/operacional";
+import type { Visitante, VeiculoVisitante } from "@/types/operacional";
 import { toast } from "@/hooks/use-toast";
 
 const VisitanteDetalhePage = () => {
   const { id } = useParams();
-  const visitante = mockVisitantes.find((v) => v.id === id) ?? mockVisitantes[0];
-  const veiculo = visitante.veiculoId
-    ? mockVeiculosVisitantes.find((v) => v.id === visitante.veiculoId)
-    : null;
+  const [loading, setLoading] = useState(true);
+  const [visitante, setVisitante] = useState<Visitante | null>(null);
+  const [veiculo, setVeiculo] = useState<VeiculoVisitante | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    Promise.all([getVisitanteById(id), getVeiculosVisitantes()])
+      .then(([vis, veiculos]) => {
+        setVisitante(vis ?? null);
+        if (vis?.veiculoId) {
+          setVeiculo(veiculos.find((v) => v.id === vis.veiculoId) ?? null);
+        }
+      })
+      .catch(() => {
+        toast({ title: "Erro ao carregar visitante", variant: "destructive" });
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Carregando...</span>
+      </div>
+    );
+  }
+
+  if (!visitante) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <p className="text-muted-foreground">Visitante não encontrado.</p>
+        <Button variant="outline" asChild><Link to="/visitantes">Voltar</Link></Button>
+      </div>
+    );
+  }
 
   const podeAprovar = ["CADASTRO_PREENCHIDO", "AGUARDANDO_VALIDACAO"].includes(visitante.status);
   const podeLiberarEntrada = ["APROVADO", "QR_GERADO"].includes(visitante.status);
