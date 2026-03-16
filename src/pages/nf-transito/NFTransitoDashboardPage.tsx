@@ -53,6 +53,34 @@ const NFTransitoDashboardPage = () => {
     return Object.entries(counts).map(([name, value]) => ({ name: name.length > 15 ? name.slice(0, 15) + "…" : name, value }));
   }, [allNFs]);
 
+  const agingData = useMemo((): AgingBucket[] => {
+    const buckets = [
+      { label: "0-1 dia", max: 1, count: 0, severity: "ok" as const },
+      { label: "2-3 dias", max: 3, count: 0, severity: "ok" as const },
+      { label: "4-5 dias", max: 5, count: 0, severity: "warn" as const },
+      { label: "6-7 dias", max: 7, count: 0, severity: "warn" as const },
+      { label: "8+ dias", max: Infinity, count: 0, severity: "critical" as const },
+    ];
+    allNFs.forEach((nf) => {
+      const bucket = buckets.find((b) => nf.diasEmTransito <= b.max);
+      if (bucket) bucket.count += 1;
+    });
+    return buckets.filter((b) => b.count > 0);
+  }, [allNFs]);
+
+  const slaByDestino = useMemo(() => {
+    const grouped: Record<string, { total: number; onTime: number }> = {};
+    allNFs.forEach((nf) => {
+      if (!grouped[nf.destino]) grouped[nf.destino] = { total: 0, onTime: 0 };
+      grouped[nf.destino].total += 1;
+      if (nf.diasEmTransito <= 3) grouped[nf.destino].onTime += 1;
+    });
+    return Object.entries(grouped).map(([name, v]) => ({
+      name: name.length > 18 ? name.slice(0, 18) + "…" : name,
+      sla: v.total > 0 ? Math.round((v.onTime / v.total) * 100) : 0,
+    })).sort((a, b) => a.sla - b.sla).slice(0, 8);
+  }, [allNFs]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
