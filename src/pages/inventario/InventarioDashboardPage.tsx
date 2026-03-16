@@ -40,8 +40,8 @@ const InventarioDashboardPage = () => {
     { name: "Não Feito", value: naoFeitas, fill: "hsl(var(--destructive))" },
   ].filter((d) => d.value > 0);
 
-  const lojaRanking = mockLojas.slice(0, 6).map((l) => {
-    const cs = mockContagens.filter((c) => c.lojaId === l.id);
+  const lojaRanking = lojas.slice(0, 6).map((l) => {
+    const cs = contagens.filter((c) => c.lojaId === l.id);
     const done = cs.filter((c) => c.status === "VALIDADO" || c.status === "CONCLUIDO").length;
     return { nome: l.nome.replace("Loja ", ""), aderencia: cs.length > 0 ? Math.round((done / cs.length) * 100) : 0 };
   });
