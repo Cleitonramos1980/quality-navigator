@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Truck, CheckCircle, AlertTriangle, Wrench, Ban, MapPin, Eye, PlusCircle, Send } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -8,52 +8,60 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getVeiculosFrota, getDeslocamentos, getDocas } from "@/services/operacional";
-import type { VeiculoFrota as VFrota, DeslocamentoFrota, Doca } from "@/types/operacional";
+import type { VeiculoFrota, DeslocamentoFrota, Doca } from "@/types/operacional";
 import RegistrarMovimentacaoModal from "@/components/frota/RegistrarMovimentacaoModal";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import type { VeiculoFrota } from "@/types/operacional";
 
 const COLORS = ["hsl(152, 60%, 40%)", "hsl(220, 70%, 45%)", "hsl(200, 80%, 50%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(280, 60%, 50%)"];
-
-const getLocalizacao = (v: VeiculoFrota) => {
-  const doca = mockDocas.find((d) => d.placaAtual === v.placa);
-  if (doca) return { local: doca.nome, doca: doca.nome };
-  if (v.status === "EM_DESLOCAMENTO") return { local: "Em rota", doca: null };
-  if (v.status === "EM_MANUTENCAO") return { local: "Oficina", doca: null };
-  return { local: "Garagem", doca: null };
-};
 
 const FrotaPage = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState("visao");
   const [busca, setBusca] = useState("");
   const [movVeiculo, setMovVeiculo] = useState<VeiculoFrota | null>(null);
+  const [allFrota, setAllFrota] = useState<VeiculoFrota[]>([]);
+  const [allDeslocamentos, setAllDeslocamentos] = useState<DeslocamentoFrota[]>([]);
+  const [allDocas, setAllDocas] = useState<Doca[]>([]);
+
+  useEffect(() => {
+    getVeiculosFrota().then(setAllFrota);
+    getDeslocamentos().then(setAllDeslocamentos);
+    getDocas().then(setAllDocas);
+  }, []);
+
+  const getLocalizacao = (v: VeiculoFrota) => {
+    const doca = allDocas.find((d) => d.placaAtual === v.placa);
+    if (doca) return { local: doca.nome, doca: doca.nome };
+    if (v.status === "EM_DESLOCAMENTO") return { local: "Em rota", doca: null };
+    if (v.status === "EM_MANUTENCAO") return { local: "Oficina", doca: null };
+    return { local: "Garagem", doca: null };
+  };
 
   const statusData = useMemo(() => {
     const counts: Record<string, number> = {};
-    mockFrota.forEach((v) => { counts[v.status] = (counts[v.status] || 0) + 1; });
+    allFrota.forEach((v) => { counts[v.status] = (counts[v.status] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name: name.replace(/_/g, " "), value }));
-  }, []);
+  }, [allFrota]);
 
   const tipoData = useMemo(() => {
     const counts: Record<string, number> = {};
-    mockFrota.forEach((v) => { counts[v.tipo] = (counts[v.tipo] || 0) + 1; });
+    allFrota.forEach((v) => { counts[v.tipo] = (counts[v.tipo] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, []);
+  }, [allFrota]);
 
   const veiculos = useMemo(() => {
-    if (!busca) return mockFrota;
+    if (!busca) return allFrota;
     const q = busca.toLowerCase();
-    return mockFrota.filter((v) => v.placa.toLowerCase().includes(q) || v.modelo.toLowerCase().includes(q) || v.motoristaResponsavel.toLowerCase().includes(q));
-  }, [busca]);
+    return allFrota.filter((v) => v.placa.toLowerCase().includes(q) || v.modelo.toLowerCase().includes(q) || v.motoristaResponsavel.toLowerCase().includes(q));
+  }, [busca, allFrota]);
 
   const kpis = {
-    total: mockFrota.length,
-    disponiveis: mockFrota.filter((v) => v.status === "DISPONIVEL").length,
-    emDeslocamento: mockFrota.filter((v) => v.status === "EM_DESLOCAMENTO").length,
-    emManutencao: mockFrota.filter((v) => v.status === "EM_MANUTENCAO").length,
-    bloqueados: mockFrota.filter((v) => v.status === "BLOQUEADO").length,
-    paradosNP: mockFrota.filter((v) => v.status === "PARADA_NAO_PROGRAMADA" || v.status === "PARADA_PROGRAMADA").length,
+    total: allFrota.length,
+    disponiveis: allFrota.filter((v) => v.status === "DISPONIVEL").length,
+    emDeslocamento: allFrota.filter((v) => v.status === "EM_DESLOCAMENTO").length,
+    emManutencao: allFrota.filter((v) => v.status === "EM_MANUTENCAO").length,
+    bloqueados: allFrota.filter((v) => v.status === "BLOQUEADO").length,
+    paradosNP: allFrota.filter((v) => v.status === "PARADA_NAO_PROGRAMADA" || v.status === "PARADA_PROGRAMADA").length,
   };
 
   return (
