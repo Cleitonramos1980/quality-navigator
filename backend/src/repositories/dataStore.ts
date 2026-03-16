@@ -247,6 +247,38 @@ export const db = {
   consumoPeca: [] as ConsumoPeca[],
   osTransitionLog: [] as OSTransitionLog[],
   uxMetrics: [] as UxMetricEntry[],
+
+  // SAC Avaliações
+  sacAvaliacoes: [] as any[],
+
+  // Inventário (seeded below)
+  inventarioLojas: [] as any[],
+  inventarioDepartamentos: [] as any[],
+  inventarioFrequencias: [] as any[],
+  inventarioTarefas: [] as any[],
+  inventarioContagens: [] as any[],
+  inventarioDivergencias: [] as any[],
+
+  // Operacional (seeded below)
+  operacionalAcessos: [] as any[],
+  operacionalVisitantes: [] as any[],
+  operacionalVeiculosVisitantes: [] as any[],
+  operacionalFrota: [] as any[],
+  operacionalDeslocamentos: [] as any[],
+  operacionalTransportadoras: [] as any[],
+  operacionalMotoristasTerceiros: [] as any[],
+  operacionalVeiculosTerceiros: [] as any[],
+  operacionalOperacoes: [] as any[],
+  operacionalAgendamentos: [] as any[],
+  operacionalDocas: [] as any[],
+  operacionalFilaPatio: [] as any[],
+  operacionalAlertas: [] as any[],
+  operacionalExcecoes: [] as any[],
+  operacionalNFsTransito: [] as any[],
+  operacionalExcecoesFiscais: [] as any[],
+  operacionalMovimentacoesFrota: [] as any[],
+  operacionalTimeline: [] as any[],
+  operacionalDashboard: {} as any,
 };
 
 export function nextId(prefix: string, currentLength: number): string {
