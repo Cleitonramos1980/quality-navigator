@@ -135,7 +135,7 @@ const InventarioDashboardPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockContagens.slice(0, 6).map((c) => (
+                {contagens.slice(0, 6).map((c) => (
                   <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30 cursor-pointer" onClick={() => navigate(`/qualidade/inventario/contagens`)}>
                     <td className="py-2.5 font-mono text-xs">{c.numero}</td>
                     <td className="py-2.5">{c.lojaNome}</td>

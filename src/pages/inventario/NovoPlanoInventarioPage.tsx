@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2, Save, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { mockLojas, mockDepartamentos } from "@/data/mockInventarioData";
+import { getLojas, getDepartamentos } from "@/services/inventario";
+import type { LojaInventario, DepartamentoInventario } from "@/types/inventario";
 import { FREQUENCIA_LABELS, type FrequenciaInventario } from "@/types/inventario";
 import { toast } from "@/hooks/use-toast";
 

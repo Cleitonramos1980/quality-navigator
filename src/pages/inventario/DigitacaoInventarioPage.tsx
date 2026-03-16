@@ -32,13 +32,16 @@ const DigitacaoInventarioPage = () => {
   const recontagemState = location.state as RecontagemState | null;
   const isRecontagem = recontagemState?.recontagem === true;
 
+  const [allContagens, setAllContagens] = useState<Contagem[]>([]);
+  useEffect(() => { getContagens().then(setAllContagens); }, []);
+
   // Find original contagem (for recontagem, find by numero)
   const contagemOriginal = isRecontagem
-    ? mockContagens.find((c) => c.numero === recontagemState.recontagemOrigem) || null
+    ? allContagens.find((c) => c.numero === recontagemState.recontagemOrigem) || null
     : null;
 
-  // Current contagem: either from route param or the first mock
-  const contagem = mockContagens.find((c) => c.id === id) || mockContagens[0];
+  // Current contagem: either from route param or the first
+  const contagem = allContagens.find((c) => c.id === id) || allContagens[0];
 
   // For recontagem, use items from original but reset quantidadeContada
   const initialItens: ItemContagem[] = isRecontagem && contagemOriginal

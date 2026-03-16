@@ -1,17 +1,22 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { ArrowLeft, ShieldCheck, RotateCcw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
-import { mockContagens } from "@/data/mockInventarioData";
+import { getContagens } from "@/services/inventario";
+import type { Contagem } from "@/types/inventario";
 import { FREQUENCIA_LABELS } from "@/types/inventario";
 import { toast } from "@/hooks/use-toast";
 
 const ValidacaoInventarioPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const contagem = mockContagens.find((c) => c.id === id) || mockContagens.find((c) => c.status === "CONCLUIDO") || mockContagens[0];
+  const [allContagens, setAllContagens] = useState<Contagem[]>([]);
+  useEffect(() => { getContagens().then(setAllContagens); }, []);
+  const contagem = allContagens.find((c) => c.id === id) || allContagens.find((c) => c.status === "CONCLUIDO") || allContagens[0];
+  if (!contagem) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
   const divergentes = contagem.itens.filter((i) => i.diferenca !== null && i.diferenca !== 0);
 
   const handleValidar = () => {

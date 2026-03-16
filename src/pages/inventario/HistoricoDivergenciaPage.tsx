@@ -78,7 +78,7 @@ const HistoricoDivergenciaPage = () => {
           <SelectTrigger className="w-52"><SelectValue placeholder="Loja" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="TODAS">Todas as Lojas</SelectItem>
-            {mockLojas.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
+            {lojas.map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>

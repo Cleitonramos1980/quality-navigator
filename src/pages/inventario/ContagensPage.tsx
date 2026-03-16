@@ -1,20 +1,24 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
-import { mockContagens, mockLojas } from "@/data/mockInventarioData";
+import { getContagens } from "@/services/inventario";
+import type { Contagem } from "@/types/inventario";
 import { FREQUENCIA_LABELS } from "@/types/inventario";
 
 const ContagensPage = () => {
   const navigate = useNavigate();
   const [busca, setBusca] = useState("");
   const [statusFilter, setStatusFilter] = useState("TODOS");
+  const [contagens, setContagens] = useState<Contagem[]>([]);
+
+  useEffect(() => { getContagens().then(setContagens); }, []);
 
   const filtered = useMemo(() => {
-    return mockContagens.filter((c) => {
+    return contagens.filter((c) => {
       if (statusFilter !== "TODOS" && c.status !== statusFilter) return false;
       if (busca) {
         const q = busca.toLowerCase();
