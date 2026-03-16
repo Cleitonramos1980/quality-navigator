@@ -28,7 +28,7 @@ const LojaMultiSelect = ({
   onChange,
 }: {
   lojaIds: string[];
-  lojas: typeof mockLojas;
+  lojas: LojaInventario[];
   onChange: (ids: string[]) => void;
 }) => {
   const [open, setOpen] = useState(false);
