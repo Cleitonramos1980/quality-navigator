@@ -86,6 +86,7 @@ const PatioPage = lazy(() => import("@/pages/patio/PatioPage"));
 const MonitoramentoPage = lazy(() => import("@/pages/monitoramento/MonitoramentoPage"));
 const NFTransitoDashboardPage = lazy(() => import("@/pages/nf-transito/NFTransitoDashboardPage"));
 const NFTransitoDetalhePage = lazy(() => import("@/pages/nf-transito/NFTransitoDetalhePage"));
+const VisitantePublicoPage = lazy(() => import("@/pages/visitantes/VisitantePublicoPage"));
 
 const queryClient = new QueryClient();
 
