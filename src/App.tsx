@@ -93,6 +93,7 @@ const TorreControlePage = lazy(() => import("@/pages/torre-controle/TorreControl
 const ExcecaoDetalhePage = lazy(() => import("@/pages/torre-controle/ExcecaoDetalhePage"));
 const AgendamentoDocaPage = lazy(() => import("@/pages/patio/AgendamentoDocaPage"));
 const NovoAgendamentoDocaPage = lazy(() => import("@/pages/patio/NovoAgendamentoDocaPage"));
+const AgendamentoDetalhePage = lazy(() => import("@/pages/patio/AgendamentoDetalhePage"));
 const CadeiasCustodiaPage = lazy(() => import("@/pages/custodia/CadeiasCustodiaPage"));
 const CustodiaDetalhePage = lazy(() => import("@/pages/custodia/CustodiaDetalhePage"));
 
