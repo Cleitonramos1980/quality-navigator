@@ -178,50 +178,54 @@ const AgendamentoDocaPage = () => {
                 <TableHead>Prioridade</TableHead>
                 <TableHead>SLA</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Pendências</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSlots.length === 0 && (
-                <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">Nenhum agendamento encontrado.</TableCell></TableRow>
-              )}
-              {filteredSlots.map(slot => (
-                <TableRow key={slot.id} className={slot.status === "ATRASADO" ? "bg-destructive/5" : slot.status === "NAO_COMPARECEU" ? "bg-muted/50" : undefined}>
-                  <TableCell className="font-mono text-xs font-medium">{slot.codigo}</TableCell>
-                  <TableCell className="text-xs">
-                    <div>{new Date(slot.janelaInicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
-                    <div className="text-muted-foreground">até {new Date(slot.janelaFim).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
-                  </TableCell>
-                  <TableCell className="text-xs">{slot.transportadoraNome}</TableCell>
-                  <TableCell className="font-mono text-xs">{slot.placa || "—"}</TableCell>
-                  <TableCell><Badge variant="secondary" className="text-[10px]">{slot.tipoOperacao}</Badge></TableCell>
-                  <TableCell className="text-xs font-medium">{slot.docaPrevistaNome || "—"}</TableCell>
-                  <TableCell className="text-xs">{slot.duracaoPrevistaMin} min</TableCell>
-                  <TableCell>
-                    <Badge className={`text-[10px] ${PRIORIDADE_COLORS[slot.prioridade]}`}>{slot.prioridade}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`text-xs font-bold ${slot.sla >= 80 ? "text-success" : slot.sla >= 50 ? "text-warning" : "text-destructive"}`}>
-                      {slot.sla}%
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={`text-[10px] ${AGENDAMENTO_STATUS_COLORS[slot.status]}`}>
-                      {AGENDAMENTO_STATUS_LABELS[slot.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="max-w-[180px]">
-                    {slot.pendencias.length > 0 ? (
-                      <div className="space-y-0.5">
-                        {slot.pendencias.map((p, i) => (
-                          <p key={i} className="text-[10px] text-destructive leading-tight">{p}</p>
-                        ))}
-                      </div>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
+                 <TableHead>Pendências</TableHead>
+                 <TableHead className="w-[60px]">Ações</TableHead>
+               </TableRow>
+             </TableHeader>
+             <TableBody>
+               {filteredSlots.length === 0 && (
+                 <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground py-8">Nenhum agendamento encontrado.</TableCell></TableRow>
+               )}
+               {filteredSlots.map(slot => (
+                 <TableRow key={slot.id} className={slot.status === "ATRASADO" ? "bg-destructive/5" : slot.status === "NAO_COMPARECEU" ? "bg-muted/50" : undefined}>
+                   <TableCell className="font-mono text-xs font-medium">{slot.codigo}</TableCell>
+                   <TableCell className="text-xs">
+                     <div>{new Date(slot.janelaInicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
+                     <div className="text-muted-foreground">até {new Date(slot.janelaFim).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
+                   </TableCell>
+                   <TableCell className="text-xs">{slot.transportadoraNome}</TableCell>
+                   <TableCell className="font-mono text-xs">{slot.placa || "—"}</TableCell>
+                   <TableCell><Badge variant="secondary" className="text-[10px]">{slot.tipoOperacao}</Badge></TableCell>
+                   <TableCell className="text-xs font-medium">{slot.docaRealNome || slot.docaPrevistaNome || "—"}</TableCell>
+                   <TableCell className="text-xs">{slot.duracaoPrevistaMin} min</TableCell>
+                   <TableCell>
+                     <Badge className={`text-[10px] ${PRIORIDADE_COLORS[slot.prioridade]}`}>{slot.prioridade}</Badge>
+                   </TableCell>
+                   <TableCell>
+                     <span className={`text-xs font-bold ${slot.sla >= 80 ? "text-success" : slot.sla >= 50 ? "text-warning" : "text-destructive"}`}>
+                       {slot.sla}%
+                     </span>
+                   </TableCell>
+                   <TableCell>
+                     <Badge className={`text-[10px] ${AGENDAMENTO_STATUS_COLORS[slot.status]}`}>
+                       {AGENDAMENTO_STATUS_LABELS[slot.status]}
+                     </Badge>
+                   </TableCell>
+                   <TableCell className="max-w-[180px]">
+                     {slot.pendencias.length > 0 ? (
+                       <div className="space-y-0.5">
+                         {slot.pendencias.map((p, i) => (
+                           <p key={i} className="text-[10px] text-destructive leading-tight">{p}</p>
+                         ))}
+                       </div>
+                     ) : <span className="text-xs text-muted-foreground">—</span>}
+                   </TableCell>
+                   <TableCell>
+                     <AgendamentoActionMenu slot={slot} onUpdate={handleSlotUpdate} />
+                   </TableCell>
+                 </TableRow>
+               ))}
+             </TableBody>
           </Table>
         </div>
       )}
