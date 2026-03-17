@@ -194,6 +194,10 @@ const App = () => (
           <Route path="/monitoramento" element={<AppLayout><Lazy><MonitoramentoPage /></Lazy></AppLayout>} />
           <Route path="/nf-transito" element={<AppLayout><Lazy><NFTransitoDashboardPage /></Lazy></AppLayout>} />
           <Route path="/nf-transito/:id" element={<AppLayout><Lazy><NFTransitoDetalhePage /></Lazy></AppLayout>} />
+          <Route path="/torre-controle" element={<AppLayout><Lazy><TorreControlePage /></Lazy></AppLayout>} />
+          <Route path="/patio/agendamento" element={<AppLayout><Lazy><AgendamentoDocaPage /></Lazy></AppLayout>} />
+          <Route path="/custodia" element={<AppLayout><Lazy><CadeiasCustodiaPage /></Lazy></AppLayout>} />
+          <Route path="/custodia/:id" element={<AppLayout><Lazy><CustodiaDetalhePage /></Lazy></AppLayout>} />
           <Route
             path="*"
             element={
