@@ -23,6 +23,7 @@ const SLOT_COLORS: Record<string, string> = {
 };
 
 const AgendamentoDocaPage = () => {
+  const navigate = useNavigate();
   const [slots, setSlots] = useState<AgendamentoDockSlot[]>([]);
   const [capacity, setCapacity] = useState<DockCapacity[]>([]);
   const [kpis, setKpis] = useState<AgendamentoKPIs | null>(null);
