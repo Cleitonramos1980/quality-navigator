@@ -138,8 +138,8 @@ const Dashboard = () => {
             <Link to="/nf-transito" className="block">
               <KPICard title="NFs em Trânsito" value={opData.nfsEmTransito} icon={<FileText className="w-5 h-5" />} subtitle={`${opData.nfsEmRisco} em risco`} />
             </Link>
-            <Link to="/monitoramento" className="block">
-              <KPICard title="Alertas Ativos" value={opData.alertasAtivos} icon={<Bell className="w-5 h-5" />} subtitle="requerem ação" />
+            <Link to="/torre-controle" className="block">
+              <KPICard title="Exceções" value={opData.alertasAtivos} icon={<ShieldAlert className="w-5 h-5" />} subtitle="torre de controle" />
             </Link>
           </div>
 
