@@ -171,7 +171,7 @@ export async function torreAgendaCustodiaRoutes(app: FastifyInstance) {
         titulo: status === "ATRASADO" ? `Atraso no agendamento ${slot.codigo}` : `No-show: ${slot.codigo}`,
         descricao: `${slot.transportadoraNome} — ${slot.tipoOperacao} na ${slot.docaPrevistaNome || "doca"}`,
         categoria: "PATIO", criticidade: status === "NAO_COMPARECEU" ? "ALTA" : "MEDIA",
-        status: "ABERTA", origem: "Agendamento", origemId: id, origemRota: "/patio/agendamento",
+        status: "ABERTA", origem: "Agendamento", origemId: id, origemRota: `/patio/agendamento/${id}`,
         criadoEm: new Date().toISOString(), atualizadoEm: new Date().toISOString(),
         prazo: new Date(Date.now() + 4 * 3600000).toISOString(), reincidencias: 0,
         acaoSugerida: status === "NAO_COMPARECEU" ? "Contatar transportadora" : "Verificar status do veículo",
@@ -287,6 +287,12 @@ export async function torreAgendaCustodiaRoutes(app: FastifyInstance) {
       dataHora: new Date().toISOString(),
       responsavel: (req as any).authUser?.nome ?? body.responsavel ?? "system",
       observacao: body.observacao,
+      url: body.url,
+      categoria: body.categoria,
+      etapaRelacionada: body.etapaRelacionada,
+      nomeArquivo: body.nomeArquivo,
+      mimeType: body.mimeType,
+      tamanhoArquivo: body.tamanhoArquivo,
     };
     cust.evidencias.push(ev);
     appendAudit("EVIDENCIA_CUSTODIA", "CUSTODIA", id, `${body.tipo}: ${body.descricao}`, (req as any).authUser?.nome ?? "system");

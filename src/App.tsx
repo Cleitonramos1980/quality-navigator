@@ -93,6 +93,7 @@ const TorreControlePage = lazy(() => import("@/pages/torre-controle/TorreControl
 const ExcecaoDetalhePage = lazy(() => import("@/pages/torre-controle/ExcecaoDetalhePage"));
 const AgendamentoDocaPage = lazy(() => import("@/pages/patio/AgendamentoDocaPage"));
 const NovoAgendamentoDocaPage = lazy(() => import("@/pages/patio/NovoAgendamentoDocaPage"));
+const AgendamentoDetalhePage = lazy(() => import("@/pages/patio/AgendamentoDetalhePage"));
 const CadeiasCustodiaPage = lazy(() => import("@/pages/custodia/CadeiasCustodiaPage"));
 const CustodiaDetalhePage = lazy(() => import("@/pages/custodia/CustodiaDetalhePage"));
 
@@ -200,6 +201,7 @@ const App = () => (
           <Route path="/torre-controle/:id" element={<AppLayout><Lazy><ExcecaoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/patio/agendamento" element={<AppLayout><Lazy><AgendamentoDocaPage /></Lazy></AppLayout>} />
           <Route path="/patio/agendamento/novo" element={<AppLayout><Lazy><NovoAgendamentoDocaPage /></Lazy></AppLayout>} />
+          <Route path="/patio/agendamento/:id" element={<AppLayout><Lazy><AgendamentoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/custodia" element={<AppLayout><Lazy><CadeiasCustodiaPage /></Lazy></AppLayout>} />
           <Route path="/custodia/:id" element={<AppLayout><Lazy><CustodiaDetalhePage /></Lazy></AppLayout>} />
           <Route

@@ -115,17 +115,18 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
     if (!evDesc) return;
     setSaving(true);
     try {
+      const selectedFile = fileInputRef.current?.files?.[0];
       const updated = await registrarEvidenciaCustodia(custodia.id, {
         tipo: evTipo as any,
         descricao: evDesc,
-        observacao: [
-          evObs,
-          evCategoria ? `Categoria: ${evCategoria}` : "",
-          evEtapaVinculada ? `Etapa: ${evEtapaVinculada}` : "",
-          evArquivoNome ? `Arquivo: ${evArquivoNome}` : "",
-        ].filter(Boolean).join(" | ") || undefined,
+        observacao: evObs || undefined,
         url: evArquivoNome || undefined,
-      });
+        categoria: evCategoria || undefined,
+        etapaRelacionada: evEtapaVinculada || undefined,
+        nomeArquivo: evArquivoNome || undefined,
+        mimeType: selectedFile?.type || undefined,
+        tamanhoArquivo: selectedFile?.size || undefined,
+      } as any);
       onUpdate(updated);
       toast.success("Evidência registrada");
       setModal(null); resetForms();
