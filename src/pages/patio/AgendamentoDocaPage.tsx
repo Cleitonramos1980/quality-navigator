@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CalendarDays, Clock, Truck, Layers, AlertTriangle, CheckCircle2,
   ArrowRight, Filter, BarChart3, Timer, XCircle, RefreshCw,
@@ -23,6 +23,7 @@ const SLOT_COLORS: Record<string, string> = {
 };
 
 const AgendamentoDocaPage = () => {
+  const navigate = useNavigate();
   const [slots, setSlots] = useState<AgendamentoDockSlot[]>([]);
   const [capacity, setCapacity] = useState<DockCapacity[]>([]);
   const [kpis, setKpis] = useState<AgendamentoKPIs | null>(null);
@@ -45,13 +46,18 @@ const AgendamentoDocaPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <CalendarDays className="h-6 w-6 text-primary" /> Agendamento de Docas
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Planejamento, priorização e alocação inteligente de docas e pátio
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <CalendarDays className="h-6 w-6 text-primary" /> Agendamento de Docas
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Planejamento, priorização e alocação inteligente de docas e pátio
+          </p>
+        </div>
+        <Button onClick={() => navigate("/patio/agendamento/novo")} className="gap-2">
+          <CalendarDays className="h-4 w-4" /> Novo Agendamento
+        </Button>
       </div>
 
       {/* KPIs */}
@@ -102,7 +108,28 @@ const AgendamentoDocaPage = () => {
                   <td className="font-semibold text-foreground py-2 px-2">{dock.docaNome}</td>
                   {dock.slots.map((slot, idx) => (
                     <td key={idx} className="py-2 px-1 text-center">
-                      <div className={`h-8 rounded flex items-center justify-center ${SLOT_COLORS[slot.status]}`}>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        title={slot.status === "livre" ? `Agendar ${dock.docaNome} às ${slot.hora}` : slot.status === "agendado" ? "Já agendado" : slot.status}
+                        className={`h-8 rounded flex items-center justify-center transition-all ${SLOT_COLORS[slot.status]} ${
+                          slot.status === "livre" ? "cursor-pointer hover:ring-2 hover:ring-primary/50 hover:scale-105" :
+                          slot.status === "agendado" ? "cursor-pointer hover:ring-2 hover:ring-info/50" : ""
+                        }`}
+                        onClick={() => {
+                          if (slot.status === "livre") {
+                            navigate(`/patio/agendamento/novo?doca=${dock.docaId}&hora=${slot.hora}`);
+                          } else if (slot.status === "agendado") {
+                            // Find the matching slot to show details
+                            const match = slots.find(s => s.docaPrevistaId === dock.docaId && s.janelaInicio.includes(slot.hora.replace(":", "")));
+                            if (match) {
+                              navigate(`/patio/agendamento/novo?doca=${dock.docaId}&hora=${slot.hora}`);
+                            } else {
+                              navigate(`/patio/agendamento/novo?doca=${dock.docaId}&hora=${slot.hora}`);
+                            }
+                          }
+                        }}
+                      >
                         {slot.status === "conflito" && <AlertTriangle className="h-3 w-3 text-destructive" />}
                         {slot.status === "manutencao" && <XCircle className="h-3 w-3 text-muted-foreground" />}
                       </div>
