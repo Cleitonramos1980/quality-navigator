@@ -80,7 +80,7 @@ const LoginPage = () => {
             {loading ? "Entrando..." : "Entrar"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Autenticação via backend com JWT.
+            Acesso seguro — autenticação corporativa
           </p>
         </form>
       </div>
