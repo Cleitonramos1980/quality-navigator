@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import {
   ArrowLeft, ShieldAlert, User, Clock, AlertTriangle, CheckCircle2,
   ExternalLink, MessageSquare, ArrowUpRight, Eye, Edit, Shield,
+  CalendarDays, FileText, Truck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +19,17 @@ import RiskScoreCard from "@/components/operacional/RiskScoreCard";
 import {
   getExcecaoById, atribuirResponsavel, atualizarStatusExcecao, registrarTratativa,
 } from "@/services/torreControle";
+import { getAgendamentosSlots } from "@/services/agendamento";
+import { getCustodias } from "@/services/custodia";
 import type { ExcecaoTorre, ExcecaoStatus } from "@/types/torreControle";
+import type { AgendamentoDockSlot } from "@/types/agendamento";
+import type { CustodiaNF } from "@/types/custodiaDigital";
 import {
   EXCECAO_STATUS_LABELS, EXCECAO_STATUS_COLORS, EXCECAO_CATEGORIA_LABELS,
   CRITICIDADE_LABELS, CRITICIDADE_COLORS,
 } from "@/types/torreControle";
+import { AGENDAMENTO_STATUS_LABELS, AGENDAMENTO_STATUS_COLORS } from "@/types/agendamento";
+import { CUSTODIA_STATUS_LABELS, CUSTODIA_STATUS_COLORS } from "@/types/custodiaDigital";
 
 /* ── Action Modal ─────────────────────────────── */
 function ActionModal({
@@ -52,6 +59,8 @@ const ExcecaoDetalhePage = () => {
   const { id } = useParams();
   const [data, setData] = useState<ExcecaoTorre | null>(null);
   const [saving, setSaving] = useState(false);
+  const [relatedAgendamento, setRelatedAgendamento] = useState<AgendamentoDockSlot | null>(null);
+  const [relatedCustodia, setRelatedCustodia] = useState<CustodiaNF | null>(null);
 
   // form states
   const [resp, setResp] = useState("");
@@ -64,6 +73,23 @@ const ExcecaoDetalhePage = () => {
   }, [id]);
 
   useEffect(reload, [reload]);
+
+  // Load related entity when data changes
+  useEffect(() => {
+    if (!data) return;
+    if (data.origem === "Agendamento" && data.origemId) {
+      getAgendamentosSlots().then(slots => {
+        const found = slots.find(s => s.id === data.origemId);
+        setRelatedAgendamento(found || null);
+      });
+    }
+    if (data.origem === "Custódia" && data.origemId) {
+      getCustodias().then(list => {
+        const found = list.find(c => c.id === data.origemId);
+        setRelatedCustodia(found || null);
+      });
+    }
+  }, [data?.origemId, data?.origem]);
 
   const wrap = async (fn: () => Promise<ExcecaoTorre>) => {
     setSaving(true);
@@ -126,11 +152,65 @@ const ExcecaoDetalhePage = () => {
             </div>
           </div>
 
+          {/* GAP 4: Related entity detail */}
+          {relatedAgendamento && (
+            <div className="glass-card rounded-lg p-4 border-l-4 border-primary">
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" /> Agendamento Relacionado
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div><p className="text-muted-foreground">Código</p><p className="font-medium font-mono">{relatedAgendamento.codigo}</p></div>
+                <div><p className="text-muted-foreground">Transportadora</p><p className="font-medium">{relatedAgendamento.transportadoraNome}</p></div>
+                <div><p className="text-muted-foreground">Operação</p><p className="font-medium">{relatedAgendamento.tipoOperacao}</p></div>
+                <div><p className="text-muted-foreground">Status</p>
+                  <Badge className={`text-[9px] ${AGENDAMENTO_STATUS_COLORS[relatedAgendamento.status]}`}>
+                    {AGENDAMENTO_STATUS_LABELS[relatedAgendamento.status]}
+                  </Badge>
+                </div>
+                <div><p className="text-muted-foreground">Doca</p><p className="font-medium">{relatedAgendamento.docaPrevistaNome || "—"}</p></div>
+                <div><p className="text-muted-foreground">Janela</p><p className="font-medium">{new Date(relatedAgendamento.janelaInicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p></div>
+                <div><p className="text-muted-foreground">Placa</p><p className="font-medium font-mono">{relatedAgendamento.placa || "—"}</p></div>
+                <div><p className="text-muted-foreground">SLA</p><p className={`font-bold ${relatedAgendamento.sla >= 80 ? "text-success" : "text-destructive"}`}>{relatedAgendamento.sla}%</p></div>
+              </div>
+              <div className="mt-3">
+                <Button variant="outline" size="sm" asChild className="gap-1.5">
+                  <Link to="/patio/agendamento"><ExternalLink className="h-3 w-3" />Ir para Agendamento</Link>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {relatedCustodia && (
+            <div className="glass-card rounded-lg p-4 border-l-4 border-primary">
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" /> Custódia Relacionada
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div><p className="text-muted-foreground">NF</p><p className="font-medium font-mono">{relatedCustodia.nfNumero}</p></div>
+                <div><p className="text-muted-foreground">Cliente</p><p className="font-medium">{relatedCustodia.cliente}</p></div>
+                <div><p className="text-muted-foreground">Destino</p><p className="font-medium">{relatedCustodia.destino}</p></div>
+                <div><p className="text-muted-foreground">Status</p>
+                  <Badge className={`text-[9px] ${CUSTODIA_STATUS_COLORS[relatedCustodia.status]}`}>
+                    {CUSTODIA_STATUS_LABELS[relatedCustodia.status]}
+                  </Badge>
+                </div>
+                <div><p className="text-muted-foreground">Valor</p><p className="font-medium">R$ {relatedCustodia.valor.toLocaleString("pt-BR")}</p></div>
+                <div><p className="text-muted-foreground">Dias Trânsito</p><p className={`font-bold ${relatedCustodia.diasEmTransito > 5 ? "text-destructive" : ""}`}>{relatedCustodia.diasEmTransito}d</p></div>
+                <div><p className="text-muted-foreground">Risco</p><p className={`font-bold ${relatedCustodia.scoreRisco > 50 ? "text-destructive" : "text-success"}`}>{relatedCustodia.scoreRisco}</p></div>
+                <div><p className="text-muted-foreground">Etapas</p><p className="font-medium">{relatedCustodia.eventos.length} registradas</p></div>
+              </div>
+              <div className="mt-3">
+                <Button variant="outline" size="sm" asChild className="gap-1.5">
+                  <Link to={`/custodia/${relatedCustodia.id}`}><ExternalLink className="h-3 w-3" />Ir para Custódia</Link>
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Actions bar */}
           <div className="glass-card rounded-lg p-4">
             <h3 className="text-sm font-semibold text-foreground mb-3">Ações Operacionais</h3>
             <div className="flex flex-wrap gap-2">
-              {/* Atribuir responsável */}
               <ActionModal
                 trigger={<Button size="sm" variant="outline" className="gap-1.5"><User className="h-3.5 w-3.5" />Atribuir Responsável</Button>}
                 title="Atribuir Responsável"
@@ -143,7 +223,6 @@ const ExcecaoDetalhePage = () => {
                 </div>
               </ActionModal>
 
-              {/* Mudar status */}
               <ActionModal
                 trigger={<Button size="sm" variant="outline" className="gap-1.5"><Edit className="h-3.5 w-3.5" />Mudar Status</Button>}
                 title="Alterar Status"
@@ -169,7 +248,6 @@ const ExcecaoDetalhePage = () => {
                 </div>
               </ActionModal>
 
-              {/* Registrar tratativa */}
               <ActionModal
                 trigger={<Button size="sm" variant="outline" className="gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Registrar Tratativa</Button>}
                 title="Registrar Tratativa"
@@ -182,7 +260,6 @@ const ExcecaoDetalhePage = () => {
                 </div>
               </ActionModal>
 
-              {/* Quick actions */}
               <Button size="sm" variant="outline" className="gap-1.5" disabled={saving}
                 onClick={() => wrap(() => atualizarStatusExcecao(data.id, "ESCALADA", "Escalada pelo operador"))}>
                 <ArrowUpRight className="h-3.5 w-3.5" />Escalar
@@ -244,16 +321,26 @@ const ExcecaoDetalhePage = () => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Origin link */}
+          {/* Origin link (enhanced) */}
           {data.origemRota && (
             <div className="glass-card rounded-lg p-4">
               <p className="text-xs text-muted-foreground mb-2">Origem Relacionada</p>
-              <Button variant="outline" size="sm" asChild className="w-full gap-2">
-                <Link to={data.origemRota}>
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Abrir {data.origem} — {data.origemId}
-                </Link>
-              </Button>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Tipo</span>
+                  <span className="font-medium">{data.origem}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">ID</span>
+                  <span className="font-mono">{data.origemId}</span>
+                </div>
+                <Button variant="outline" size="sm" asChild className="w-full gap-2 mt-1">
+                  <Link to={data.origemRota}>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Abrir {data.origem}
+                  </Link>
+                </Button>
+              </div>
             </div>
           )}
 
