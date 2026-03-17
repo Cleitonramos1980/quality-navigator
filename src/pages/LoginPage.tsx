@@ -45,9 +45,8 @@ const LoginPage = () => {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mx-auto mb-4">
             <DoorOpen className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-xl font-bold text-sidebar-primary">ControlPorte</h1>
-          <p className="text-sm text-sidebar-foreground/60 mt-1">Controle de Portaria, Pátio e Frota</p>
-          <p className="text-xs text-sidebar-foreground/40 mt-0.5">Visitantes · Veículos · NF em Trânsito · Monitoramento</p>
+          <h1 className="text-xl font-bold text-sidebar-primary">Torre de Controle</h1>
+          <p className="text-xs text-sidebar-foreground/50 mt-1 leading-relaxed">SAC · Qualidade · Inventário · Assistência Técnica<br/>Acessos · Portaria · Controle de Pátio e Frota</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4 bg-card rounded-xl p-6 shadow-lg border border-border">
