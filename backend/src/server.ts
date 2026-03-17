@@ -28,6 +28,7 @@ import { trackHttpRequestMetric } from "./utils/observability.js";
 import { db } from "./repositories/dataStore.js";
 import { persistCollection } from "./repositories/persistentCollectionStore.js";
 import { seedInventarioData, seedOperacionalData } from "./repositories/seedData.js";
+import { seedPhasesData } from "./repositories/seedPhases.js";
 
 const app = Fastify({
   logger: {
