@@ -144,6 +144,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedPlanta, setSelectedPlanta] = useState<Planta | "ALL">("ALL");
   const [plantaOpen, setPlantaOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const perfil = getCurrentPerfil();
   const papel = getCurrentPapel();
   const userName = getCurrentUserName();
