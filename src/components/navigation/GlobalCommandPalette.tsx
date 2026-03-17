@@ -44,9 +44,20 @@ const COMMAND_ROUTES: CommandRoute[] = [
   { label: "Terceiros / Transportadoras", path: "/terceiros", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
   { label: "Pátio e Docas", path: "/patio", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
 
+  // Operacional — Torre de Controle
+  { label: "Torre de Controle de Exceções", path: "/torre-controle", icon: Activity, modulo: "operacional", group: "Torre de Controle" },
+
+  // Operacional — Frota & Logística
+  { label: "Frota", path: "/frota", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
+  { label: "Novo Despacho", path: "/frota/despacho", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
+  { label: "Terceiros / Transportadoras", path: "/terceiros", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
+  { label: "Pátio e Docas", path: "/patio", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
+  { label: "Agendamento de Docas", path: "/patio/agendamento", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
+
   // Operacional — Monitoramento & NF
   { label: "Monitoramento", path: "/monitoramento", icon: Activity, modulo: "operacional", group: "Monitoramento & Fiscal" },
   { label: "NF em Trânsito", path: "/nf-transito", icon: FileText, modulo: "operacional", group: "Monitoramento & Fiscal" },
+  { label: "Cadeia de Custódia Digital", path: "/custodia", icon: FileText, modulo: "operacional", group: "Monitoramento & Fiscal" },
 
   // SAC
   { label: "Dashboard SAC", path: "/sac/dashboard", icon: Headphones, modulo: "sac", group: "SAC" },

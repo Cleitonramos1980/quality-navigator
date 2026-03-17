@@ -115,11 +115,15 @@ const allNavItems: NavItem[] = [
     ],
   },
   {
+    path: "/torre-controle", label: "Torre de Controle", icon: Activity, modulo: "operacional",
+  },
+  {
     path: "/frota", label: "Frota", icon: Truck, modulo: "operacional",
     children: [
       { path: "/frota", label: "Visão Geral" },
       { path: "/terceiros", label: "Terceiros / Transportadoras" },
       { path: "/patio", label: "Pátio e Docas" },
+      { path: "/patio/agendamento", label: "Agendamento de Docas" },
     ],
   },
   {
@@ -127,6 +131,10 @@ const allNavItems: NavItem[] = [
   },
   {
     path: "/nf-transito", label: "NF em Trânsito", icon: FileText, modulo: "operacional",
+    children: [
+      { path: "/nf-transito", label: "Dashboard NF" },
+      { path: "/custodia", label: "Cadeia de Custódia" },
+    ],
   },
 ];
 
