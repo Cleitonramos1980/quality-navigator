@@ -8,11 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  MoreHorizontal, Truck, MapPin, Play, CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw,
+  MoreHorizontal, Truck, MapPin, Play, CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, Edit, CalendarClock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { atualizarStatusAgendamento, alocarDoca } from "@/services/agendamento";
 import type { AgendamentoDockSlot, AgendamentoStatus } from "@/types/agendamento";
+import EditarAgendamentoModal from "@/components/agendamento/EditarAgendamentoModal";
+import RemarcarAgendamentoModal from "@/components/agendamento/RemarcarAgendamentoModal";
+import CancelarAgendamentoModal from "@/components/agendamento/CancelarAgendamentoModal";
 
 const DOCAS = [
   { id: "DCA-001", nome: "Doca 01" },
@@ -27,7 +30,7 @@ interface Props {
   onUpdate: (updated: AgendamentoDockSlot) => void;
 }
 
-type ModalType = "status" | "doca" | null;
+type ModalType = "status" | "doca" | "editar" | "remarcar" | "cancelar" | null;
 
 const STATUS_TRANSITIONS: { status: AgendamentoStatus; label: string; icon: typeof Truck }[] = [
   { status: "CONFIRMADO", label: "Confirmar", icon: CheckCircle2 },
@@ -38,8 +41,6 @@ const STATUS_TRANSITIONS: { status: AgendamentoStatus; label: string; icon: type
   { status: "CONCLUIDO", label: "Concluir Operação", icon: CheckCircle2 },
   { status: "ATRASADO", label: "Marcar Atraso", icon: AlertTriangle },
   { status: "NAO_COMPARECEU", label: "Registrar No-Show", icon: XCircle },
-  { status: "REMARCADO", label: "Remarcar", icon: RefreshCw },
-  { status: "CANCELADO", label: "Cancelar", icon: XCircle },
 ];
 
 export default function AgendamentoActionMenu({ slot, onUpdate }: Props) {
@@ -48,6 +49,8 @@ export default function AgendamentoActionMenu({ slot, onUpdate }: Props) {
   const [observacao, setObservacao] = useState("");
   const [docaId, setDocaId] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const isTerminal = ["CONCLUIDO", "CANCELADO"].includes(slot.status);
 
   const handleStatusChange = async () => {
     setSaving(true);
@@ -80,18 +83,55 @@ export default function AgendamentoActionMenu({ slot, onUpdate }: Props) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuContent align="end" className="w-56">
+          {/* Edit */}
+          <DropdownMenuItem onClick={() => setModal("editar")} disabled={isTerminal}>
+            <Edit className="h-3.5 w-3.5 mr-2" />Editar Agendamento
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setModal("remarcar")} disabled={isTerminal}>
+            <CalendarClock className="h-3.5 w-3.5 mr-2" />Remarcar
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {/* Status transitions */}
           {STATUS_TRANSITIONS.map(t => (
-            <DropdownMenuItem key={t.status} onClick={() => { setSelectedStatus(t.status); setModal("status"); }}>
+            <DropdownMenuItem key={t.status} onClick={() => { setSelectedStatus(t.status); setModal("status"); }} disabled={isTerminal}>
               <t.icon className="h-3.5 w-3.5 mr-2" />{t.label}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setModal("doca")}>
+          <DropdownMenuItem onClick={() => setModal("doca")} disabled={isTerminal}>
             <MapPin className="h-3.5 w-3.5 mr-2" />Alocar / Trocar Doca
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setModal("cancelar")} disabled={isTerminal} className="text-destructive focus:text-destructive">
+            <XCircle className="h-3.5 w-3.5 mr-2" />Cancelar Agendamento
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Edit Modal */}
+      <EditarAgendamentoModal
+        slot={slot}
+        open={modal === "editar"}
+        onOpenChange={o => !o && setModal(null)}
+        onUpdate={onUpdate}
+      />
+
+      {/* Remarcar Modal */}
+      <RemarcarAgendamentoModal
+        slot={slot}
+        open={modal === "remarcar"}
+        onOpenChange={o => !o && setModal(null)}
+        onUpdate={onUpdate}
+      />
+
+      {/* Cancelar Modal */}
+      <CancelarAgendamentoModal
+        slot={slot}
+        open={modal === "cancelar"}
+        onOpenChange={o => !o && setModal(null)}
+        onUpdate={onUpdate}
+      />
 
       {/* Status Modal */}
       <Dialog open={modal === "status"} onOpenChange={o => !o && setModal(null)}>

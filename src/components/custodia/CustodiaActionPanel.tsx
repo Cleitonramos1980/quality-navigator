@@ -1,27 +1,30 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  MapPin, CheckCircle2, Package, AlertTriangle, Camera, FileText, Truck, RotateCcw, Plus,
+  MapPin, CheckCircle2, Package, AlertTriangle, Camera, FileText, RotateCcw, Plus,
+  XCircle, Lock, Upload, Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   registrarEventoCustodia, registrarEvidenciaCustodia, atualizarStatusCustodia,
 } from "@/services/custodia";
-import type { CustodiaNF } from "@/types/custodiaDigital";
+import type { CustodiaNF, CustodiaStatus } from "@/types/custodiaDigital";
+import { CUSTODIA_STATUS_LABELS } from "@/types/custodiaDigital";
 
 interface Props {
   custodia: CustodiaNF;
   onUpdate: (updated: CustodiaNF) => void;
 }
 
-type ModalType = "evento" | "evidencia" | "entrega" | "ressalva" | "devolucao" | null;
+type ModalType = "evento" | "evidencia" | "entrega" | "ressalva" | "devolucao" | "nao_entregue" | "encerrar" | "mudar_status" | null;
 
 const EVENTO_TIPOS = [
   { value: "CHECKPOINT", label: "Checkpoint" },
@@ -29,6 +32,9 @@ const EVENTO_TIPOS = [
   { value: "TENTATIVA_ENTREGA", label: "Tentativa de Entrega" },
   { value: "OCORRENCIA", label: "Ocorrência" },
   { value: "DIVERGENCIA", label: "Divergência" },
+  { value: "SAIDA", label: "Saída da Portaria" },
+  { value: "LIBERACAO", label: "Liberação" },
+  { value: "VINCULACAO", label: "Vinculação" },
 ];
 
 const EVIDENCIA_TIPOS = [
@@ -38,6 +44,20 @@ const EVIDENCIA_TIPOS = [
   { value: "ASSINATURA", label: "Assinatura" },
   { value: "FOTO", label: "Foto" },
   { value: "DOCUMENTO", label: "Documento" },
+];
+
+const EVIDENCIA_CATEGORIAS = [
+  "Documentação", "Foto de Carga", "Comprovante", "Assinatura Digital",
+  "Registro de Ocorrência", "Relatório de Inspeção", "Outro",
+];
+
+const STATUS_MANUAL: { value: CustodiaStatus; label: string }[] = [
+  { value: "VINCULADA", label: "Vinculada" },
+  { value: "LIBERADA", label: "Liberada" },
+  { value: "SAIU_PORTARIA", label: "Saiu da Portaria" },
+  { value: "EM_TRANSITO", label: "Em Trânsito" },
+  { value: "EM_RISCO", label: "Em Risco" },
+  { value: "CHEGADA_REGISTRADA", label: "Chegada Registrada" },
 ];
 
 export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
@@ -53,13 +73,28 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
   const [evTipo, setEvTipo] = useState("FOTO");
   const [evDesc, setEvDesc] = useState("");
   const [evObs, setEvObs] = useState("");
+  const [evCategoria, setEvCategoria] = useState("");
+  const [evEtapaVinculada, setEvEtapaVinculada] = useState("");
+  const [evArquivoNome, setEvArquivoNome] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Entrega form
   const [recebedor, setRecebedor] = useState("");
   const [divergencia, setDivergencia] = useState("");
 
+  // Não entregue form
+  const [motivoNaoEntregue, setMotivoNaoEntregue] = useState("");
+
+  // Encerrar form
+  const [motivoEncerramento, setMotivoEncerramento] = useState("");
+
+  // Mudar status
+  const [novoStatus, setNovoStatus] = useState<CustodiaStatus>("EM_TRANSITO");
+
   const resetForms = () => {
-    setEventoDesc(""); setEventoLocal(""); setEvDesc(""); setEvObs(""); setRecebedor(""); setDivergencia("");
+    setEventoDesc(""); setEventoLocal(""); setEvDesc(""); setEvObs(""); setRecebedor("");
+    setDivergencia(""); setMotivoNaoEntregue(""); setMotivoEncerramento("");
+    setEvCategoria(""); setEvEtapaVinculada(""); setEvArquivoNome("");
   };
 
   const handleEvento = async () => {
@@ -81,7 +116,15 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
     setSaving(true);
     try {
       const updated = await registrarEvidenciaCustodia(custodia.id, {
-        tipo: evTipo as any, descricao: evDesc, observacao: evObs || undefined,
+        tipo: evTipo as any,
+        descricao: evDesc,
+        observacao: [
+          evObs,
+          evCategoria ? `Categoria: ${evCategoria}` : "",
+          evEtapaVinculada ? `Etapa: ${evEtapaVinculada}` : "",
+          evArquivoNome ? `Arquivo: ${evArquivoNome}` : "",
+        ].filter(Boolean).join(" | ") || undefined,
+        url: evArquivoNome || undefined,
       });
       onUpdate(updated);
       toast.success("Evidência registrada");
@@ -119,7 +162,6 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
   const handleDevolucao = async () => {
     setSaving(true);
     try {
-      // Register event + update status
       await registrarEventoCustodia(custodia.id, {
         tipo: "DEVOLUCAO" as any, etapa: "DEVOLUCAO", descricao: divergencia || "Devolução registrada",
       });
@@ -131,11 +173,72 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
     finally { setSaving(false); }
   };
 
-  const isTerminal = ["ENTREGUE", "ENCERRADA", "DEVOLVIDA"].includes(custodia.status);
+  const handleNaoEntregue = async () => {
+    if (!motivoNaoEntregue) return;
+    setSaving(true);
+    try {
+      await registrarEventoCustodia(custodia.id, {
+        tipo: "TENTATIVA_ENTREGA" as any, etapa: "TENTATIVA_ENTREGA",
+        descricao: `Não entregue: ${motivoNaoEntregue}`,
+      });
+      const updated = await atualizarStatusCustodia(custodia.id, "NAO_ENTREGUE", {
+        divergencia: motivoNaoEntregue, statusAceite: "RECUSADO",
+      });
+      onUpdate(updated);
+      toast.success("Registrado como não entregue");
+      setModal(null); resetForms();
+    } catch { toast.error("Erro"); }
+    finally { setSaving(false); }
+  };
+
+  const handleEncerrar = async () => {
+    if (!motivoEncerramento) return;
+    setSaving(true);
+    try {
+      await registrarEventoCustodia(custodia.id, {
+        tipo: "ENCERRAMENTO" as any, etapa: "ENCERRAMENTO",
+        descricao: `Encerramento: ${motivoEncerramento}`,
+      });
+      const updated = await atualizarStatusCustodia(custodia.id, "ENCERRADA", {
+        divergencia: motivoEncerramento,
+      });
+      onUpdate(updated);
+      toast.success("Custódia encerrada");
+      setModal(null); resetForms();
+    } catch { toast.error("Erro"); }
+    finally { setSaving(false); }
+  };
+
+  const handleMudarStatus = async () => {
+    setSaving(true);
+    try {
+      const updated = await atualizarStatusCustodia(custodia.id, novoStatus);
+      onUpdate(updated);
+      toast.success(`Status atualizado para ${CUSTODIA_STATUS_LABELS[novoStatus]}`);
+      setModal(null);
+    } catch { toast.error("Erro"); }
+    finally { setSaving(false); }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEvArquivoNome(file.name);
+      toast.info(`Arquivo selecionado: ${file.name}`);
+    }
+  };
+
+  const isTerminal = ["ENTREGUE", "ENCERRADA", "DEVOLVIDA", "NAO_ENTREGUE"].includes(custodia.status);
+  const canDeliver = !isTerminal && !["EMITIDA", "VINCULADA"].includes(custodia.status);
 
   return (
     <div className="glass-card rounded-lg p-4">
-      <h3 className="text-sm font-semibold text-foreground mb-3">Ações Operacionais</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-foreground">Ações Operacionais</h3>
+        <Badge variant="secondary" className="text-[10px]">
+          {CUSTODIA_STATUS_LABELS[custodia.status]}
+        </Badge>
+      </div>
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setModal("evento")} disabled={isTerminal}>
           <Plus className="h-3.5 w-3.5" />Registrar Evento
@@ -143,16 +246,29 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setModal("evidencia")}>
           <Camera className="h-3.5 w-3.5" />Anexar Evidência
         </Button>
-        <Button size="sm" className="gap-1.5" onClick={() => setModal("entrega")} disabled={isTerminal}>
+        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setModal("mudar_status")} disabled={isTerminal}>
+          <MapPin className="h-3.5 w-3.5" />Mudar Status
+        </Button>
+        <Button size="sm" className="gap-1.5" onClick={() => setModal("entrega")} disabled={!canDeliver}>
           <CheckCircle2 className="h-3.5 w-3.5" />Confirmar Entrega
         </Button>
-        <Button size="sm" variant="outline" className="gap-1.5 text-warning" onClick={() => setModal("ressalva")} disabled={isTerminal}>
+        <Button size="sm" variant="outline" className="gap-1.5 text-warning" onClick={() => setModal("ressalva")} disabled={!canDeliver}>
           <AlertTriangle className="h-3.5 w-3.5" />Entrega c/ Ressalva
+        </Button>
+        <Button size="sm" variant="outline" className="gap-1.5 text-destructive" onClick={() => setModal("nao_entregue")} disabled={!canDeliver}>
+          <XCircle className="h-3.5 w-3.5" />Não Entregue
         </Button>
         <Button size="sm" variant="outline" className="gap-1.5 text-destructive" onClick={() => setModal("devolucao")} disabled={isTerminal}>
           <RotateCcw className="h-3.5 w-3.5" />Devolução
         </Button>
+        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setModal("encerrar")} disabled={custodia.status === "ENCERRADA"}>
+          <Lock className="h-3.5 w-3.5" />Encerrar Custódia
+        </Button>
       </div>
+
+      {/* Hidden file input */}
+      <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect}
+        accept="image/*,.pdf,.doc,.docx" />
 
       {/* Evento Modal */}
       <Dialog open={modal === "evento"} onOpenChange={o => !o && setModal(null)}>
@@ -184,23 +300,69 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
         </DialogContent>
       </Dialog>
 
-      {/* Evidencia Modal */}
+      {/* Evidencia Modal (enhanced) */}
       <Dialog open={modal === "evidencia"} onOpenChange={o => !o && setModal(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>Anexar Evidência — {custodia.nfNumero}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="space-y-1.5">
-              <Label>Tipo</Label>
-              <Select value={evTipo} onValueChange={setEvTipo}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {EVIDENCIA_TIPOS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Tipo de Evidência</Label>
+                <Select value={evTipo} onValueChange={setEvTipo}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {EVIDENCIA_TIPOS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Categoria</Label>
+                <Select value={evCategoria} onValueChange={setEvCategoria}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {EVIDENCIA_CATEGORIAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Descrição *</Label>
               <Input placeholder="Descrição da evidência" value={evDesc} onChange={e => setEvDesc(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Etapa Vinculada</Label>
+              <Select value={evEtapaVinculada} onValueChange={setEvEtapaVinculada}>
+                <SelectTrigger><SelectValue placeholder="Vincular a uma etapa" /></SelectTrigger>
+                <SelectContent>
+                  {custodia.eventos.map(ev => (
+                    <SelectItem key={ev.id} value={ev.etapa}>{ev.etapa} — {ev.descricao.slice(0, 40)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Arquivo / Anexo</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Nome do arquivo ou referência"
+                  value={evArquivoNome}
+                  onChange={e => setEvArquivoNome(e.target.value)}
+                  className="flex-1"
+                />
+                <Button type="button" variant="outline" size="sm" className="gap-1.5 shrink-0"
+                  onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="h-3.5 w-3.5" />Upload
+                </Button>
+              </div>
+              {evArquivoNome && (
+                <div className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-1.5 text-xs">
+                  <Paperclip className="h-3 w-3 text-primary" />
+                  <span className="truncate text-foreground">{evArquivoNome}</span>
+                  <Badge variant="secondary" className="text-[9px] ml-auto">
+                    {evArquivoNome.includes(".") ? "Anexado" : "Referência"}
+                  </Badge>
+                </div>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Observação</Label>
@@ -209,7 +371,30 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
-            <Button onClick={handleEvidencia} disabled={saving || !evDesc}>{saving ? "Salvando..." : "Anexar"}</Button>
+            <Button onClick={handleEvidencia} disabled={saving || !evDesc}>{saving ? "Salvando..." : "Anexar Evidência"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mudar Status Modal */}
+      <Dialog open={modal === "mudar_status"} onOpenChange={o => !o && setModal(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Mudar Status — {custodia.nfNumero}</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Novo Status</Label>
+              <Select value={novoStatus} onValueChange={v => setNovoStatus(v as CustodiaStatus)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_MANUAL.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">Status atual: <strong>{CUSTODIA_STATUS_LABELS[custodia.status]}</strong></p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
+            <Button onClick={handleMudarStatus} disabled={saving}>{saving ? "Salvando..." : "Atualizar Status"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -252,6 +437,27 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
         </DialogContent>
       </Dialog>
 
+      {/* Não Entregue Modal */}
+      <Dialog open={modal === "nao_entregue"} onOpenChange={o => !o && setModal(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive">
+            <XCircle className="h-5 w-5" />Registrar Não Entregue — {custodia.nfNumero}
+          </DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Motivo da Não Entrega *</Label>
+              <Textarea placeholder="Endereço não localizado, recusa do cliente, ausente..." value={motivoNaoEntregue} onChange={e => setMotivoNaoEntregue(e.target.value)} rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleNaoEntregue} disabled={saving || !motivoNaoEntregue}>
+              {saving ? "Salvando..." : "Registrar Não Entregue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Devolução Modal */}
       <Dialog open={modal === "devolucao"} onOpenChange={o => !o && setModal(null)}>
         <DialogContent className="sm:max-w-md">
@@ -265,6 +471,30 @@ export default function CustodiaActionPanel({ custodia, onUpdate }: Props) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
             <Button variant="destructive" onClick={handleDevolucao} disabled={saving || !divergencia}>{saving ? "Salvando..." : "Registrar Devolução"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Encerrar Custódia Modal */}
+      <Dialog open={modal === "encerrar"} onOpenChange={o => !o && setModal(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />Encerrar Custódia — {custodia.nfNumero}
+          </DialogTitle></DialogHeader>
+          <div className="rounded-lg border border-muted bg-muted/30 p-3 text-xs text-muted-foreground">
+            O encerramento finaliza a cadeia de custódia. Nenhuma nova ação poderá ser registrada após o encerramento.
+          </div>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Motivo / Observação do Encerramento *</Label>
+              <Textarea placeholder="Entrega confirmada, ciclo concluído, decisão gerencial..." value={motivoEncerramento} onChange={e => setMotivoEncerramento(e.target.value)} rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModal(null)}>Cancelar</Button>
+            <Button onClick={handleEncerrar} disabled={saving || !motivoEncerramento}>
+              {saving ? "Encerrando..." : "Encerrar Custódia"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

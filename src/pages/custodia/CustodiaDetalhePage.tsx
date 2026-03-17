@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Shield, CheckCircle2, Clock, FileText, Camera, MapPin, Package, FileSignature, AlertTriangle, Truck } from "lucide-react";
+import { ArrowLeft, Shield, CheckCircle2, Clock, FileText, Camera, MapPin, Package, FileSignature, AlertTriangle, Truck, Paperclip, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import RiskScoreCard from "@/components/operacional/RiskScoreCard";
 import TraceabilityCard from "@/components/operacional/TraceabilityCard";
 import RelatedActionsPanel from "@/components/operacional/RelatedActionsPanel";
 import CustodiaActionPanel from "@/components/custodia/CustodiaActionPanel";
+import ExcecoesRelacionadasPanel from "@/components/custodia/ExcecoesRelacionadasPanel";
 import { getCustodiaById } from "@/services/custodia";
 import type { CustodiaNF } from "@/types/custodiaDigital";
 import { CUSTODIA_STATUS_LABELS, CUSTODIA_STATUS_COLORS } from "@/types/custodiaDigital";
@@ -15,6 +16,15 @@ const EVIDENCE_ICONS: Record<string, typeof Camera> = {
   COMPROVANTE_SAIDA: FileText, COMPROVANTE_CHEGADA: MapPin,
   PROVA_ENTREGA: Package, ASSINATURA: FileSignature,
   FOTO: Camera, DOCUMENTO: FileText,
+};
+
+const EVIDENCE_TYPE_LABELS: Record<string, string> = {
+  COMPROVANTE_SAIDA: "Comprovante de Saída",
+  COMPROVANTE_CHEGADA: "Comprovante de Chegada",
+  PROVA_ENTREGA: "Prova de Entrega",
+  ASSINATURA: "Assinatura",
+  FOTO: "Foto",
+  DOCUMENTO: "Documento",
 };
 
 const CustodiaDetalhePage = () => {
@@ -80,6 +90,7 @@ const CustodiaDetalhePage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-xs font-semibold text-foreground">{ev.etapa}</p>
+                        <Badge variant="secondary" className="text-[9px]">{ev.tipo}</Badge>
                         <span className="text-[10px] text-muted-foreground">{new Date(ev.dataHora).toLocaleString("pt-BR")}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">{ev.descricao}</p>
@@ -92,9 +103,12 @@ const CustodiaDetalhePage = () => {
             </div>
           </div>
 
-          {/* Evidências */}
+          {/* Evidências (enhanced) */}
           <div className="glass-card rounded-lg p-5">
-            <h3 className="mb-4 text-sm font-semibold text-foreground">Evidências ({data.evidencias.length})</h3>
+            <h3 className="mb-4 text-sm font-semibold text-foreground flex items-center gap-2">
+              <Camera className="h-4 w-4 text-primary" />
+              Evidências ({data.evidencias.length})
+            </h3>
             {data.evidencias.length === 0 ? (
               <div className="text-center py-6">
                 <Camera className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
@@ -104,14 +118,46 @@ const CustodiaDetalhePage = () => {
               <div className="grid gap-3 sm:grid-cols-2">
                 {data.evidencias.map(ev => {
                   const Icon = EVIDENCE_ICONS[ev.tipo] || FileText;
+                  const hasFile = ev.url || (ev.observacao && ev.observacao.includes("Arquivo:"));
+                  const fileName = ev.url || (ev.observacao?.match(/Arquivo:\s*([^\|]+)/)?.[1]?.trim());
+                  const categoria = ev.observacao?.match(/Categoria:\s*([^\|]+)/)?.[1]?.trim();
+                  const etapa = ev.observacao?.match(/Etapa:\s*([^\|]+)/)?.[1]?.trim();
                   return (
-                    <div key={ev.id} className="flex items-start gap-3 rounded-md border border-border p-3">
-                      <div className="rounded-md bg-primary/10 p-2"><Icon className="h-4 w-4 text-primary" /></div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground">{ev.descricao}</p>
-                        <p className="text-[10px] text-muted-foreground">{ev.responsavel} · {new Date(ev.dataHora).toLocaleString("pt-BR")}</p>
-                        {ev.observacao && <p className="text-[10px] text-muted-foreground mt-0.5">{ev.observacao}</p>}
+                    <div key={ev.id} className="rounded-md border border-border p-3 space-y-2">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-md bg-primary/10 p-2"><Icon className="h-4 w-4 text-primary" /></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-medium text-foreground">{ev.descricao}</p>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">{ev.responsavel} · {new Date(ev.dataHora).toLocaleString("pt-BR")}</p>
+                        </div>
+                        <Badge variant="secondary" className="text-[9px] shrink-0">
+                          {EVIDENCE_TYPE_LABELS[ev.tipo] || ev.tipo}
+                        </Badge>
                       </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {categoria && (
+                          <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                            {categoria}
+                          </span>
+                        )}
+                        {etapa && (
+                          <span className="inline-block rounded bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary">
+                            Etapa: {etapa}
+                          </span>
+                        )}
+                      </div>
+                      {fileName && (
+                        <div className="flex items-center gap-2 rounded-md bg-muted/50 px-2.5 py-1.5 text-xs">
+                          <Paperclip className="h-3 w-3 text-primary shrink-0" />
+                          <span className="truncate text-foreground">{fileName}</span>
+                          <Badge variant="secondary" className="text-[9px] ml-auto shrink-0">Anexado</Badge>
+                        </div>
+                      )}
+                      {ev.observacao && !ev.observacao.startsWith("Categoria:") && !ev.observacao.startsWith("Arquivo:") && (
+                        <p className="text-[10px] text-muted-foreground">{ev.observacao.split("|")[0].trim()}</p>
+                      )}
                     </div>
                   );
                 })}
@@ -122,6 +168,10 @@ const CustodiaDetalhePage = () => {
 
         <div className="space-y-6">
           <RiskScoreCard score={data.scoreRisco} motivoRisco={data.divergencia} acaoRecomendada={data.scoreRisco > 50 ? "Acompanhar e escalar se necessário" : undefined} />
+
+          {/* GAP 4: Exceções relacionadas */}
+          <ExcecoesRelacionadasPanel origemId={data.id} origemTipo="Custódia" />
+
           <RelatedActionsPanel origemId={data.nfId} />
         </div>
       </div>
