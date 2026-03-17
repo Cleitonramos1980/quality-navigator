@@ -147,6 +147,7 @@ async function start() {
   // Seed operational and inventory data if empty
   seedInventarioData();
   seedOperacionalData();
+  seedPhasesData();
 
   const loginEmail = "cleiton.ramos@hotmail.com";
   const userExists = db.usuarios.some(
