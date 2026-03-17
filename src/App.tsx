@@ -88,6 +88,12 @@ const NFTransitoDashboardPage = lazy(() => import("@/pages/nf-transito/NFTransit
 const NFTransitoDetalhePage = lazy(() => import("@/pages/nf-transito/NFTransitoDetalhePage"));
 const VisitantePublicoPage = lazy(() => import("@/pages/visitantes/VisitantePublicoPage"));
 
+// Phase 1-3: New modules
+const TorreControlePage = lazy(() => import("@/pages/torre-controle/TorreControlePage"));
+const AgendamentoDocaPage = lazy(() => import("@/pages/patio/AgendamentoDocaPage"));
+const CadeiasCustodiaPage = lazy(() => import("@/pages/custodia/CadeiasCustodiaPage"));
+const CustodiaDetalhePage = lazy(() => import("@/pages/custodia/CustodiaDetalhePage"));
+
 const queryClient = new QueryClient();
 
 const Lazy = ({ children }: { children: ReactNode }) => (
