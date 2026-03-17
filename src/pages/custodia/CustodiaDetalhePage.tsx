@@ -118,10 +118,9 @@ const CustodiaDetalhePage = () => {
               <div className="grid gap-3 sm:grid-cols-2">
                 {data.evidencias.map(ev => {
                   const Icon = EVIDENCE_ICONS[ev.tipo] || FileText;
-                  const hasFile = ev.url || (ev.observacao && ev.observacao.includes("Arquivo:"));
-                  const fileName = ev.url || (ev.observacao?.match(/Arquivo:\s*([^\|]+)/)?.[1]?.trim());
-                  const categoria = ev.observacao?.match(/Categoria:\s*([^\|]+)/)?.[1]?.trim();
-                  const etapa = ev.observacao?.match(/Etapa:\s*([^\|]+)/)?.[1]?.trim();
+                  const fileName = ev.nomeArquivo || ev.url;
+                  const categoria = ev.categoria;
+                  const etapa = ev.etapaRelacionada;
                   return (
                     <div key={ev.id} className="rounded-md border border-border p-3 space-y-2">
                       <div className="flex items-start gap-3">
@@ -147,6 +146,16 @@ const CustodiaDetalhePage = () => {
                             Etapa: {etapa}
                           </span>
                         )}
+                        {ev.mimeType && (
+                          <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                            {ev.mimeType}
+                          </span>
+                        )}
+                        {ev.tamanhoArquivo && (
+                          <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                            {(ev.tamanhoArquivo / 1024).toFixed(0)} KB
+                          </span>
+                        )}
                       </div>
                       {fileName && (
                         <div className="flex items-center gap-2 rounded-md bg-muted/50 px-2.5 py-1.5 text-xs">
@@ -155,8 +164,8 @@ const CustodiaDetalhePage = () => {
                           <Badge variant="secondary" className="text-[9px] ml-auto shrink-0">Anexado</Badge>
                         </div>
                       )}
-                      {ev.observacao && !ev.observacao.startsWith("Categoria:") && !ev.observacao.startsWith("Arquivo:") && (
-                        <p className="text-[10px] text-muted-foreground">{ev.observacao.split("|")[0].trim()}</p>
+                      {ev.observacao && (
+                        <p className="text-[10px] text-muted-foreground">{ev.observacao}</p>
                       )}
                     </div>
                   );
