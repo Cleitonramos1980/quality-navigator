@@ -138,6 +138,7 @@ await governancaQualidadeRoutes(app);
 await uxMetricsRoutes(app);
 await inventarioRoutes(app);
 await operacionalRoutes(app);
+await torreAgendaCustodiaRoutes(app);
 
 async function start() {
   await initOraclePool();
