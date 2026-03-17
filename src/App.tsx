@@ -90,6 +90,7 @@ const VisitantePublicoPage = lazy(() => import("@/pages/visitantes/VisitantePubl
 
 // Phase 1-3: New modules
 const TorreControlePage = lazy(() => import("@/pages/torre-controle/TorreControlePage"));
+const ExcecaoDetalhePage = lazy(() => import("@/pages/torre-controle/ExcecaoDetalhePage"));
 const AgendamentoDocaPage = lazy(() => import("@/pages/patio/AgendamentoDocaPage"));
 const NovoAgendamentoDocaPage = lazy(() => import("@/pages/patio/NovoAgendamentoDocaPage"));
 const CadeiasCustodiaPage = lazy(() => import("@/pages/custodia/CadeiasCustodiaPage"));
@@ -196,6 +197,7 @@ const App = () => (
           <Route path="/nf-transito" element={<AppLayout><Lazy><NFTransitoDashboardPage /></Lazy></AppLayout>} />
           <Route path="/nf-transito/:id" element={<AppLayout><Lazy><NFTransitoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/torre-controle" element={<AppLayout><Lazy><TorreControlePage /></Lazy></AppLayout>} />
+          <Route path="/torre-controle/:id" element={<AppLayout><Lazy><ExcecaoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/patio/agendamento" element={<AppLayout><Lazy><AgendamentoDocaPage /></Lazy></AppLayout>} />
           <Route path="/patio/agendamento/novo" element={<AppLayout><Lazy><NovoAgendamentoDocaPage /></Lazy></AppLayout>} />
           <Route path="/custodia" element={<AppLayout><Lazy><CadeiasCustodiaPage /></Lazy></AppLayout>} />
