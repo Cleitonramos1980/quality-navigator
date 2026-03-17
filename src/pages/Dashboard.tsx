@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import {
   ShieldCheck, AlertTriangle, TrendingDown, Clock, Inbox, MessageSquare, Star,
-  DoorOpen, Users, Truck, Layers, FileText, Activity, Bell, MapPin,
+  DoorOpen, Users, Truck, Layers, FileText, Activity, Bell, MapPin, ShieldAlert, CalendarDays, Shield,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
