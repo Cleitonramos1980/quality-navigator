@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Shield, CheckCircle2, Clock, FileText, Camera, MapPin, Package, FileSignature, AlertTriangle, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import RiskScoreCard from "@/components/operacional/RiskScoreCard";
 import TraceabilityCard from "@/components/operacional/TraceabilityCard";
 import RelatedActionsPanel from "@/components/operacional/RelatedActionsPanel";
+import CustodiaActionPanel from "@/components/custodia/CustodiaActionPanel";
 import { getCustodiaById } from "@/services/custodia";
 import type { CustodiaNF } from "@/types/custodiaDigital";
 import { CUSTODIA_STATUS_LABELS, CUSTODIA_STATUS_COLORS } from "@/types/custodiaDigital";
@@ -20,9 +21,11 @@ const CustodiaDetalhePage = () => {
   const { id } = useParams();
   const [data, setData] = useState<CustodiaNF | null>(null);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     if (id) getCustodiaById(id).then(d => setData(d || null));
   }, [id]);
+
+  useEffect(reload, [reload]);
 
   if (!data) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
 
