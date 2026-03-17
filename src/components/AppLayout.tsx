@@ -214,8 +214,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             <DoorOpen className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-sidebar-primary">ControlPorte</h1>
-            <p className="text-[10px] leading-none text-sidebar-foreground/60">Portaria · Pátio · Frota · NF</p>
+            <h1 className="text-sm font-bold text-sidebar-primary">Torre de Controle</h1>
+            <p className="text-[10px] leading-relaxed text-sidebar-foreground/50">SAC · Qualidade · Inventário · Assistência Técnica<br/>Acessos · Portaria · Controle de Pátio e Frota</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
