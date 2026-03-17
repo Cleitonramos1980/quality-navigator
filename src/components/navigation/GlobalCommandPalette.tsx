@@ -1,7 +1,10 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search, LayoutDashboard, Headphones, Wrench, ClipboardCheck, Settings } from "lucide-react";
+import {
+  Search, LayoutDashboard, Headphones, Wrench, ClipboardCheck, Settings,
+  DoorOpen, Users, Truck, Activity, FileText, PackageSearch, Layers, Eye, UserPlus, QrCode, Car,
+} from "lucide-react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -19,36 +22,71 @@ interface CommandRoute {
   label: string;
   path: string;
   icon: ComponentType<{ className?: string }>;
-  modulo: "dashboard" | "sac" | "qualidade" | "inventario" | "assistencia" | "admin";
+  modulo: "dashboard" | "sac" | "qualidade" | "inventario" | "assistencia" | "admin" | "operacional";
+  group: string;
 }
 
 const COMMAND_ROUTES: CommandRoute[] = [
-  { label: "Dashboard", path: "/", icon: LayoutDashboard, modulo: "dashboard" },
-  { label: "Dashboard SAC", path: "/sac/dashboard", icon: Headphones, modulo: "sac" },
-  { label: "Atendimentos SAC", path: "/sac/atendimentos", icon: Headphones, modulo: "sac" },
-  { label: "Novo Atendimento SAC", path: "/sac/novo", icon: Headphones, modulo: "sac" },
-  { label: "Pesquisa SAC", path: "/sac/pesquisa", icon: Headphones, modulo: "sac" },
-  { label: "RequisiÃ§Ãµes SAC", path: "/sac/requisicoes", icon: Headphones, modulo: "sac" },
-  { label: "Garantias", path: "/garantias", icon: Headphones, modulo: "sac" },
-  { label: "NÃ£o Conformidades", path: "/nao-conformidades", icon: ClipboardCheck, modulo: "qualidade" },
-  { label: "CAPA", path: "/capa", icon: ClipboardCheck, modulo: "qualidade" },
-  { label: "Auditorias", path: "/auditorias", icon: ClipboardCheck, modulo: "qualidade" },
-  { label: "Metrologia / MSA", path: "/qualidade/metrologia", icon: ClipboardCheck, modulo: "qualidade" },
-  { label: "KPIs Industriais", path: "/qualidade/kpis-industriais", icon: ClipboardCheck, modulo: "qualidade" },
-  { label: "Risco / SLA", path: "/qualidade/risco-sla", icon: ClipboardCheck, modulo: "qualidade" },
-  { label: "Auditorias em Camadas", path: "/qualidade/auditorias-camadas", icon: ClipboardCheck, modulo: "qualidade" },
-  { label: "Core Tools Fornecedor", path: "/qualidade/core-tools", icon: ClipboardCheck, modulo: "qualidade" },
-  { label: "ISO 9001 Readiness", path: "/qualidade/iso-readiness", icon: ClipboardCheck, modulo: "qualidade" },
-  { label: "Dashboard AssistÃªncia", path: "/assistencia/dashboard", icon: Wrench, modulo: "assistencia" },
-  { label: "Ordens de ServiÃ§o", path: "/assistencia/os", icon: Wrench, modulo: "assistencia" },
-  { label: "Nova Ordem de ServiÃ§o", path: "/assistencia/os/nova", icon: Wrench, modulo: "assistencia" },
-  { label: "RequisiÃ§Ãµes de Material", path: "/assistencia/requisicoes", icon: Wrench, modulo: "assistencia" },
-  { label: "Estoque", path: "/assistencia/estoque", icon: Wrench, modulo: "assistencia" },
-  { label: "AdministraÃ§Ã£o", path: "/admin", icon: Settings, modulo: "admin" },
-  { label: "UsuÃ¡rios", path: "/administracao/usuarios", icon: Settings, modulo: "admin" },
-  { label: "Perfis", path: "/administracao/perfis", icon: Settings, modulo: "admin" },
-  { label: "Log de Auditoria", path: "/administracao/log-auditoria", icon: Settings, modulo: "admin" },
-  { label: "ParÃ¢metros", path: "/administracao/parametros", icon: Settings, modulo: "admin" },
+  // Operacional — Portaria & Visitantes
+  { label: "Dashboard Operacional", path: "/", icon: LayoutDashboard, modulo: "dashboard", group: "Painel Principal" },
+  { label: "Acessos / Portaria", path: "/portaria", icon: DoorOpen, modulo: "operacional", group: "Portaria & Visitantes" },
+  { label: "Novo Acesso", path: "/portaria/novo", icon: DoorOpen, modulo: "operacional", group: "Portaria & Visitantes" },
+  { label: "Presença / Evacuação", path: "/portaria/presenca", icon: Users, modulo: "operacional", group: "Portaria & Visitantes" },
+  { label: "Leitura de QR Code", path: "/portaria/leitura-qr", icon: QrCode, modulo: "operacional", group: "Portaria & Visitantes" },
+  { label: "Leitura de Placa", path: "/portaria/leitura-placa", icon: Car, modulo: "operacional", group: "Portaria & Visitantes" },
+  { label: "Visitantes", path: "/visitantes", icon: Users, modulo: "operacional", group: "Portaria & Visitantes" },
+  { label: "Nova Pré-autorização", path: "/visitantes/pre-autorizacao", icon: UserPlus, modulo: "operacional", group: "Portaria & Visitantes" },
+  { label: "Veículos de Visitantes", path: "/veiculos-visitantes", icon: Car, modulo: "operacional", group: "Portaria & Visitantes" },
+
+  // Operacional — Frota & Logística
+  { label: "Frota", path: "/frota", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
+  { label: "Novo Despacho", path: "/frota/despacho", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
+  { label: "Terceiros / Transportadoras", path: "/terceiros", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
+  { label: "Pátio e Docas", path: "/patio", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
+
+  // Operacional — Monitoramento & NF
+  { label: "Monitoramento", path: "/monitoramento", icon: Activity, modulo: "operacional", group: "Monitoramento & Fiscal" },
+  { label: "NF em Trânsito", path: "/nf-transito", icon: FileText, modulo: "operacional", group: "Monitoramento & Fiscal" },
+
+  // SAC
+  { label: "Dashboard SAC", path: "/sac/dashboard", icon: Headphones, modulo: "sac", group: "SAC" },
+  { label: "Atendimentos SAC", path: "/sac/atendimentos", icon: Headphones, modulo: "sac", group: "SAC" },
+  { label: "Novo Atendimento SAC", path: "/sac/novo", icon: Headphones, modulo: "sac", group: "SAC" },
+  { label: "Pesquisa SAC", path: "/sac/pesquisa", icon: Headphones, modulo: "sac", group: "SAC" },
+  { label: "Avaliações SAC", path: "/sac/avaliacoes", icon: Headphones, modulo: "sac", group: "SAC" },
+  { label: "Requisições SAC", path: "/sac/requisicoes", icon: Headphones, modulo: "sac", group: "SAC" },
+  { label: "Garantias", path: "/garantias", icon: Headphones, modulo: "sac", group: "SAC" },
+
+  // Qualidade
+  { label: "Não Conformidades", path: "/nao-conformidades", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+  { label: "CAPA", path: "/capa", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+  { label: "Auditorias", path: "/auditorias", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+  { label: "Metrologia / MSA", path: "/qualidade/metrologia", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+  { label: "KPIs Industriais", path: "/qualidade/kpis-industriais", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+  { label: "Risco / SLA", path: "/qualidade/risco-sla", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+  { label: "Auditorias em Camadas", path: "/qualidade/auditorias-camadas", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+  { label: "Core Tools Fornecedor", path: "/qualidade/core-tools", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+  { label: "ISO 9001 Readiness", path: "/qualidade/iso-readiness", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+
+  // Inventário
+  { label: "Dashboard de Inventário", path: "/qualidade/inventario", icon: PackageSearch, modulo: "inventario", group: "Inventário" },
+  { label: "Gerar Inventário", path: "/qualidade/inventario/novo-plano", icon: PackageSearch, modulo: "inventario", group: "Inventário" },
+  { label: "Digitação de Inventário", path: "/qualidade/inventario/digitacao", icon: PackageSearch, modulo: "inventario", group: "Inventário" },
+  { label: "Contagens", path: "/qualidade/inventario/contagens", icon: PackageSearch, modulo: "inventario", group: "Inventário" },
+
+  // Assistência Técnica
+  { label: "Dashboard Assistência", path: "/assistencia/dashboard", icon: Wrench, modulo: "assistencia", group: "Assistência Técnica" },
+  { label: "Ordens de Serviço", path: "/assistencia/os", icon: Wrench, modulo: "assistencia", group: "Assistência Técnica" },
+  { label: "Nova Ordem de Serviço", path: "/assistencia/os/nova", icon: Wrench, modulo: "assistencia", group: "Assistência Técnica" },
+  { label: "Requisições de Material", path: "/assistencia/requisicoes", icon: Wrench, modulo: "assistencia", group: "Assistência Técnica" },
+  { label: "Estoque", path: "/assistencia/estoque", icon: Wrench, modulo: "assistencia", group: "Assistência Técnica" },
+
+  // Administração
+  { label: "Administração", path: "/admin", icon: Settings, modulo: "admin", group: "Administração" },
+  { label: "Usuários", path: "/administracao/usuarios", icon: Settings, modulo: "admin", group: "Administração" },
+  { label: "Perfis", path: "/administracao/perfis", icon: Settings, modulo: "admin", group: "Administração" },
+  { label: "Log de Auditoria", path: "/administracao/log-auditoria", icon: Settings, modulo: "admin", group: "Administração" },
+  { label: "Parâmetros", path: "/administracao/parametros", icon: Settings, modulo: "admin", group: "Administração" },
 ];
 
 function canAccessPath(path: string, modulo: CommandRoute["modulo"]): boolean {
@@ -70,6 +108,15 @@ const GlobalCommandPalette = () => {
     [],
   );
 
+  const groups = useMemo(() => {
+    const map = new Map<string, typeof routes>();
+    routes.forEach((r) => {
+      if (!map.has(r.group)) map.set(r.group, []);
+      map.get(r.group)!.push(r);
+    });
+    return Array.from(map.entries());
+  }, [routes]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
@@ -88,30 +135,32 @@ const GlobalCommandPalette = () => {
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Buscar tela ou aÃ§Ã£o..." />
+      <CommandInput placeholder="Buscar tela ou ação..." />
       <CommandList>
         <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-        <CommandGroup heading="NavegaÃ§Ã£o">
-          {routes.map((route) => {
-            const active = location.pathname === route.path || location.pathname.startsWith(`${route.path}/`);
-            return (
-              <CommandItem
-                key={route.path}
-                value={`${route.label} ${route.path}`}
-                onSelect={() => {
-                  setOpen(false);
-                  trackAction("NAVIGATE", { path: route.path });
-                  navigate(route.path);
-                }}
-                className={active ? "bg-accent" : undefined}
-              >
-                <route.icon className="mr-2 h-4 w-4" />
-                <span>{route.label}</span>
-                <CommandShortcut>{route.path}</CommandShortcut>
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
+        {groups.map(([groupLabel, groupRoutes]) => (
+          <CommandGroup key={groupLabel} heading={groupLabel}>
+            {groupRoutes.map((route) => {
+              const active = location.pathname === route.path || location.pathname.startsWith(`${route.path}/`);
+              return (
+                <CommandItem
+                  key={route.path}
+                  value={`${route.label} ${route.path}`}
+                  onSelect={() => {
+                    setOpen(false);
+                    trackAction("NAVIGATE", { path: route.path });
+                    navigate(route.path);
+                  }}
+                  className={active ? "bg-accent" : undefined}
+                >
+                  <route.icon className="mr-2 h-4 w-4" />
+                  <span>{route.label}</span>
+                  <CommandShortcut>{route.path}</CommandShortcut>
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        ))}
       </CommandList>
       <div className="flex items-center justify-between border-t px-3 py-2 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1">
@@ -125,4 +174,3 @@ const GlobalCommandPalette = () => {
 };
 
 export default GlobalCommandPalette;
-

@@ -44,7 +44,8 @@ const NovaPreAutorizacaoPage = () => {
     toast.success("Pré-autorização criada com sucesso!");
   };
 
-  const mockLink = "https://sgi.rodriguescolchoes.com.br/visitante/cadastro/abc123-token";
+  const generatedToken = crypto.randomUUID().slice(0, 12);
+  const mockLink = `${window.location.origin}/visitante/cadastro/${generatedToken}`;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto">

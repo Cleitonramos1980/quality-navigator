@@ -48,9 +48,9 @@ const LoginPage = () => {
               className="h-full w-full object-contain"
             />
           </div>
-          <h1 className="text-xl font-bold text-sidebar-primary">SQI</h1>
+          <h1 className="text-xl font-bold text-sidebar-primary">SGI</h1>
           <p className="text-sm text-sidebar-foreground/60 mt-1">Sistema de Gestão Integrada</p>
-          <p className="text-xs text-sidebar-foreground/40 mt-0.5">Rodrigues Ind. e Com. de Colchões Ltda</p>
+          <p className="text-xs text-sidebar-foreground/40 mt-0.5">Portaria · Logística · Qualidade</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4 bg-card rounded-xl p-6 shadow-lg border border-border">
@@ -80,7 +80,7 @@ const LoginPage = () => {
             {loading ? "Entrando..." : "Entrar"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Autenticação via backend com JWT.
+            Acesso seguro — autenticação corporativa
           </p>
         </form>
       </div>

@@ -211,7 +211,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           </div>
           <div>
             <h1 className="text-sm font-bold text-sidebar-primary">SGI</h1>
-            <p className="text-[10px] leading-none text-sidebar-foreground/60">Gestão Integrada — Portaria, Logística & Qualidade</p>
+            <p className="text-[10px] leading-none text-sidebar-foreground/60">Portaria · Logística · Qualidade</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
