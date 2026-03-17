@@ -28,6 +28,7 @@ const LOCAL_USERS: LocalUser[] = [
   { id: "usr-003", nome: "Qualidade", email: "qualidade@rodrigues.com.br", password: "123456", perfil: "QUALIDADE" },
   { id: "usr-004", nome: "Diretor", email: "diretoria@rodrigues.com.br", password: "123456", perfil: "DIRETORIA" },
   { id: "usr-005", nome: "Técnico", email: "tecnico@rodrigues.com.br", password: "123456", perfil: "TECNICO" },
+  { id: "usr-006", nome: "Teste", email: "teste@admin.com", password: "123", perfil: "ADMIN" },
 ];
 
 function localLogin(email: string, password: string): AuthLoginResponse {
