@@ -42,6 +42,9 @@ const CustodiaDetalhePage = () => {
         </div>
       </div>
 
+      {/* Action Panel */}
+      <CustodiaActionPanel custodia={data} onUpdate={setData} />
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           {/* Cabeçalho executivo */}
