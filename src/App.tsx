@@ -151,6 +151,7 @@ const App = () => (
           <Route path="/sac/requisicoes/:id/atender" element={<AppLayout><RequireRole roles={["SAC"]}><Lazy><AtenderRequisicaoPage /></Lazy></RequireRole></AppLayout>} />
           <Route path="/sac/:id" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><Lazy><AtendimentoDetalhePage /></Lazy></RequireRole></AppLayout>} />
           <Route path="/avaliacao/:token" element={<Lazy><AvaliacaoRespostaPage /></Lazy>} />
+          <Route path="/visitante/cadastro/:token" element={<Lazy><VisitantePublicoPage /></Lazy>} />
 
           <Route path="/admin" element={<AppLayout><RequireRole roles={["ADMIN"]}><Lazy><AdminPage /></Lazy></RequireRole></AppLayout>} />
           <Route path="/administracao/usuarios" element={<AppLayout><RequireRole roles={["ADMIN"]}><Lazy><UsuariosPage /></Lazy></RequireRole></AppLayout>} />
