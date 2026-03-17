@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   CalendarDays, Clock, Truck, Layers, AlertTriangle, CheckCircle2,
@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getAgendamentosSlots, getDockCapacity, getAgendamentoKPIs } from "@/services/agendamento";
+import AgendamentoActionMenu from "@/components/agendamento/AgendamentoActionMenu";
 import type { AgendamentoDockSlot, DockCapacity, AgendamentoKPIs } from "@/types/agendamento";
 import { AGENDAMENTO_STATUS_LABELS, AGENDAMENTO_STATUS_COLORS, PRIORIDADE_COLORS } from "@/types/agendamento";
 
