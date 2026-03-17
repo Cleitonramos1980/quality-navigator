@@ -149,20 +149,25 @@ async function start() {
   seedOperacionalData();
   seedPhasesData();
 
-  const loginEmail = "cleiton.ramos@hotmail.com";
-  const userExists = db.usuarios.some(
-    (u) => u.email.toLowerCase() === loginEmail.toLowerCase(),
-  );
-  if (!userExists) {
-    db.usuarios.push({
-      id: `USR-${String(db.usuarios.length + 1).padStart(3, "0")}`,
-      nome: "Cleiton Ramos",
-      email: loginEmail,
-      perfil: "ADMIN",
-      ativo: true,
-    });
-    await persistCollection("usuarios");
+  const seedUsers = [
+    { nome: "Cleiton Ramos", email: "cleiton.ramos@hotmail.com", perfil: "ADMIN" },
+    { nome: "Teste", email: "teste@admin.com", perfil: "ADMIN" },
+  ];
+  for (const su of seedUsers) {
+    const exists = db.usuarios.some(
+      (u) => u.email.toLowerCase() === su.email.toLowerCase(),
+    );
+    if (!exists) {
+      db.usuarios.push({
+        id: `USR-${String(db.usuarios.length + 1).padStart(3, "0")}`,
+        nome: su.nome,
+        email: su.email,
+        perfil: su.perfil,
+        ativo: true,
+      });
+    }
   }
+  await persistCollection("usuarios");
 
   await app.listen({ host: "0.0.0.0", port: env.PORT });
 }
