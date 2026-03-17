@@ -212,15 +212,18 @@ const TorreControlePage = () => {
                       {EXCECAO_STATUS_LABELS[exc.status]}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {exc.origemRota && (
-                        <Button variant="ghost" size="sm" asChild title="Ver origem">
-                          <Link to={exc.origemRota}><ExternalLink className="h-3.5 w-3.5" /></Link>
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
+                   <TableCell>
+                     <div className="flex gap-1">
+                       <Button variant="ghost" size="sm" asChild title="Ver detalhe">
+                         <Link to={`/torre-controle/${exc.id}`}><Eye className="h-3.5 w-3.5" /></Link>
+                       </Button>
+                       {exc.origemRota && (
+                         <Button variant="ghost" size="sm" asChild title="Ver origem">
+                           <Link to={exc.origemRota}><ExternalLink className="h-3.5 w-3.5" /></Link>
+                         </Button>
+                       )}
+                     </div>
+                   </TableCell>
                 </TableRow>
               );
             })}
