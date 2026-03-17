@@ -144,6 +144,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedPlanta, setSelectedPlanta] = useState<Planta | "ALL">("ALL");
   const [plantaOpen, setPlantaOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const perfil = getCurrentPerfil();
   const papel = getCurrentPapel();
   const userName = getCurrentUserName();
@@ -262,24 +263,54 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
           {navItems.map((item) => {
             const isActive = isPathActive(item.path) || (item.children?.some((c) => isPathActive(c.path)) ?? false);
+            const isExpanded = item.children
+              ? (expandedMenu === item.path || (expandedMenu === null && isActive))
+              : false;
             return (
               <div key={item.path}>
-                <Link
-                  to={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  onMouseEnter={() => handlePrefetch(item.path)}
-                  onFocus={() => handlePrefetch(item.path)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
-                    isActive
-                      ? "bg-sidebar-primary/15 font-medium text-sidebar-primary"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-                {item.children && isActive && (
+                {item.children ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isExpanded) {
+                        setExpandedMenu("__none__");
+                      } else {
+                        setExpandedMenu(item.path);
+                      }
+                      navigate(item.path);
+                      setSidebarOpen(false);
+                    }}
+                    onMouseEnter={() => handlePrefetch(item.path)}
+                    onFocus={() => handlePrefetch(item.path)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
+                      isActive
+                        ? "bg-sidebar-primary/15 font-medium text-sidebar-primary"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                    <ChevronDown className={cn("ml-auto h-3 w-3 transition-transform", isExpanded && "rotate-180")} />
+                  </button>
+                ) : (
+                  <Link
+                    to={item.path}
+                    onClick={() => { setExpandedMenu("__none__"); setSidebarOpen(false); }}
+                    onMouseEnter={() => handlePrefetch(item.path)}
+                    onFocus={() => handlePrefetch(item.path)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
+                      isActive
+                        ? "bg-sidebar-primary/15 font-medium text-sidebar-primary"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                )}
+                {item.children && isExpanded && (
                   <div className="ml-7 mt-0.5 space-y-0.5">
                     {item.children.map((child) => (
                       <Link
