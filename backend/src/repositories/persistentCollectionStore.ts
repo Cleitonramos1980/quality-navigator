@@ -65,6 +65,13 @@ const COLLECTION_KEYS: DbKey[] = [
   "operacionalMovimentacoesFrota",
   "operacionalTimeline",
   "operacionalDashboard",
+  "torreExcecoes",
+  "torreKPIs",
+  "agendamentosSlots",
+  "agendamentoDockCapacity",
+  "agendamentoKPIs",
+  "custodias",
+  "custodiaKPIs",
 ];
 
 let ensured = false;

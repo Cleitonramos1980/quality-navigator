@@ -19,7 +19,7 @@ import { authRoutes } from "./routes/auth.js";
 import { uxMetricsRoutes } from "./routes/uxMetrics.js";
 import { inventarioRoutes } from "./routes/inventario.js";
 import { operacionalRoutes } from "./routes/operacional.js";
-import {
+import { torreAgendaCustodiaRoutes } from "./routes/torreAgendaCustodia.js";
   initPersistentCollections,
   persistAllCollections,
 } from "./repositories/persistentCollectionStore.js";
@@ -28,6 +28,7 @@ import { trackHttpRequestMetric } from "./utils/observability.js";
 import { db } from "./repositories/dataStore.js";
 import { persistCollection } from "./repositories/persistentCollectionStore.js";
 import { seedInventarioData, seedOperacionalData } from "./repositories/seedData.js";
+import { seedPhasesData } from "./repositories/seedPhases.js";
 
 const app = Fastify({
   logger: {
@@ -137,6 +138,7 @@ await governancaQualidadeRoutes(app);
 await uxMetricsRoutes(app);
 await inventarioRoutes(app);
 await operacionalRoutes(app);
+await torreAgendaCustodiaRoutes(app);
 
 async function start() {
   await initOraclePool();
@@ -145,6 +147,7 @@ async function start() {
   // Seed operational and inventory data if empty
   seedInventarioData();
   seedOperacionalData();
+  seedPhasesData();
 
   const loginEmail = "cleiton.ramos@hotmail.com";
   const userExists = db.usuarios.some(
