@@ -14,6 +14,11 @@ export interface EvidenciaEntrega {
   dataHora: string;
   responsavel: string;
   observacao?: string;
+  categoria?: string;
+  etapaRelacionada?: string;
+  nomeArquivo?: string;
+  mimeType?: string;
+  tamanhoArquivo?: number;
 }
 
 export interface CustodiaEvento {

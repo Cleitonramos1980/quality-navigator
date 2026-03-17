@@ -174,7 +174,7 @@ const ExcecaoDetalhePage = () => {
               </div>
               <div className="mt-3">
                 <Button variant="outline" size="sm" asChild className="gap-1.5">
-                  <Link to="/patio/agendamento"><ExternalLink className="h-3 w-3" />Ir para Agendamento</Link>
+                  <Link to={`/patio/agendamento/${relatedAgendamento.id}`}><ExternalLink className="h-3 w-3" />Abrir Agendamento {relatedAgendamento.codigo}</Link>
                 </Button>
               </div>
             </div>

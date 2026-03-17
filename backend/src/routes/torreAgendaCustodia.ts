@@ -287,6 +287,12 @@ export async function torreAgendaCustodiaRoutes(app: FastifyInstance) {
       dataHora: new Date().toISOString(),
       responsavel: (req as any).authUser?.nome ?? body.responsavel ?? "system",
       observacao: body.observacao,
+      url: body.url,
+      categoria: body.categoria,
+      etapaRelacionada: body.etapaRelacionada,
+      nomeArquivo: body.nomeArquivo,
+      mimeType: body.mimeType,
+      tamanhoArquivo: body.tamanhoArquivo,
     };
     cust.evidencias.push(ev);
     appendAudit("EVIDENCIA_CUSTODIA", "CUSTODIA", id, `${body.tipo}: ${body.descricao}`, (req as any).authUser?.nome ?? "system");
