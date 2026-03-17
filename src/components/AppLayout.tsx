@@ -215,7 +215,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           </div>
           <div>
             <h1 className="text-sm font-bold text-sidebar-primary">Torre de Controle</h1>
-            <p className="text-[10px] leading-relaxed text-sidebar-foreground/50">SAC · Qualidade · Inventário · Assistência Técnica<br/>Acessos · Portaria · Controle de Pátio e Frota</p>
+            <p className="text-[10px] leading-none text-sidebar-foreground/60">Sistema de Gestão Integrada</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
