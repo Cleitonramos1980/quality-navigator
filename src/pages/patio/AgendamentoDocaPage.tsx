@@ -46,13 +46,18 @@ const AgendamentoDocaPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <CalendarDays className="h-6 w-6 text-primary" /> Agendamento de Docas
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Planejamento, priorização e alocação inteligente de docas e pátio
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <CalendarDays className="h-6 w-6 text-primary" /> Agendamento de Docas
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Planejamento, priorização e alocação inteligente de docas e pátio
+          </p>
+        </div>
+        <Button onClick={() => navigate("/patio/agendamento/novo")} className="gap-2">
+          <CalendarDays className="h-4 w-4" /> Novo Agendamento
+        </Button>
       </div>
 
       {/* KPIs */}
