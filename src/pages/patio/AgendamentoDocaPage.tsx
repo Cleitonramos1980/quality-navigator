@@ -31,11 +31,18 @@ const AgendamentoDocaPage = () => {
   const [tab, setTab] = useState("grade");
   const [filtroStatus, setFiltroStatus] = useState("ALL");
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     getAgendamentosSlots().then(setSlots);
     getDockCapacity().then(setCapacity);
     getAgendamentoKPIs().then(setKpis);
   }, []);
+
+  useEffect(reload, [reload]);
+
+  const handleSlotUpdate = (updated: AgendamentoDockSlot) => {
+    setSlots(prev => prev.map(s => s.id === updated.id ? updated : s));
+    getAgendamentoKPIs().then(setKpis);
+  };
 
   const filteredSlots = useMemo(() => {
     let list = slots;
