@@ -7,6 +7,7 @@ import { setAuthSession } from "@/lib/rbac";
 import { getDefaultRouteForPerfil } from "@/lib/workflowOs";
 import { login } from "@/services/auth";
 import { useToast } from "@/components/ui/use-toast";
+import { DoorOpen } from "lucide-react";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
