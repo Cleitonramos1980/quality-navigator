@@ -90,6 +90,7 @@ const VisitantePublicoPage = lazy(() => import("@/pages/visitantes/VisitantePubl
 
 // Phase 1-3: New modules
 const TorreControlePage = lazy(() => import("@/pages/torre-controle/TorreControlePage"));
+const ExcecaoDetalhePage = lazy(() => import("@/pages/torre-controle/ExcecaoDetalhePage"));
 const AgendamentoDocaPage = lazy(() => import("@/pages/patio/AgendamentoDocaPage"));
 const NovoAgendamentoDocaPage = lazy(() => import("@/pages/patio/NovoAgendamentoDocaPage"));
 const CadeiasCustodiaPage = lazy(() => import("@/pages/custodia/CadeiasCustodiaPage"));
