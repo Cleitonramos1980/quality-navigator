@@ -7,6 +7,7 @@ import { setAuthSession } from "@/lib/rbac";
 import { getDefaultRouteForPerfil } from "@/lib/workflowOs";
 import { login } from "@/services/auth";
 import { useToast } from "@/components/ui/use-toast";
+import { DoorOpen } from "lucide-react";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -41,16 +42,12 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-sidebar p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-44 h-14 rounded-xl bg-white/95 border border-border flex items-center justify-center mx-auto mb-4 overflow-hidden px-2">
-            <img
-              src="/rodrigues-colchoes-logo.png"
-              alt="Rodrigues Colchoes"
-              className="h-full w-full object-contain"
-            />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mx-auto mb-4">
+            <DoorOpen className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-xl font-bold text-sidebar-primary">SGI</h1>
-          <p className="text-sm text-sidebar-foreground/60 mt-1">Sistema de Gestão Integrada</p>
-          <p className="text-xs text-sidebar-foreground/40 mt-0.5">Portaria · Logística · Qualidade</p>
+          <h1 className="text-xl font-bold text-sidebar-primary">ControlPorte</h1>
+          <p className="text-sm text-sidebar-foreground/60 mt-1">Controle de Portaria, Pátio e Frota</p>
+          <p className="text-xs text-sidebar-foreground/40 mt-0.5">Visitantes · Veículos · NF em Trânsito · Monitoramento</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4 bg-card rounded-xl p-6 shadow-lg border border-border">

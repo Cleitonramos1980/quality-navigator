@@ -202,16 +202,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         )}
       >
         <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-5">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white/95 p-1">
-            <img
-              src="/rodrigues-colchoes-logo.png"
-              alt="Rodrigues Colchões"
-              className="h-full w-full object-contain"
-            />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+            <DoorOpen className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-sidebar-primary">SGI</h1>
-            <p className="text-[10px] leading-none text-sidebar-foreground/60">Portaria · Logística · Qualidade</p>
+            <h1 className="text-sm font-bold text-sidebar-primary">ControlPorte</h1>
+            <p className="text-[10px] leading-none text-sidebar-foreground/60">Portaria · Pátio · Frota · NF</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}

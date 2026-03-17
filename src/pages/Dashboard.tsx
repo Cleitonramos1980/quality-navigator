@@ -105,15 +105,15 @@ const Dashboard = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Torre de Controle</h1>
+          <h1 className="text-2xl font-bold text-foreground">Painel Operacional</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Visão consolidada — portaria, pátio, frota, logística e qualidade
+            Portaria · Visitantes · Pátio · Frota · NF em Trânsito
           </p>
         </div>
         <Tabs value={activeView} onValueChange={setActiveView}>
           <TabsList>
-            <TabsTrigger value="operacional">Operacional</TabsTrigger>
-            <TabsTrigger value="qualidade">Qualidade</TabsTrigger>
+            <TabsTrigger value="operacional">Operação</TabsTrigger>
+            <TabsTrigger value="qualidade">Indicadores</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
