@@ -279,6 +279,15 @@ export const db = {
   operacionalMovimentacoesFrota: [] as any[],
   operacionalTimeline: [] as any[],
   operacionalDashboard: {} as any,
+
+  // Phase 1-3: Torre de Controle, Agendamento Inteligente, Cadeia de Custódia
+  torreExcecoes: [] as any[],
+  torreKPIs: {} as any,
+  agendamentosSlots: [] as any[],
+  agendamentoDockCapacity: [] as any[],
+  agendamentoKPIs: {} as any,
+  custodias: [] as any[],
+  custodiaKPIs: {} as any,
 };
 
 export function nextId(prefix: string, currentLength: number): string {
