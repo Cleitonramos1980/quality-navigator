@@ -22,6 +22,7 @@ import { operacionalRoutes } from "./routes/operacional.js";
 import { torreAgendaCustodiaRoutes } from "./routes/torreAgendaCustodia.js";
 import { inspecoesRoutes } from "./routes/inspecoes.js";
 import {
+  initPersistentCollections,
   persistAllCollections,
 } from "./repositories/persistentCollectionStore.js";
 import { verifyAuthToken } from "./utils/jwt.js";
