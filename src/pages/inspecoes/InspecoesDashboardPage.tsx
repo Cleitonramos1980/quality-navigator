@@ -95,7 +95,7 @@ const InspecoesDashboardPage = () => {
           ) : (
             <div className="space-y-2">
               {ultimasInspecoes.map((insp) => (
-                <Link key={insp.id} to={`/inspecoes/${insp.id}`} className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-muted/30 transition-colors">
+                <Link key={insp.id} to={`/inspecoes/execucoes/${insp.id}`} className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-muted/30 transition-colors">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{insp.modeloNome}</p>
                     <p className="text-xs text-muted-foreground">{insp.setor} · {insp.executor} · {new Date(insp.dataHora).toLocaleDateString("pt-BR")}</p>

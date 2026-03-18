@@ -83,13 +83,15 @@ export interface PadraoMola {
 export interface InspecaoMola {
   id: string;
   maquina: string;
-  statusMaquina: string;
+  statusMaquina: "Operando" | "Manutenção" | "Setup" | "Parada";
   alturaTipo: string;
   linhaPocket: string;
   operador: string;
   dataHora: string;
   observacaoGeral?: string;
-  resultado: "APROVADO" | "REPROVADO";
+  resultado: "APROVADO" | "REPROVADO" | "PARADA_REGISTRADA";
+  /** When machine is stopped, dimensional measurements are optional */
+  motivoParada?: string;
   medicoes: MedicaoMola[];
 }
 

@@ -104,7 +104,7 @@ const HistoricoInspecoesPage = () => {
                   </td>
                   <td className="px-3 py-2">{e.naoConformes > 0 ? <Badge variant="destructive">{e.naoConformes}</Badge> : <span className="text-muted-foreground">0</span>}</td>
                   <td className="px-3 py-2"><Badge variant={e.status === "CONCLUIDA" ? "default" : "secondary"}>{e.status}</Badge></td>
-                  <td className="px-3 py-2"><Button asChild size="sm" variant="ghost"><Link to={`/inspecoes/${e.id}`}><Eye className="w-4 h-4" /></Link></Button></td>
+                  <td className="px-3 py-2"><Button asChild size="sm" variant="ghost"><Link to={`/inspecoes/execucoes/${e.id}`}><Eye className="w-4 h-4" /></Link></Button></td>
                 </tr>
               ))}
             </tbody>
