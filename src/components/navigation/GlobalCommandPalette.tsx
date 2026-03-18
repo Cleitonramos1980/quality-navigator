@@ -46,6 +46,9 @@ const COMMAND_ROUTES: CommandRoute[] = [
   { label: "Pátio e Docas", path: "/patio", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
   { label: "Agendamento de Docas", path: "/patio/agendamento", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
 
+  // Operacional — Torre de Controle
+  { label: "Torre de Controle de Exceções", path: "/torre-controle", icon: Activity, modulo: "operacional", group: "Torre de Controle" },
+
   // Operacional — Monitoramento & NF
   { label: "Monitoramento", path: "/monitoramento", icon: Activity, modulo: "operacional", group: "Monitoramento & Fiscal" },
   { label: "NF em Trânsito", path: "/nf-transito", icon: FileText, modulo: "operacional", group: "Monitoramento & Fiscal" },
