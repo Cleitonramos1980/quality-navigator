@@ -47,7 +47,7 @@ const TiposNCPage = () => {
         await createTipoNCInspecao({ ...form, ativo: true });
         toast({ title: "Tipo criado" });
       }
-      setForm({ setor: "Produção", nome: "", categoria: "Visual", observacao: "" });
+      setForm({ setor: SETORES_INSPECAO[0] as string, nome: "", categoria: "Visual", observacao: "" });
       setShowForm(false);
       setEditId(null);
       await load();
