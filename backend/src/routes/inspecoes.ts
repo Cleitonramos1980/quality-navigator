@@ -1,12 +1,36 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { PersistentCollectionStore } from "../repositories/persistentCollectionStore.js";
+import { randomUUID } from "node:crypto";
 
-const modelos = new PersistentCollectionStore("inspecoes_modelos");
-const execucoes = new PersistentCollectionStore("inspecoes_execucoes");
-const tiposNc = new PersistentCollectionStore("inspecoes_tipos_nc");
-const padroesMola = new PersistentCollectionStore("inspecoes_padroes_mola");
-const inspecoesMola = new PersistentCollectionStore("inspecoes_mola");
+// ── Simple in-memory collection store for inspeções ──
+class InspecoesStore {
+  private items: any[] = [];
+  constructor(public readonly name: string) {}
+
+  list() { return this.items; }
+
+  getById(id: string) { return this.items.find((i) => i.id === id) ?? null; }
+
+  create(data: any) {
+    const item = { ...data, id: data.id ?? `${this.name.toUpperCase()}-${randomUUID().slice(0, 8)}` };
+    this.items.push(item);
+    return item;
+  }
+
+  update(id: string, data: any) {
+    const idx = this.items.findIndex((i) => i.id === id);
+    if (idx === -1) return null;
+    this.items[idx] = { ...this.items[idx], ...data, id };
+    return this.items[idx];
+  }
+}
+
+// Re-export for seed usage
+export const modelos = new InspecoesStore("inspecoes_modelos");
+export const execucoes = new InspecoesStore("inspecoes_execucoes");
+export const tiposNc = new InspecoesStore("inspecoes_tipos_nc");
+export const padroesMola = new InspecoesStore("inspecoes_padroes_mola");
+export const inspecoesMola = new InspecoesStore("inspecoes_mola");
 
 export async function inspecoesRoutes(app: FastifyInstance) {
   // ── Modelos ──

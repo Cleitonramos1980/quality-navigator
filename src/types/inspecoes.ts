@@ -54,7 +54,7 @@ export interface ExecucaoInspecaoItem {
   observacao?: string;
   evidenciaNomeArquivo?: string;
   evidenciaUrl?: string;
-  /** Multiple evidence files per item (legacy-compatible) */
+  /** Multiple evidence files per item (up to 3) */
   evidencias?: string[];
 }
 
@@ -108,16 +108,23 @@ export interface MedicaoMola {
   conforme: boolean;
 }
 
+// ── Real legacy sectors (15) ──
 export const SETORES_INSPECAO = [
-  "Produção",
-  "Montagem",
-  "Embalagem",
-  "Recebimento",
-  "Expedição",
-  "Armazém",
-  "Molas",
-  "Espuma",
-  "Costura",
+  "ESPUMAÇÃO",
+  "ÁREA DE CURA",
+  "FLOCADEIRA",
+  "LAMINAÇÃO",
+  "MOLA",
+  "BORDADEIRA",
+  "CORTE E COSTURA",
+  "MARCENARIA",
+  "TAPEÇARIA",
+  "FECHAMENTO",
+  "MÓVEIS",
+  "EMBALAGEM",
+  "ALMOXARIFADO",
+  "ESTOFAMENTO",
+  "EMBALAGEM DE BASE",
 ] as const;
 
 export const CATEGORIAS_NC = [
@@ -131,11 +138,10 @@ export const CATEGORIAS_NC = [
   "Documentação",
 ] as const;
 
+// ── Real legacy machines (4) ──
 export const MAQUINAS_MOLA = [
-  "MOL-01",
-  "MOL-02",
-  "MOL-03",
-  "MOL-04",
-  "MOL-05",
-  "MOL-06",
+  "01",
+  "02",
+  "03",
+  "04",
 ] as const;

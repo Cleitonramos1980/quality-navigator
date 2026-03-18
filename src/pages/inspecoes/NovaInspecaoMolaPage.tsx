@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 type StatusMaquina = InspecaoMola["statusMaquina"];
 
 const STATUS_MAQUINA_OPTIONS: { value: StatusMaquina; label: string }[] = [
-  { value: "Operando", label: "Operando" },
+  { value: "Operando", label: "Em Processo" },
   { value: "Manutenção", label: "Manutenção" },
   { value: "Setup", label: "Setup" },
   { value: "Parada", label: "Parada" },

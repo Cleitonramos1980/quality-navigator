@@ -23,7 +23,7 @@ interface CommandRoute {
   label: string;
   path: string;
   icon: ComponentType<{ className?: string }>;
-  modulo: "dashboard" | "sac" | "qualidade" | "inspecoes" | "inventario" | "assistencia" | "admin" | "operacional";
+  modulo: NavModulo;
   group: string;
 }
 
@@ -44,16 +44,10 @@ const COMMAND_ROUTES: CommandRoute[] = [
   { label: "Novo Despacho", path: "/frota/despacho", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
   { label: "Terceiros / Transportadoras", path: "/terceiros", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
   { label: "Pátio e Docas", path: "/patio", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
+  { label: "Agendamento de Docas", path: "/patio/agendamento", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
 
   // Operacional — Torre de Controle
   { label: "Torre de Controle de Exceções", path: "/torre-controle", icon: Activity, modulo: "operacional", group: "Torre de Controle" },
-
-  // Operacional — Frota & Logística
-  { label: "Frota", path: "/frota", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
-  { label: "Novo Despacho", path: "/frota/despacho", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
-  { label: "Terceiros / Transportadoras", path: "/terceiros", icon: Truck, modulo: "operacional", group: "Frota & Logística" },
-  { label: "Pátio e Docas", path: "/patio", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
-  { label: "Agendamento de Docas", path: "/patio/agendamento", icon: Layers, modulo: "operacional", group: "Frota & Logística" },
 
   // Operacional — Monitoramento & NF
   { label: "Monitoramento", path: "/monitoramento", icon: Activity, modulo: "operacional", group: "Monitoramento & Fiscal" },
@@ -73,15 +67,15 @@ const COMMAND_ROUTES: CommandRoute[] = [
   { label: "Não Conformidades", path: "/nao-conformidades", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
 
   // Inspeções
-  { label: "Dashboard de Inspeções", path: "/inspecoes", icon: Eye, modulo: "inspecoes" as any, group: "Inspeções" },
-  { label: "Modelos de Inspeção", path: "/inspecoes/modelos", icon: ClipboardCheck, modulo: "inspecoes" as any, group: "Inspeções" },
-  { label: "Nova Inspeção", path: "/inspecoes/nova", icon: ClipboardCheck, modulo: "inspecoes" as any, group: "Inspeções" },
-  { label: "Histórico de Inspeções", path: "/inspecoes/historico", icon: ClipboardCheck, modulo: "inspecoes" as any, group: "Inspeções" },
-  { label: "Tipos de Não Conformidade", path: "/inspecoes/tipos-nc", icon: ClipboardCheck, modulo: "inspecoes" as any, group: "Inspeções" },
-  { label: "Dashboard de Molas", path: "/inspecoes/molas", icon: Activity, modulo: "inspecoes" as any, group: "Inspeções" },
-  { label: "Nova Inspeção de Molas", path: "/inspecoes/molas/nova", icon: Activity, modulo: "inspecoes" as any, group: "Inspeções" },
-  { label: "Histórico de Molas", path: "/inspecoes/molas/historico", icon: Activity, modulo: "inspecoes" as any, group: "Inspeções" },
-  { label: "Padrões de Molas", path: "/inspecoes/molas/padroes", icon: Activity, modulo: "inspecoes" as any, group: "Inspeções" },
+  { label: "Dashboard de Inspeções", path: "/inspecoes", icon: Eye, modulo: "inspecoes", group: "Inspeções" },
+  { label: "Modelos de Inspeção", path: "/inspecoes/modelos", icon: ClipboardCheck, modulo: "inspecoes", group: "Inspeções" },
+  { label: "Nova Inspeção", path: "/inspecoes/nova", icon: ClipboardCheck, modulo: "inspecoes", group: "Inspeções" },
+  { label: "Histórico de Inspeções", path: "/inspecoes/historico", icon: ClipboardCheck, modulo: "inspecoes", group: "Inspeções" },
+  { label: "Tipos de Não Conformidade", path: "/inspecoes/tipos-nc", icon: ClipboardCheck, modulo: "inspecoes", group: "Inspeções" },
+  { label: "Dashboard de Molas", path: "/inspecoes/molas", icon: Activity, modulo: "inspecoes", group: "Inspeções" },
+  { label: "Nova Inspeção de Molas", path: "/inspecoes/molas/nova", icon: Activity, modulo: "inspecoes", group: "Inspeções" },
+  { label: "Histórico de Molas", path: "/inspecoes/molas/historico", icon: Activity, modulo: "inspecoes", group: "Inspeções" },
+  { label: "Padrões de Molas", path: "/inspecoes/molas/padroes", icon: Activity, modulo: "inspecoes", group: "Inspeções" },
   { label: "CAPA", path: "/capa", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
   { label: "Auditorias", path: "/auditorias", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
   { label: "Metrologia / MSA", path: "/qualidade/metrologia", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },

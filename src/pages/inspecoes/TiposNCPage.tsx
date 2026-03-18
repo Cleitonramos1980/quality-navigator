@@ -20,7 +20,7 @@ const TiposNCPage = () => {
   const [filtroSetor, setFiltroSetor] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ setor: "Produção", nome: "", categoria: "Visual", observacao: "" });
+  const [form, setForm] = useState({ setor: SETORES_INSPECAO[0] as string, nome: "", categoria: "Visual", observacao: "" });
 
   const load = async () => {
     setLoading(true);
@@ -47,7 +47,7 @@ const TiposNCPage = () => {
         await createTipoNCInspecao({ ...form, ativo: true });
         toast({ title: "Tipo criado" });
       }
-      setForm({ setor: "Produção", nome: "", categoria: "Visual", observacao: "" });
+      setForm({ setor: SETORES_INSPECAO[0] as string, nome: "", categoria: "Visual", observacao: "" });
       setShowForm(false);
       setEditId(null);
       await load();
@@ -82,7 +82,7 @@ const TiposNCPage = () => {
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Cadastro de tipos de NC por setor para inspeções</p>
         </div>
-        <Button size="sm" onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ setor: "Produção", nome: "", categoria: "Visual", observacao: "" }); }}>
+        <Button size="sm" onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ setor: SETORES_INSPECAO[0] as string, nome: "", categoria: "Visual", observacao: "" }); }}>
           <Plus className="w-4 h-4 mr-1" />{showForm ? "Fechar" : "Novo Tipo"}
         </Button>
       </div>
