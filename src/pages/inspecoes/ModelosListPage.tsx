@@ -45,7 +45,7 @@ const ModelosListPage = () => {
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Checklists e modelos de inspeção por setor</p>
         </div>
-        <Button asChild size="sm"><Link to="/qualidade/inspecoes/modelos/novo"><Plus className="w-4 h-4 mr-1" />Novo Modelo</Link></Button>
+        <Button asChild size="sm"><Link to="/inspecoes/modelos/novo"><Plus className="w-4 h-4 mr-1" />Novo Modelo</Link></Button>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -88,7 +88,7 @@ const ModelosListPage = () => {
                   <td className="px-3 py-2"><Badge variant={m.ativo ? "default" : "secondary"}>{m.ativo ? "Ativo" : "Inativo"}</Badge></td>
                   <td className="px-3 py-2 text-muted-foreground">{new Date(m.updatedAt).toLocaleDateString("pt-BR")}</td>
                   <td className="px-3 py-2">
-                    <Button asChild size="sm" variant="ghost"><Link to={`/qualidade/inspecoes/modelos/${m.id}`}>Editar</Link></Button>
+                    <Button asChild size="sm" variant="ghost"><Link to={`/inspecoes/modelos/${m.id}`}>Editar</Link></Button>
                   </td>
                 </tr>
               ))}

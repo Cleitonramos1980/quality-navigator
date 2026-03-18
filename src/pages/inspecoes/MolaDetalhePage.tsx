@@ -29,7 +29,7 @@ const MolaDetalhePage = () => {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon"><Link to="/qualidade/inspecoes/molas/historico"><ArrowLeft className="w-4 h-4" /></Link></Button>
+        <Button asChild variant="ghost" size="icon"><Link to="/inspecoes/molas/historico"><ArrowLeft className="w-4 h-4" /></Link></Button>
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Ruler className="w-6 h-6 text-primary" />

@@ -154,18 +154,18 @@ const App = () => (
           <Route path="/qualidade/iso-readiness" element={<AppLayout><Lazy><IsoReadinessPage /></Lazy></AppLayout>} />
 
           {/* Inspeções module */}
-          <Route path="/qualidade/inspecoes" element={<AppLayout><Lazy><InspecoesDashboardPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/modelos" element={<AppLayout><Lazy><ModelosListPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/modelos/novo" element={<AppLayout><Lazy><ModeloFormPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/modelos/:id" element={<AppLayout><Lazy><ModeloFormPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/nova" element={<AppLayout><Lazy><NovaExecucaoPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/historico" element={<AppLayout><Lazy><HistoricoInspecoesPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/tipos-nc" element={<AppLayout><Lazy><TiposNCPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/molas" element={<AppLayout><Lazy><MolasDashboardPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/molas/nova" element={<AppLayout><Lazy><NovaInspecaoMolaPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/molas/historico" element={<AppLayout><Lazy><MolasHistoricoPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/molas/padroes" element={<AppLayout><Lazy><PadroesMolaPage /></Lazy></AppLayout>} />
-          <Route path="/qualidade/inspecoes/molas/:id" element={<AppLayout><Lazy><MolaDetalhePage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes" element={<AppLayout><Lazy><InspecoesDashboardPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/modelos" element={<AppLayout><Lazy><ModelosListPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/modelos/novo" element={<AppLayout><Lazy><ModeloFormPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/modelos/:id" element={<AppLayout><Lazy><ModeloFormPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/nova" element={<AppLayout><Lazy><NovaExecucaoPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/historico" element={<AppLayout><Lazy><HistoricoInspecoesPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/tipos-nc" element={<AppLayout><Lazy><TiposNCPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/molas" element={<AppLayout><Lazy><MolasDashboardPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/molas/nova" element={<AppLayout><Lazy><NovaInspecaoMolaPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/molas/historico" element={<AppLayout><Lazy><MolasHistoricoPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/molas/padroes" element={<AppLayout><Lazy><PadroesMolaPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/molas/:id" element={<AppLayout><Lazy><MolaDetalhePage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario" element={<AppLayout><Lazy><InventarioDashboardPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/agenda" element={<AppLayout><Lazy><AgendaInventarioPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/contagens" element={<AppLayout><Lazy><ContagensPage /></Lazy></AppLayout>} />

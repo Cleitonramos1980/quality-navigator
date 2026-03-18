@@ -80,7 +80,7 @@ const NovaInspecaoMolaPage = () => {
         medicoes: medicoes.map(({ input, ...m }) => m),
       });
       toast({ title: "Inspeção registrada", description: `Resultado: ${resultado}` });
-      navigate("/qualidade/inspecoes/molas");
+      navigate("/inspecoes/molas");
     } catch (e) {
       toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha", variant: "destructive" });
     } finally {
@@ -173,7 +173,7 @@ const NovaInspecaoMolaPage = () => {
       </SectionCard>
 
       <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={() => navigate("/qualidade/inspecoes/molas")}>Cancelar</Button>
+        <Button variant="outline" onClick={() => navigate("/inspecoes/molas")}>Cancelar</Button>
         <Button onClick={handleSave} disabled={saving || medicoes.length === 0} className="gap-2">
           <Save className="w-4 h-4" />{saving ? "Salvando..." : "Registrar Inspeção"}
         </Button>
