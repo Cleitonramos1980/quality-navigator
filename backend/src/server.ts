@@ -30,6 +30,8 @@ import { db } from "./repositories/dataStore.js";
 import { persistCollection } from "./repositories/persistentCollectionStore.js";
 import { seedInventarioData, seedOperacionalData } from "./repositories/seedData.js";
 import { seedPhasesData } from "./repositories/seedPhases.js";
+import { seedInspecoesData } from "./repositories/seedInspecoesData.js";
+import { modelos as inspecoesModelos, tiposNc as inspecoesTiposNc, padroesMola as inspecoesPadroesMola } from "./routes/inspecoes.js";
 
 const app = Fastify({
   logger: {
