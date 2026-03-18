@@ -43,13 +43,19 @@ const MolaDetalhePage = () => {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div><p className="text-xs text-muted-foreground">Máquina</p><p className="font-medium">{insp.maquina}</p></div>
           <div><p className="text-xs text-muted-foreground">Status Máquina</p><p className="font-medium">{insp.statusMaquina}</p></div>
-          <div><p className="text-xs text-muted-foreground">Altura / Tipo</p><p className="font-medium">{insp.alturaTipo}</p></div>
+          <div><p className="text-xs text-muted-foreground">Altura / Tipo</p><p className="font-medium">{insp.alturaTipo || "—"}</p></div>
           <div><p className="text-xs text-muted-foreground">Linha / Pocket</p><p className="font-medium">{insp.linhaPocket || "—"}</p></div>
           <div><p className="text-xs text-muted-foreground">Operador</p><p className="font-medium">{insp.operador}</p></div>
           <div><p className="text-xs text-muted-foreground">Data / Hora</p><p className="font-medium">{new Date(insp.dataHora).toLocaleString("pt-BR")}</p></div>
-          <div><p className="text-xs text-muted-foreground">Resultado</p><Badge variant={insp.resultado === "APROVADO" ? "default" : "destructive"}>{insp.resultado}</Badge></div>
-          <div><p className="text-xs text-muted-foreground">Itens Fora Padrão</p><p className="font-bold text-destructive">{foraQtd}</p></div>
+          <div><p className="text-xs text-muted-foreground">Resultado</p><Badge variant={insp.resultado === "APROVADO" ? "default" : insp.resultado === "PARADA_REGISTRADA" ? "secondary" : "destructive"}>{insp.resultado === "PARADA_REGISTRADA" ? "Parada Registrada" : insp.resultado}</Badge></div>
+          {insp.resultado !== "PARADA_REGISTRADA" && <div><p className="text-xs text-muted-foreground">Itens Fora Padrão</p><p className="font-bold text-destructive">{foraQtd}</p></div>}
         </div>
+        {insp.motivoParada && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-xs text-muted-foreground mb-1">Motivo da Parada</p>
+            <p className="text-sm">{insp.motivoParada}</p>
+          </div>
+        )}
         {insp.observacaoGeral && (
           <div className="mt-4 pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground mb-1">Observação</p>
