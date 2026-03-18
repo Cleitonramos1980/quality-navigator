@@ -1,29 +1,42 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Ruler, Save } from "lucide-react";
+import { Ruler, Save, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import SectionCard from "@/components/forms/SectionCard";
 import FormField from "@/components/forms/FormField";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { listPadroesMola, createInspecaoMola } from "@/services/inspecoes";
-import type { PadraoMola, MedicaoMola } from "@/types/inspecoes";
+import type { PadraoMola, MedicaoMola, InspecaoMola } from "@/types/inspecoes";
 import { MAQUINAS_MOLA } from "@/types/inspecoes";
 import { getCurrentUserName } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
+
+type StatusMaquina = InspecaoMola["statusMaquina"];
+
+const STATUS_MAQUINA_OPTIONS: { value: StatusMaquina; label: string }[] = [
+  { value: "Operando", label: "Operando" },
+  { value: "Manutenção", label: "Manutenção" },
+  { value: "Setup", label: "Setup" },
+  { value: "Parada", label: "Parada" },
+];
 
 const NovaInspecaoMolaPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [padroes, setPadroes] = useState<PadraoMola[]>([]);
   const [maquina, setMaquina] = useState<string>(MAQUINAS_MOLA[0]);
-  const [statusMaquina, setStatusMaquina] = useState("Operando");
+  const [statusMaquina, setStatusMaquina] = useState<StatusMaquina>("Operando");
   const [alturaTipo, setAlturaTipo] = useState("");
   const [linhaPocket, setLinhaPocket] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [motivoParada, setMotivoParada] = useState("");
   const [medicoes, setMedicoes] = useState<(MedicaoMola & { input: string })[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const isParada = statusMaquina === "Parada";
 
   useEffect(() => {
     void (async () => {
@@ -35,7 +48,7 @@ const NovaInspecaoMolaPage = () => {
   const alturasTipo = [...new Set(padroes.map((p) => p.alturaTipo))];
 
   useEffect(() => {
-    if (!alturaTipo) { setMedicoes([]); return; }
+    if (!alturaTipo || isParada) { setMedicoes([]); return; }
     const filtered = padroes.filter((p) => p.alturaTipo === alturaTipo);
     setMedicoes(filtered.map((p) => ({
       id: `MED-${p.id}`,
@@ -50,7 +63,7 @@ const NovaInspecaoMolaPage = () => {
       conforme: true,
       input: "",
     })));
-  }, [alturaTipo, padroes]);
+  }, [alturaTipo, padroes, isParada]);
 
   const updateMedicao = (idx: number, value: string) => {
     setMedicoes((prev) => prev.map((m, i) => {
@@ -62,24 +75,35 @@ const NovaInspecaoMolaPage = () => {
   };
 
   const handleSave = async () => {
-    if (!alturaTipo) { toast({ title: "Selecione altura/tipo", variant: "destructive" }); return; }
-    if (medicoes.some((m) => !m.input.trim())) { toast({ title: "Preencha todas as medições", variant: "destructive" }); return; }
+    if (!isParada) {
+      if (!alturaTipo) { toast({ title: "Selecione altura/tipo", variant: "destructive" }); return; }
+      if (medicoes.some((m) => !m.input.trim())) { toast({ title: "Preencha todas as medições", variant: "destructive" }); return; }
+    } else {
+      if (!motivoParada.trim()) { toast({ title: "Informe o motivo da parada", variant: "destructive" }); return; }
+    }
 
     setSaving(true);
     try {
-      const resultado = medicoes.every((m) => m.conforme) ? "APROVADO" as const : "REPROVADO" as const;
+      let resultado: InspecaoMola["resultado"];
+      if (isParada) {
+        resultado = "PARADA_REGISTRADA";
+      } else {
+        resultado = medicoes.every((m) => m.conforme) ? "APROVADO" : "REPROVADO";
+      }
+
       await createInspecaoMola({
         maquina,
         statusMaquina,
-        alturaTipo,
+        alturaTipo: isParada ? "N/A" : alturaTipo,
         linhaPocket,
         operador: getCurrentUserName(),
         dataHora: new Date().toISOString(),
         observacaoGeral: observacao || undefined,
+        motivoParada: isParada ? motivoParada : undefined,
         resultado,
-        medicoes: medicoes.map(({ input, ...m }) => m),
+        medicoes: isParada ? [] : medicoes.map(({ input, ...m }) => m),
       });
-      toast({ title: "Inspeção registrada", description: `Resultado: ${resultado}` });
+      toast({ title: "Inspeção registrada", description: isParada ? `Máquina ${maquina} — Parada registrada` : `Resultado: ${resultado}` });
       navigate("/inspecoes/molas");
     } catch (e) {
       toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha", variant: "destructive" });
@@ -105,24 +129,44 @@ const NovaInspecaoMolaPage = () => {
               {MAQUINAS_MOLA.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </FormField>
-          <FormField label="Status Máquina">
-            <select value={statusMaquina} onChange={(e) => setStatusMaquina(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              <option>Operando</option><option>Manutenção</option><option>Setup</option><option>Parada</option>
+          <FormField label="Status Máquina" required>
+            <select value={statusMaquina} onChange={(e) => setStatusMaquina(e.target.value as StatusMaquina)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              {STATUS_MAQUINA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </FormField>
-          <FormField label="Altura / Tipo" required>
-            <select value={alturaTipo} onChange={(e) => setAlturaTipo(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              <option value="">Selecione...</option>
-              {alturasTipo.map((a) => <option key={a} value={a}>{a}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Linha / Pocket">
-            <Input value={linhaPocket} onChange={(e) => setLinhaPocket(e.target.value)} placeholder="Ex: Linha A / Pocket 3" />
-          </FormField>
+          {!isParada && (
+            <>
+              <FormField label="Altura / Tipo" required>
+                <select value={alturaTipo} onChange={(e) => setAlturaTipo(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  <option value="">Selecione...</option>
+                  {alturasTipo.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </FormField>
+              <FormField label="Linha / Pocket">
+                <Input value={linhaPocket} onChange={(e) => setLinhaPocket(e.target.value)} placeholder="Ex: Linha A / Pocket 3" />
+              </FormField>
+            </>
+          )}
         </div>
       </SectionCard>
 
-      {medicoes.length > 0 && (
+      {isParada && (
+        <SectionCard title="Registro de Parada">
+          <div className="flex items-start gap-3 rounded-md border border-warning/30 bg-warning/5 p-4 mb-4">
+            <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium">Máquina Parada</p>
+              <p className="text-xs text-muted-foreground">A inspeção dimensional não é necessária quando a máquina está parada. Registre o motivo da parada e observações relevantes.</p>
+            </div>
+            <Badge variant="secondary" className="shrink-0">Parada</Badge>
+          </div>
+          <FormField label="Motivo da Parada" required>
+            <Textarea value={motivoParada} onChange={(e) => setMotivoParada(e.target.value)} rows={2} placeholder="Ex: Manutenção preventiva, quebra de componente, falta de matéria-prima..." />
+          </FormField>
+        </SectionCard>
+      )}
+
+      {!isParada && medicoes.length > 0 && (
         <SectionCard title="Medições" description={`${medicoes.length} item(ns) para medir`}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -174,8 +218,8 @@ const NovaInspecaoMolaPage = () => {
 
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={() => navigate("/inspecoes/molas")}>Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving || medicoes.length === 0} className="gap-2">
-          <Save className="w-4 h-4" />{saving ? "Salvando..." : "Registrar Inspeção"}
+        <Button onClick={handleSave} disabled={saving || (!isParada && medicoes.length === 0)} className="gap-2">
+          <Save className="w-4 h-4" />{saving ? "Salvando..." : isParada ? "Registrar Parada" : "Registrar Inspeção"}
         </Button>
       </div>
     </div>

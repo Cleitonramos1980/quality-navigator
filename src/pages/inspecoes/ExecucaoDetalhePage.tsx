@@ -93,7 +93,16 @@ const ExecucaoDetalhePage = () => {
                 <div className="ml-7 mt-2 space-y-1 text-xs">
                   {item.tipoNcNome && <p><span className="text-muted-foreground">Tipo NC:</span> {item.tipoNcNome}</p>}
                   {item.observacao && <p><span className="text-muted-foreground">Obs:</span> {item.observacao}</p>}
-                  {item.evidenciaNomeArquivo && (
+                  {item.evidencias && item.evidencias.length > 0 ? (
+                    <div>
+                      <span className="text-muted-foreground">Evidências ({item.evidencias.length}):</span>
+                      <ul className="mt-0.5 space-y-0.5 ml-2">
+                        {item.evidencias.map((ev, idx) => (
+                          <li key={idx} className="flex items-center gap-1"><FileText className="w-3 h-3" />{ev}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : item.evidenciaNomeArquivo && (
                     <p className="flex items-center gap-1"><FileText className="w-3 h-3" /><span className="text-muted-foreground">Evidência:</span> {item.evidenciaNomeArquivo}</p>
                   )}
                 </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardCheck, Save, CheckCircle2, XCircle, MinusCircle, Upload } from "lucide-react";
+import { ClipboardCheck, Save, CheckCircle2, XCircle, MinusCircle, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +9,8 @@ import FormField from "@/components/forms/FormField";
 import { useToast } from "@/components/ui/use-toast";
 import { listModelosInspecao, listTiposNCInspecao, createExecucaoInspecao } from "@/services/inspecoes";
 import type { ModeloInspecao, TipoNCInspecao, InspecaoItemStatus, ExecucaoInspecaoItem } from "@/types/inspecoes";
-import { getCurrentUserName } from "@/lib/rbac";
+import { SETORES_INSPECAO } from "@/types/inspecoes";
+import { getCurrentUserName, getCurrentPerfil } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 
 const statusOptions: { value: InspecaoItemStatus; label: string; icon: any; color: string }[] = [
@@ -18,6 +19,33 @@ const statusOptions: { value: InspecaoItemStatus; label: string; icon: any; colo
   { value: "NAO_APLICA", label: "N/A", icon: MinusCircle, color: "text-muted-foreground border-border bg-muted/30" },
 ];
 
+// Sector permissions by profile (legacy-compatible)
+const SETOR_PERMITIDO: Record<string, string[] | "ALL"> = {
+  ADMIN: "ALL",
+  DIRETORIA: "ALL",
+  QUALIDADE: "ALL",
+  SAC: ["Recebimento", "Expedição", "Armazém"],
+  ASSISTENCIA: ["Montagem", "Embalagem", "Produção"],
+  TECNICO: ["Produção", "Molas", "Espuma", "Costura"],
+  ALMOX: ["Armazém", "Recebimento"],
+  AUDITOR: "ALL",
+  VALIDACAO: "ALL",
+};
+
+export function getSetoresPermitidos(): string[] {
+  const perfil = getCurrentPerfil();
+  const regra = SETOR_PERMITIDO[perfil];
+  if (regra === "ALL") return [...SETORES_INSPECAO];
+  return regra ?? [...SETORES_INSPECAO];
+}
+
+interface RespostaItem {
+  resultado: InspecaoItemStatus;
+  tipoNcId: string;
+  observacao: string;
+  arquivos: string[];
+}
+
 const NovaExecucaoPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -25,16 +53,18 @@ const NovaExecucaoPage = () => {
   const [tiposNc, setTiposNc] = useState<TipoNCInspecao[]>([]);
   const [selectedModeloId, setSelectedModeloId] = useState("");
   const [observacaoGeral, setObservacaoGeral] = useState("");
-  const [respostas, setRespostas] = useState<Record<string, { resultado: InspecaoItemStatus; tipoNcId: string; observacao: string; arquivo: string }>>({});
+  const [respostas, setRespostas] = useState<Record<string, RespostaItem>>({});
   const [saving, setSaving] = useState(false);
 
+  const setoresPermitidos = getSetoresPermitidos();
   const modelo = modelos.find((m) => m.id === selectedModeloId);
 
   useEffect(() => {
     void (async () => {
       try {
         const [m, t] = await Promise.all([listModelosInspecao(), listTiposNCInspecao()]);
-        setModelos(m.filter((mod) => mod.ativo));
+        // Filter models by allowed sectors
+        setModelos(m.filter((mod) => mod.ativo && setoresPermitidos.includes(mod.setor)));
         setTiposNc(t.filter((tn) => tn.ativo));
       } catch (e) {
         toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha ao carregar dados", variant: "destructive" });
@@ -46,15 +76,30 @@ const NovaExecucaoPage = () => {
     if (modelo) {
       const init: typeof respostas = {};
       modelo.itens.filter((i) => i.ativo).forEach((item) => {
-        if (!respostas[item.id]) init[item.id] = { resultado: "CONFORME", tipoNcId: "", observacao: "", arquivo: "" };
+        if (!respostas[item.id]) init[item.id] = { resultado: "CONFORME", tipoNcId: "", observacao: "", arquivos: [] };
         else init[item.id] = respostas[item.id];
       });
       setRespostas(init);
     }
   }, [selectedModeloId]);
 
-  const updateResposta = (itemId: string, patch: Partial<typeof respostas[string]>) => {
+  const updateResposta = (itemId: string, patch: Partial<RespostaItem>) => {
     setRespostas((prev) => ({ ...prev, [itemId]: { ...prev[itemId], ...patch } }));
+  };
+
+  const addArquivos = (itemId: string, files: FileList) => {
+    setRespostas((prev) => {
+      const curr = prev[itemId];
+      const newNames = Array.from(files).map((f) => f.name);
+      return { ...prev, [itemId]: { ...curr, arquivos: [...curr.arquivos, ...newNames] } };
+    });
+  };
+
+  const removeArquivo = (itemId: string, idx: number) => {
+    setRespostas((prev) => {
+      const curr = prev[itemId];
+      return { ...prev, [itemId]: { ...curr, arquivos: curr.arquivos.filter((_, i) => i !== idx) } };
+    });
   };
 
   const itensAtivos = modelo?.itens.filter((i) => i.ativo) || [];
@@ -70,8 +115,8 @@ const NovaExecucaoPage = () => {
         if (item.exigeTipoNc && !r.tipoNcId) {
           toast({ title: "Campo obrigatório", description: `Item "${item.descricao}" exige tipo de NC.`, variant: "destructive" }); return;
         }
-        if (item.exigeEvidenciaNc && !r.arquivo) {
-          toast({ title: "Campo obrigatório", description: `Item "${item.descricao}" exige evidência.`, variant: "destructive" }); return;
+        if (item.exigeEvidenciaNc && r.arquivos.length === 0) {
+          toast({ title: "Campo obrigatório", description: `Item "${item.descricao}" exige ao menos uma evidência.`, variant: "destructive" }); return;
         }
       }
     }
@@ -79,7 +124,7 @@ const NovaExecucaoPage = () => {
     setSaving(true);
     try {
       const itensFinal: ExecucaoInspecaoItem[] = itensAtivos.map((item, idx) => {
-        const r = respostas[item.id] || { resultado: "CONFORME" as const, tipoNcId: "", observacao: "", arquivo: "" };
+        const r = respostas[item.id] || { resultado: "CONFORME" as const, tipoNcId: "", observacao: "", arquivos: [] };
         const tipoNc = tiposNc.find((t) => t.id === r.tipoNcId);
         return {
           id: `EI-${Date.now()}-${idx}`,
@@ -90,7 +135,8 @@ const NovaExecucaoPage = () => {
           tipoNcId: r.resultado === "NAO_CONFORME" ? r.tipoNcId || undefined : undefined,
           tipoNcNome: r.resultado === "NAO_CONFORME" && tipoNc ? tipoNc.nome : undefined,
           observacao: r.observacao || undefined,
-          evidenciaNomeArquivo: r.resultado === "NAO_CONFORME" && r.arquivo ? r.arquivo : undefined,
+          evidencias: r.resultado === "NAO_CONFORME" && r.arquivos.length > 0 ? r.arquivos : undefined,
+          evidenciaNomeArquivo: r.resultado === "NAO_CONFORME" && r.arquivos.length > 0 ? r.arquivos[0] : undefined,
         };
       });
 
@@ -141,6 +187,11 @@ const NovaExecucaoPage = () => {
             {modelos.map((m) => <option key={m.id} value={m.id}>{m.nome} ({m.setor})</option>)}
           </select>
         </FormField>
+        {setoresPermitidos.length < SETORES_INSPECAO.length && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Setores permitidos: {setoresPermitidos.join(", ")}
+          </p>
+        )}
       </SectionCard>
 
       {modelo && itensAtivos.length > 0 && (
@@ -188,18 +239,31 @@ const NovaExecucaoPage = () => {
                           <Textarea value={r.observacao} onChange={(e) => updateResposta(item.id, { observacao: e.target.value })} rows={2} placeholder="Descreva a não conformidade..." />
                         </FormField>
                         {item.exigeEvidenciaNc && (
-                          <FormField label="Evidência / Arquivo" required>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="file"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) updateResposta(item.id, { arquivo: file.name });
-                                }}
-                                className="text-xs"
-                              />
-                              {r.arquivo && <span className="text-xs text-muted-foreground truncate max-w-[200px]">{r.arquivo}</span>}
-                            </div>
+                          <FormField label={`Evidências${r.arquivos.length > 0 ? ` (${r.arquivos.length})` : ""}`} required>
+                            <Input
+                              type="file"
+                              multiple
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                  addArquivos(item.id, e.target.files);
+                                  e.target.value = "";
+                                }
+                              }}
+                              className="text-xs"
+                            />
+                            {r.arquivos.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {r.arquivos.map((nome, fIdx) => (
+                                  <div key={fIdx} className="flex items-center gap-2 rounded-md bg-muted/50 px-2 py-1 text-xs">
+                                    <FileText className="w-3 h-3 text-primary shrink-0" />
+                                    <span className="flex-1 truncate">{nome}</span>
+                                    <button type="button" onClick={() => removeArquivo(item.id, fIdx)} className="text-muted-foreground hover:text-destructive">
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </FormField>
                         )}
                       </div>
