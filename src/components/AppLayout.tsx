@@ -82,7 +82,7 @@ const allNavItems: NavItem[] = [
     children: [
       { path: "/inspecoes", label: "Dashboard" },
       { path: "/inspecoes/modelos", label: "Modelos / Checklists" },
-      { path: "/inspecoes/execucao/nova", label: "Nova Inspeção" },
+      { path: "/inspecoes/nova", label: "Nova Inspeção" },
       { path: "/inspecoes/historico", label: "Histórico" },
       { path: "/inspecoes/tipos-nc", label: "Tipos de NC" },
       { path: "/inspecoes/molas", label: "Inspeção de Molas" },
