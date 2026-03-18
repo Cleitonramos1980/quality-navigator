@@ -20,7 +20,7 @@ const TiposNCPage = () => {
   const [filtroSetor, setFiltroSetor] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ setor: "Produção", nome: "", categoria: "Visual", observacao: "" });
+  const [form, setForm] = useState({ setor: SETORES_INSPECAO[0], nome: "", categoria: "Visual", observacao: "" });
 
   const load = async () => {
     setLoading(true);
