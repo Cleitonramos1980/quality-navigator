@@ -64,40 +64,42 @@ const MolaDetalhePage = () => {
         )}
       </SectionCard>
 
-      <SectionCard title="Medições Registradas" description={`${insp.medicoes.length} item(ns)`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left px-3 py-2">Item</th>
-                <th className="text-left px-3 py-2">Descrição</th>
-                <th className="text-center px-3 py-2">Padrão</th>
-                <th className="text-center px-3 py-2">Mín</th>
-                <th className="text-center px-3 py-2">Máx</th>
-                <th className="text-center px-3 py-2">Und</th>
-                <th className="text-center px-3 py-2">Medido</th>
-                <th className="text-center px-3 py-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {insp.medicoes.map((m) => (
-                <tr key={m.id} className={cn("border-b border-border/60", !m.conforme ? "bg-destructive/5" : "")}>
-                  <td className="px-3 py-2 font-medium">{m.item}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{m.descricao}</td>
-                  <td className="px-3 py-2 text-center font-mono">{m.padrao}</td>
-                  <td className="px-3 py-2 text-center font-mono">{m.minimo}</td>
-                  <td className="px-3 py-2 text-center font-mono">{m.maximo}</td>
-                  <td className="px-3 py-2 text-center">{m.unidade}</td>
-                  <td className={cn("px-3 py-2 text-center font-mono font-bold", !m.conforme ? "text-destructive" : "text-success")}>{m.valorMedido}</td>
-                  <td className="px-3 py-2 text-center">
-                    {m.conforme ? <CheckCircle2 className="w-4 h-4 text-success inline" /> : <XCircle className="w-4 h-4 text-destructive inline" />}
-                  </td>
+      {insp.medicoes.length > 0 && (
+        <SectionCard title="Medições Registradas" description={`${insp.medicoes.length} item(ns)`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left px-3 py-2">Item</th>
+                  <th className="text-left px-3 py-2">Descrição</th>
+                  <th className="text-center px-3 py-2">Padrão</th>
+                  <th className="text-center px-3 py-2">Mín</th>
+                  <th className="text-center px-3 py-2">Máx</th>
+                  <th className="text-center px-3 py-2">Und</th>
+                  <th className="text-center px-3 py-2">Medido</th>
+                  <th className="text-center px-3 py-2">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </SectionCard>
+              </thead>
+              <tbody>
+                {insp.medicoes.map((m) => (
+                  <tr key={m.id} className={cn("border-b border-border/60", !m.conforme ? "bg-destructive/5" : "")}>
+                    <td className="px-3 py-2 font-medium">{m.item}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{m.descricao}</td>
+                    <td className="px-3 py-2 text-center font-mono">{m.padrao}</td>
+                    <td className="px-3 py-2 text-center font-mono">{m.minimo}</td>
+                    <td className="px-3 py-2 text-center font-mono">{m.maximo}</td>
+                    <td className="px-3 py-2 text-center">{m.unidade}</td>
+                    <td className={cn("px-3 py-2 text-center font-mono font-bold", !m.conforme ? "text-destructive" : "text-success")}>{m.valorMedido}</td>
+                    <td className="px-3 py-2 text-center">
+                      {m.conforme ? <CheckCircle2 className="w-4 h-4 text-success inline" /> : <XCircle className="w-4 h-4 text-destructive inline" />}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      )}
     </div>
   );
 };

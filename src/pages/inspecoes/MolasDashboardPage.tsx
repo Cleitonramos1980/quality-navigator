@@ -69,8 +69,8 @@ const MolasDashboardPage = () => {
                   <p className="font-medium text-sm">{maquina}</p>
                   {ultimaInspecao && <p className="text-xs text-muted-foreground">{new Date(ultimaInspecao.dataHora).toLocaleDateString("pt-BR")}</p>}
                 </div>
-                <Badge variant={status === "APROVADO" ? "default" : status === "REPROVADO" ? "destructive" : "secondary"}>
-                  {status === "SEM_DADOS" ? "Sem dados" : status}
+                <Badge variant={status === "APROVADO" ? "default" : status === "REPROVADO" ? "destructive" : status === "PARADA_REGISTRADA" ? "secondary" : "secondary"}>
+                  {status === "SEM_DADOS" ? "Sem dados" : status === "PARADA_REGISTRADA" ? "Parada" : status}
                 </Badge>
               </div>
             ))}
