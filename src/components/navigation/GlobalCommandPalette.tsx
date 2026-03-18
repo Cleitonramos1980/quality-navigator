@@ -15,6 +15,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { canSeeModulo, canSeeAssistSubmenu, canSeeQualidadeSubmenu, canSeeSacSubmenu } from "@/lib/workflowOs";
+import type { NavModulo } from "@/lib/workflowOs";
 import { prefetchRoute } from "@/lib/routePrefetch";
 import { useUxMetrics } from "@/hooks/useUxMetrics";
 

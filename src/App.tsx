@@ -159,6 +159,7 @@ const App = () => (
           <Route path="/inspecoes/modelos/novo" element={<AppLayout><Lazy><ModeloFormPage /></Lazy></AppLayout>} />
           <Route path="/inspecoes/modelos/:id" element={<AppLayout><Lazy><ModeloFormPage /></Lazy></AppLayout>} />
           <Route path="/inspecoes/nova" element={<AppLayout><Lazy><NovaExecucaoPage /></Lazy></AppLayout>} />
+          <Route path="/inspecoes/execucoes/:id" element={<AppLayout><Lazy><ExecucaoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/inspecoes/historico" element={<AppLayout><Lazy><HistoricoInspecoesPage /></Lazy></AppLayout>} />
           <Route path="/inspecoes/tipos-nc" element={<AppLayout><Lazy><TiposNCPage /></Lazy></AppLayout>} />
           <Route path="/inspecoes/molas" element={<AppLayout><Lazy><MolasDashboardPage /></Lazy></AppLayout>} />
