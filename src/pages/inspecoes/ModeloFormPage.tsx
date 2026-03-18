@@ -30,7 +30,7 @@ const ModeloFormPage = () => {
   const { toast } = useToast();
 
   const [nome, setNome] = useState("");
-  const [setor, setSetor] = useState("Produção");
+  const [setor, setSetor] = useState(SETORES_INSPECAO[0] as string);
   const [descricao, setDescricao] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [itens, setItens] = useState<ModeloInspecaoItem[]>([emptyItem()]);
