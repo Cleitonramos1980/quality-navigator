@@ -20,7 +20,8 @@ import { uxMetricsRoutes } from "./routes/uxMetrics.js";
 import { inventarioRoutes } from "./routes/inventario.js";
 import { operacionalRoutes } from "./routes/operacional.js";
 import { torreAgendaCustodiaRoutes } from "./routes/torreAgendaCustodia.js";
-  initPersistentCollections,
+import { inspecoesRoutes } from "./routes/inspecoes.js";
+import {
   persistAllCollections,
 } from "./repositories/persistentCollectionStore.js";
 import { verifyAuthToken } from "./utils/jwt.js";
@@ -139,6 +140,7 @@ await uxMetricsRoutes(app);
 await inventarioRoutes(app);
 await operacionalRoutes(app);
 await torreAgendaCustodiaRoutes(app);
+await inspecoesRoutes(app);
 
 async function start() {
   await initOraclePool();

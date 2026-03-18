@@ -97,6 +97,20 @@ const AgendamentoDetalhePage = lazy(() => import("@/pages/patio/AgendamentoDetal
 const CadeiasCustodiaPage = lazy(() => import("@/pages/custodia/CadeiasCustodiaPage"));
 const CustodiaDetalhePage = lazy(() => import("@/pages/custodia/CustodiaDetalhePage"));
 
+// Inspeções module
+const InspecoesDashboardPage = lazy(() => import("@/pages/inspecoes/InspecoesDashboardPage"));
+const ModelosListPage = lazy(() => import("@/pages/inspecoes/ModelosListPage"));
+const ModeloFormPage = lazy(() => import("@/pages/inspecoes/ModeloFormPage"));
+const NovaExecucaoPage = lazy(() => import("@/pages/inspecoes/NovaExecucaoPage"));
+const ExecucaoDetalhePage = lazy(() => import("@/pages/inspecoes/ExecucaoDetalhePage"));
+const HistoricoInspecoesPage = lazy(() => import("@/pages/inspecoes/HistoricoInspecoesPage"));
+const TiposNCPage = lazy(() => import("@/pages/inspecoes/TiposNCPage"));
+const MolasDashboardPage = lazy(() => import("@/pages/inspecoes/MolasDashboardPage"));
+const NovaInspecaoMolaPage = lazy(() => import("@/pages/inspecoes/NovaInspecaoMolaPage"));
+const MolaDetalhePage = lazy(() => import("@/pages/inspecoes/MolaDetalhePage"));
+const MolasHistoricoPage = lazy(() => import("@/pages/inspecoes/MolasHistoricoPage"));
+const PadroesMolaPage = lazy(() => import("@/pages/inspecoes/PadroesMolaPage"));
+
 const queryClient = new QueryClient();
 
 const Lazy = ({ children }: { children: ReactNode }) => (
@@ -138,6 +152,20 @@ const App = () => (
           <Route path="/qualidade/auditorias-camadas" element={<AppLayout><Lazy><AuditoriasCamadasPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/core-tools" element={<AppLayout><Lazy><CoreToolsFornecedoresPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/iso-readiness" element={<AppLayout><Lazy><IsoReadinessPage /></Lazy></AppLayout>} />
+
+          {/* Inspeções module */}
+          <Route path="/qualidade/inspecoes" element={<AppLayout><Lazy><InspecoesDashboardPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/modelos" element={<AppLayout><Lazy><ModelosListPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/modelos/novo" element={<AppLayout><Lazy><ModeloFormPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/modelos/:id" element={<AppLayout><Lazy><ModeloFormPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/nova" element={<AppLayout><Lazy><NovaExecucaoPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/historico" element={<AppLayout><Lazy><HistoricoInspecoesPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/tipos-nc" element={<AppLayout><Lazy><TiposNCPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/molas" element={<AppLayout><Lazy><MolasDashboardPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/molas/nova" element={<AppLayout><Lazy><NovaInspecaoMolaPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/molas/historico" element={<AppLayout><Lazy><MolasHistoricoPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/molas/padroes" element={<AppLayout><Lazy><PadroesMolaPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inspecoes/molas/:id" element={<AppLayout><Lazy><MolaDetalhePage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario" element={<AppLayout><Lazy><InventarioDashboardPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/agenda" element={<AppLayout><Lazy><AgendaInventarioPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/contagens" element={<AppLayout><Lazy><ContagensPage /></Lazy></AppLayout>} />

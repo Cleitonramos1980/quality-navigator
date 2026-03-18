@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Search,
   Settings,
   Wrench,
   X,
@@ -74,6 +75,7 @@ const allNavItems: NavItem[] = [
       { path: "/qualidade/fornecedores", label: "Fornecedores / SCAR" },
       { path: "/qualidade/core-tools", label: "Core Tools Fornecedor" },
       { path: "/qualidade/iso-readiness", label: "ISO 9001 Readiness" },
+      { path: "/qualidade/inspecoes", label: "Inspeções" },
     ],
   },
   {
