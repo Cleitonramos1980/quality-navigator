@@ -54,6 +54,8 @@ export interface ExecucaoInspecaoItem {
   observacao?: string;
   evidenciaNomeArquivo?: string;
   evidenciaUrl?: string;
+  /** Multiple evidence files per item (legacy-compatible) */
+  evidencias?: string[];
 }
 
 export interface TipoNCInspecao {
