@@ -82,7 +82,7 @@ const TiposNCPage = () => {
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Cadastro de tipos de NC por setor para inspeções</p>
         </div>
-        <Button size="sm" onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ setor: SETORES_INSPECAO[0], nome: "", categoria: "Visual", observacao: "" }); }}>
+        <Button size="sm" onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ setor: SETORES_INSPECAO[0] as string, nome: "", categoria: "Visual", observacao: "" }); }}>
           <Plus className="w-4 h-4 mr-1" />{showForm ? "Fechar" : "Novo Tipo"}
         </Button>
       </div>
