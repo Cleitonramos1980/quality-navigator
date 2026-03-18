@@ -51,6 +51,7 @@ const MolasHistoricoPage = () => {
           <option value="">Todos Resultados</option>
           <option value="APROVADO">Aprovado</option>
           <option value="REPROVADO">Reprovado</option>
+          <option value="PARADA_REGISTRADA">Parada Registrada</option>
         </select>
       </div>
 
