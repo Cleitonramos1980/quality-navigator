@@ -70,6 +70,17 @@ const COMMAND_ROUTES: CommandRoute[] = [
 
   // Qualidade
   { label: "Não Conformidades", path: "/nao-conformidades", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
+
+  // Inspeções
+  { label: "Dashboard de Inspeções", path: "/inspecoes", icon: Eye, modulo: "inspecoes" as any, group: "Inspeções" },
+  { label: "Modelos de Inspeção", path: "/inspecoes/modelos", icon: ClipboardCheck, modulo: "inspecoes" as any, group: "Inspeções" },
+  { label: "Nova Inspeção", path: "/inspecoes/nova", icon: ClipboardCheck, modulo: "inspecoes" as any, group: "Inspeções" },
+  { label: "Histórico de Inspeções", path: "/inspecoes/historico", icon: ClipboardCheck, modulo: "inspecoes" as any, group: "Inspeções" },
+  { label: "Tipos de Não Conformidade", path: "/inspecoes/tipos-nc", icon: ClipboardCheck, modulo: "inspecoes" as any, group: "Inspeções" },
+  { label: "Dashboard de Molas", path: "/inspecoes/molas", icon: Activity, modulo: "inspecoes" as any, group: "Inspeções" },
+  { label: "Nova Inspeção de Molas", path: "/inspecoes/molas/nova", icon: Activity, modulo: "inspecoes" as any, group: "Inspeções" },
+  { label: "Histórico de Molas", path: "/inspecoes/molas/historico", icon: Activity, modulo: "inspecoes" as any, group: "Inspeções" },
+  { label: "Padrões de Molas", path: "/inspecoes/molas/padroes", icon: Activity, modulo: "inspecoes" as any, group: "Inspeções" },
   { label: "CAPA", path: "/capa", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
   { label: "Auditorias", path: "/auditorias", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
   { label: "Metrologia / MSA", path: "/qualidade/metrologia", icon: ClipboardCheck, modulo: "qualidade", group: "Qualidade" },
