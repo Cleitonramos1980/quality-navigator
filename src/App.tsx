@@ -97,6 +97,20 @@ const AgendamentoDetalhePage = lazy(() => import("@/pages/patio/AgendamentoDetal
 const CadeiasCustodiaPage = lazy(() => import("@/pages/custodia/CadeiasCustodiaPage"));
 const CustodiaDetalhePage = lazy(() => import("@/pages/custodia/CustodiaDetalhePage"));
 
+// Inspeções module
+const InspecoesDashboardPage = lazy(() => import("@/pages/inspecoes/InspecoesDashboardPage"));
+const ModelosListPage = lazy(() => import("@/pages/inspecoes/ModelosListPage"));
+const ModeloFormPage = lazy(() => import("@/pages/inspecoes/ModeloFormPage"));
+const NovaExecucaoPage = lazy(() => import("@/pages/inspecoes/NovaExecucaoPage"));
+const ExecucaoDetalhePage = lazy(() => import("@/pages/inspecoes/ExecucaoDetalhePage"));
+const HistoricoInspecoesPage = lazy(() => import("@/pages/inspecoes/HistoricoInspecoesPage"));
+const TiposNCPage = lazy(() => import("@/pages/inspecoes/TiposNCPage"));
+const MolasDashboardPage = lazy(() => import("@/pages/inspecoes/MolasDashboardPage"));
+const NovaInspecaoMolaPage = lazy(() => import("@/pages/inspecoes/NovaInspecaoMolaPage"));
+const MolaDetalhePage = lazy(() => import("@/pages/inspecoes/MolaDetalhePage"));
+const MolasHistoricoPage = lazy(() => import("@/pages/inspecoes/MolasHistoricoPage"));
+const PadroesMolaPage = lazy(() => import("@/pages/inspecoes/PadroesMolaPage"));
+
 const queryClient = new QueryClient();
 
 const Lazy = ({ children }: { children: ReactNode }) => (
