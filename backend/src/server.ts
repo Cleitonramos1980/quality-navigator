@@ -20,7 +20,8 @@ import { uxMetricsRoutes } from "./routes/uxMetrics.js";
 import { inventarioRoutes } from "./routes/inventario.js";
 import { operacionalRoutes } from "./routes/operacional.js";
 import { torreAgendaCustodiaRoutes } from "./routes/torreAgendaCustodia.js";
-  initPersistentCollections,
+import { inspecoesRoutes } from "./routes/inspecoes.js";
+import {
   persistAllCollections,
 } from "./repositories/persistentCollectionStore.js";
 import { verifyAuthToken } from "./utils/jwt.js";
