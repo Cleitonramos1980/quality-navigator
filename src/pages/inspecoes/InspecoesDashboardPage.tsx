@@ -57,10 +57,10 @@ const InspecoesDashboardPage = () => {
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link to="/qualidade/inspecoes/historico"><History className="w-4 h-4 mr-1" />Histórico</Link>
+            <Link to="/inspecoes/historico"><History className="w-4 h-4 mr-1" />Histórico</Link>
           </Button>
           <Button asChild size="sm">
-            <Link to="/qualidade/inspecoes/nova"><Plus className="w-4 h-4 mr-1" />Nova Inspeção</Link>
+            <Link to="/inspecoes/nova"><Plus className="w-4 h-4 mr-1" />Nova Inspeção</Link>
           </Button>
         </div>
       </div>
@@ -95,7 +95,7 @@ const InspecoesDashboardPage = () => {
           ) : (
             <div className="space-y-2">
               {ultimasInspecoes.map((insp) => (
-                <Link key={insp.id} to={`/qualidade/inspecoes/${insp.id}`} className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-muted/30 transition-colors">
+                <Link key={insp.id} to={`/inspecoes/${insp.id}`} className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-muted/30 transition-colors">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{insp.modeloNome}</p>
                     <p className="text-xs text-muted-foreground">{insp.setor} · {insp.executor} · {new Date(insp.dataHora).toLocaleDateString("pt-BR")}</p>
@@ -116,19 +116,19 @@ const InspecoesDashboardPage = () => {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-2"><CardTitle className="text-sm">Modelos de Inspeção</CardTitle></CardHeader>
-          <CardContent><Button asChild variant="outline" size="sm" className="w-full"><Link to="/qualidade/inspecoes/modelos">Gerenciar Modelos</Link></Button></CardContent>
+          <CardContent><Button asChild variant="outline" size="sm" className="w-full"><Link to="/inspecoes/modelos">Gerenciar Modelos</Link></Button></CardContent>
         </Card>
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-2"><CardTitle className="text-sm">Tipos de NC</CardTitle></CardHeader>
-          <CardContent><Button asChild variant="outline" size="sm" className="w-full"><Link to="/qualidade/inspecoes/tipos-nc">Gerenciar Tipos</Link></Button></CardContent>
+          <CardContent><Button asChild variant="outline" size="sm" className="w-full"><Link to="/inspecoes/tipos-nc">Gerenciar Tipos</Link></Button></CardContent>
         </Card>
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-2"><CardTitle className="text-sm">Inspeção de Molas</CardTitle></CardHeader>
-          <CardContent><Button asChild variant="outline" size="sm" className="w-full"><Link to="/qualidade/inspecoes/molas">Dashboard de Molas</Link></Button></CardContent>
+          <CardContent><Button asChild variant="outline" size="sm" className="w-full"><Link to="/inspecoes/molas">Dashboard de Molas</Link></Button></CardContent>
         </Card>
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-2"><CardTitle className="text-sm">Padrões de Molas</CardTitle></CardHeader>
-          <CardContent><Button asChild variant="outline" size="sm" className="w-full"><Link to="/qualidade/inspecoes/molas/padroes">Gerenciar Padrões</Link></Button></CardContent>
+          <CardContent><Button asChild variant="outline" size="sm" className="w-full"><Link to="/inspecoes/molas/padroes">Gerenciar Padrões</Link></Button></CardContent>
         </Card>
       </div>
     </div>

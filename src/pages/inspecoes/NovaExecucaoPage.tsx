@@ -116,7 +116,7 @@ const NovaExecucaoPage = () => {
         itens: itensFinal,
       });
       toast({ title: "Inspeção registrada", description: `${modelo.nome} — ${taxa}% de conformidade` });
-      navigate("/qualidade/inspecoes/historico");
+      navigate("/inspecoes/historico");
     } catch (e) {
       toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha ao salvar", variant: "destructive" });
     } finally {
@@ -215,7 +215,7 @@ const NovaExecucaoPage = () => {
           </SectionCard>
 
           <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => navigate("/qualidade/inspecoes")}>Cancelar</Button>
+            <Button variant="outline" onClick={() => navigate("/inspecoes")}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving} className="gap-2">
               <Save className="w-4 h-4" />{saving ? "Salvando..." : "Concluir Inspeção"}
             </Button>

@@ -79,7 +79,7 @@ const MolasHistoricoPage = () => {
                   <td className="px-3 py-2">{i.alturaTipo}</td>
                   <td className="px-3 py-2">{i.operador}</td>
                   <td className="px-3 py-2"><Badge variant={i.resultado === "APROVADO" ? "default" : "destructive"}>{i.resultado}</Badge></td>
-                  <td className="px-3 py-2"><Button asChild size="sm" variant="ghost"><Link to={`/qualidade/inspecoes/molas/${i.id}`}><Eye className="w-4 h-4" /></Link></Button></td>
+                  <td className="px-3 py-2"><Button asChild size="sm" variant="ghost"><Link to={`/inspecoes/molas/${i.id}`}><Eye className="w-4 h-4" /></Link></Button></td>
                 </tr>
               ))}
             </tbody>

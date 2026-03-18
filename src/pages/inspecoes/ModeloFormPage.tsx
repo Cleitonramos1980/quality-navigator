@@ -78,7 +78,7 @@ const ModeloFormPage = () => {
         await createModeloInspecao({ nome, setor, descricao, ativo, ordem: 0, itens: orderedItens });
         toast({ title: "Modelo criado", description: `${nome} criado com sucesso.` });
       }
-      navigate("/qualidade/inspecoes/modelos");
+      navigate("/inspecoes/modelos");
     } catch (e) {
       toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha ao salvar", variant: "destructive" });
     } finally {
@@ -161,7 +161,7 @@ const ModeloFormPage = () => {
       </SectionCard>
 
       <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={() => navigate("/qualidade/inspecoes/modelos")}>Cancelar</Button>
+        <Button variant="outline" onClick={() => navigate("/inspecoes/modelos")}>Cancelar</Button>
         <Button onClick={handleSave} disabled={saving} className="gap-2">
           <Save className="w-4 h-4" />{saving ? "Salvando..." : "Salvar Modelo"}
         </Button>

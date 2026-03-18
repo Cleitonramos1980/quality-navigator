@@ -75,7 +75,20 @@ const allNavItems: NavItem[] = [
       { path: "/qualidade/fornecedores", label: "Fornecedores / SCAR" },
       { path: "/qualidade/core-tools", label: "Core Tools Fornecedor" },
       { path: "/qualidade/iso-readiness", label: "ISO 9001 Readiness" },
-      { path: "/qualidade/inspecoes", label: "Inspeções" },
+    ],
+  },
+  {
+    path: "/inspecoes", label: "Inspeções", icon: ClipboardCheck, modulo: "inspecoes",
+    children: [
+      { path: "/inspecoes", label: "Dashboard" },
+      { path: "/inspecoes/modelos", label: "Modelos / Checklists" },
+      { path: "/inspecoes/nova", label: "Nova Inspeção" },
+      { path: "/inspecoes/historico", label: "Histórico" },
+      { path: "/inspecoes/tipos-nc", label: "Tipos de NC" },
+      { path: "/inspecoes/molas", label: "Inspeção de Molas" },
+      { path: "/inspecoes/molas/nova", label: "Nova Inspeção Molas" },
+      { path: "/inspecoes/molas/historico", label: "Histórico Molas" },
+      { path: "/inspecoes/molas/padroes", label: "Padrões de Molas" },
     ],
   },
   {

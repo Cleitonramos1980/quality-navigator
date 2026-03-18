@@ -48,8 +48,8 @@ const MolasDashboardPage = () => {
           <p className="text-sm text-muted-foreground mt-0.5">Dashboard dimensional — controle de molas ensacadas</p>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm"><Link to="/qualidade/inspecoes/molas/historico"><History className="w-4 h-4 mr-1" />Histórico</Link></Button>
-          <Button asChild size="sm"><Link to="/qualidade/inspecoes/molas/nova"><Plus className="w-4 h-4 mr-1" />Nova Inspeção</Link></Button>
+          <Button asChild variant="outline" size="sm"><Link to="/inspecoes/molas/historico"><History className="w-4 h-4 mr-1" />Histórico</Link></Button>
+          <Button asChild size="sm"><Link to="/inspecoes/molas/nova"><Plus className="w-4 h-4 mr-1" />Nova Inspeção</Link></Button>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ const MolasDashboardPage = () => {
           ) : (
             <div className="space-y-2">
               {ultimas.map((insp) => (
-                <Link key={insp.id} to={`/qualidade/inspecoes/molas/${insp.id}`} className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-muted/30 transition-colors">
+                <Link key={insp.id} to={`/inspecoes/molas/${insp.id}`} className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-muted/30 transition-colors">
                   <div>
                     <p className="text-sm font-medium">{insp.maquina} — {insp.alturaTipo}</p>
                     <p className="text-xs text-muted-foreground">{insp.operador} · {new Date(insp.dataHora).toLocaleString("pt-BR")}</p>
@@ -97,7 +97,7 @@ const MolasDashboardPage = () => {
       </div>
 
       <div className="flex gap-3">
-        <Button asChild variant="outline" size="sm"><Link to="/qualidade/inspecoes/molas/padroes">Gerenciar Padrões de Molas</Link></Button>
+        <Button asChild variant="outline" size="sm"><Link to="/inspecoes/molas/padroes">Gerenciar Padrões de Molas</Link></Button>
       </div>
     </div>
   );
