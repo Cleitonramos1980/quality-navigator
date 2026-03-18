@@ -68,9 +68,9 @@ const InspecoesDashboardPage = () => {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KPICard title="Total no Período" value={total} icon={<BarChart3 className="w-5 h-5" />} />
         <KPICard title="Concluídas" value={concluidas} icon={<CheckCircle2 className="w-5 h-5" />} />
-        <KPICard title="Com NC" value={comNc} icon={<XCircle className="w-5 h-5" />} variant={comNc > 0 ? "danger" : "default"} />
-        <KPICard title="Pendentes" value={pendentes} icon={<AlertTriangle className="w-5 h-5" />} variant={pendentes > 0 ? "warning" : "default"} />
-        <KPICard title="Taxa Conformidade" value={`${taxaMedia}%`} icon={<CheckCircle2 className="w-5 h-5" />} variant={taxaMedia >= 90 ? "success" : taxaMedia >= 70 ? "warning" : "danger"} />
+        <KPICard title="Com NC" value={comNc} icon={<XCircle className="w-5 h-5" />} />
+        <KPICard title="Pendentes" value={pendentes} icon={<AlertTriangle className="w-5 h-5" />} />
+        <KPICard title="Taxa Conformidade" value={`${taxaMedia}%`} icon={<CheckCircle2 className="w-5 h-5" />} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

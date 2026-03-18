@@ -17,7 +17,7 @@ const NovaInspecaoMolaPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [padroes, setPadroes] = useState<PadraoMola[]>([]);
-  const [maquina, setMaquina] = useState(MAQUINAS_MOLA[0]);
+  const [maquina, setMaquina] = useState<string>(MAQUINAS_MOLA[0]);
   const [statusMaquina, setStatusMaquina] = useState("Operando");
   const [alturaTipo, setAlturaTipo] = useState("");
   const [linhaPocket, setLinhaPocket] = useState("");

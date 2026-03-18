@@ -55,9 +55,9 @@ const MolasDashboardPage = () => {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard title="Total Inspeções" value={total} icon={<Activity className="w-5 h-5" />} />
-        <KPICard title="Aprovadas" value={aprovadas} icon={<CheckCircle2 className="w-5 h-5" />} variant="success" />
-        <KPICard title="Reprovadas" value={reprovadas} icon={<XCircle className="w-5 h-5" />} variant={reprovadas > 0 ? "danger" : "default"} />
-        <KPICard title="Itens Fora Padrão" value={forapadrao} icon={<AlertTriangle className="w-5 h-5" />} variant={forapadrao > 0 ? "warning" : "default"} />
+        <KPICard title="Aprovadas" value={aprovadas} icon={<CheckCircle2 className="w-5 h-5" />} />
+        <KPICard title="Reprovadas" value={reprovadas} icon={<XCircle className="w-5 h-5" />} />
+        <KPICard title="Itens Fora Padrão" value={forapadrao} icon={<AlertTriangle className="w-5 h-5" />} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
