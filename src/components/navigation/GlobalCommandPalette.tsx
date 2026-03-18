@@ -23,7 +23,7 @@ interface CommandRoute {
   label: string;
   path: string;
   icon: ComponentType<{ className?: string }>;
-  modulo: "dashboard" | "sac" | "qualidade" | "inspecoes" | "inventario" | "assistencia" | "admin" | "operacional";
+  modulo: NavModulo;
   group: string;
 }
 
