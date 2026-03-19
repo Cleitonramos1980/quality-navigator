@@ -77,8 +77,8 @@ console.log();
 // Validate
 const errors: string[] = [];
 if (depois.modelos < 15) errors.push(`Esperados >= 15 modelos, encontrados ${depois.modelos}`);
-if (totalItens < 900) errors.push(`Esperados >= 900 itens, encontrados ${totalItens}`);
-if (depois.tiposNc < 150) errors.push(`Esperados >= 150 tipos NC, encontrados ${depois.tiposNc}`);
+if (totalItens < 1000) errors.push(`Esperados >= 1000 itens, encontrados ${totalItens}`);
+if (depois.tiposNc < 167) errors.push(`Esperados >= 167 tipos NC, encontrados ${depois.tiposNc}`);
 if (depois.padroesMola < 16) errors.push(`Esperados >= 16 padrões mola, encontrados ${depois.padroesMola}`);
 
 if (errors.length > 0) {
