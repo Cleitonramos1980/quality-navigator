@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import * as repo from "../repositories/inspecoesRepository.js";
+import * as repo from "../repositories/inspecoes/oracleInspecoesRepository.js";
 
 export async function inspecoesRoutes(app: FastifyInstance) {
   // ── Modelos ──
@@ -8,7 +8,7 @@ export async function inspecoesRoutes(app: FastifyInstance) {
 
   app.get("/api/inspecoes/modelos/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const item = repo.getModeloById(id);
+    const item = await repo.getModeloById(id);
     if (!item) return reply.status(404).send({ error: { message: "Modelo não encontrado" } });
     return item;
   });
@@ -19,7 +19,7 @@ export async function inspecoesRoutes(app: FastifyInstance) {
 
   app.put("/api/inspecoes/modelos/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const updated = repo.updateModelo(id, req.body as any);
+    const updated = await repo.updateModelo(id, req.body as any);
     if (!updated) return reply.status(404).send({ error: { message: "Modelo não encontrado" } });
     return updated;
   });
@@ -29,7 +29,7 @@ export async function inspecoesRoutes(app: FastifyInstance) {
 
   app.get("/api/inspecoes/execucoes/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const item = repo.getExecucaoById(id);
+    const item = await repo.getExecucaoById(id);
     if (!item) return reply.status(404).send({ error: { message: "Execução não encontrada" } });
     return item;
   });
@@ -47,7 +47,7 @@ export async function inspecoesRoutes(app: FastifyInstance) {
 
   app.put("/api/inspecoes/tipos-nc/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const updated = repo.updateTipoNc(id, req.body as any);
+    const updated = await repo.updateTipoNc(id, req.body as any);
     if (!updated) return reply.status(404).send({ error: { message: "Tipo NC não encontrado" } });
     return updated;
   });
@@ -61,7 +61,7 @@ export async function inspecoesRoutes(app: FastifyInstance) {
 
   app.put("/api/inspecoes/molas/padroes/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const updated = repo.updatePadraoMola(id, req.body as any);
+    const updated = await repo.updatePadraoMola(id, req.body as any);
     if (!updated) return reply.status(404).send({ error: { message: "Padrão não encontrado" } });
     return updated;
   });
@@ -71,7 +71,7 @@ export async function inspecoesRoutes(app: FastifyInstance) {
 
   app.get("/api/inspecoes/molas/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const item = repo.getInspecaoMolaById(id);
+    const item = await repo.getInspecaoMolaById(id);
     if (!item) return reply.status(404).send({ error: { message: "Inspeção de mola não encontrada" } });
     return item;
   });
@@ -79,6 +79,9 @@ export async function inspecoesRoutes(app: FastifyInstance) {
   app.post("/api/inspecoes/molas", async (req) => {
     return repo.createInspecaoMola(req.body as any);
   });
+
+  // ── Máquinas de Mola ──
+  app.get("/api/inspecoes/molas/maquinas", async () => repo.listMaquinasMola());
 
   // ── Setores ──
   app.get("/api/inspecoes/setores", async () => repo.listSetores());
@@ -97,7 +100,7 @@ export async function inspecoesRoutes(app: FastifyInstance) {
 
   app.delete("/api/inspecoes/usuario-setor/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const removed = repo.removeUsuarioSetor(id);
+    const removed = await repo.removeUsuarioSetor(id);
     if (!removed) return reply.status(404).send({ error: { message: "Mapeamento não encontrado" } });
     return { ok: true };
   });
