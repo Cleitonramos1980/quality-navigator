@@ -495,8 +495,8 @@ for (const [setor, items] of bySetor) {
 
 console.log("\n── Regras de fallback aplicadas ──");
 console.log("  obrigatorio:     valor da planilha quando preenchido; default = SIM");
-console.log("  exigeTipoNc:     sempre SIM (classificação de NC é padrão)");
-console.log("  exigeEvidencia:   default = NÃO (evidência é opcional, não obrigatória)");
-console.log("  ordem:            coluna 'Ordem' da planilha; fallback = número do Item (ex: 1.2 → 2)");
+console.log("  exigeTipoNc:     valor da planilha quando preenchido; default = SIM");
+console.log("  exigeEvidencia:  valor da planilha quando preenchido; default = NÃO");
+console.log("  ordem:           coluna 'Ordem' da planilha; fallback = número do Item (ex: 1.2 → 2)");
 
 console.log("\nImportação finalizada.");
