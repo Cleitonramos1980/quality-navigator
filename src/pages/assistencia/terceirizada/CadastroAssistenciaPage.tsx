@@ -21,7 +21,7 @@ const CadastroAssistenciaPage = () => {
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AssistenciaTerceirizada | null>(null);
-  const [form, setForm] = useState({ nome: "", razaoSocial: "", cnpjCpf: "", contatoPrincipal: "", telefone: "", email: "", endereco: "", cidade: "", uf: "", observacoes: "", status: "ATIVA" as const });
+  const [form, setForm] = useState({ nome: "", razaoSocial: "", cnpjCpf: "", contatoPrincipal: "", telefone: "", email: "", endereco: "", cidade: "", uf: "", observacoes: "", status: "ATIVA" as string });
 
   const load = () => listarAssistenciasTerceirizadas().then(setLista);
   useEffect(() => { load(); }, []);
