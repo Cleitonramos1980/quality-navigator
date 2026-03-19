@@ -37,4 +37,5 @@ export const createInspecaoMola = (data: Omit<InspecaoMola, "id">) => apiPost<In
 export const listSetoresInspecao = () => apiGet<string[]>("/inspecoes/setores");
 
 // Usuário-Setor mapping
-export const listUsuarioSetores = (userId: string) => apiGet<string[]>(`/inspecoes/usuario-setor/${userId}`);
+export const listUsuarioSetores = (userId: string, perfil?: string) =>
+  apiGet<string[]>(`/inspecoes/usuario-setor/${userId}${perfil ? `?perfil=${encodeURIComponent(perfil)}` : ""}`);

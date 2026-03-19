@@ -10,7 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { listModelosInspecao, listTiposNCInspecao, createExecucaoInspecao } from "@/services/inspecoes";
 import type { ModeloInspecao, TipoNCInspecao, InspecaoItemStatus, ExecucaoInspecaoItem } from "@/types/inspecoes";
 import { SETORES_INSPECAO } from "@/types/inspecoes";
-import { getCurrentUserName, getCurrentPerfil } from "@/lib/rbac";
+import { getCurrentUserName } from "@/lib/rbac";
+import { useSetoresPermitidos } from "@/hooks/useSetoresPermitidos";
 import { cn } from "@/lib/utils";
 
 const statusOptions: { value: InspecaoItemStatus; label: string; icon: any; color: string }[] = [
@@ -19,26 +20,6 @@ const statusOptions: { value: InspecaoItemStatus; label: string; icon: any; colo
   { value: "NAO_APLICA", label: "N/A", icon: MinusCircle, color: "text-muted-foreground border-border bg-muted/30" },
 ];
 
-// Sector permissions by profile (legacy-compatible with real sectors)
-const SETOR_PERMITIDO: Record<string, string[] | "ALL"> = {
-  ADMIN: "ALL",
-  DIRETORIA: "ALL",
-  QUALIDADE: "ALL",
-  SAC: ["ALMOXARIFADO", "EMBALAGEM", "EMBALAGEM DE BASE"],
-  ASSISTENCIA: ["FECHAMENTO", "ESTOFAMENTO", "TAPEÇARIA", "EMBALAGEM"],
-  TECNICO: ["ESPUMAÇÃO", "ÁREA DE CURA", "FLOCADEIRA", "LAMINAÇÃO", "MOLA", "BORDADEIRA", "CORTE E COSTURA", "MARCENARIA", "TAPEÇARIA", "FECHAMENTO", "ESTOFAMENTO"],
-  ALMOX: ["ALMOXARIFADO"],
-  AUDITOR: "ALL",
-  VALIDACAO: "ALL",
-  INSPECAO: "ALL",
-};
-
-export function getSetoresPermitidos(): string[] {
-  const perfil = getCurrentPerfil();
-  const regra = SETOR_PERMITIDO[perfil];
-  if (regra === "ALL") return [...SETORES_INSPECAO];
-  return regra ?? [...SETORES_INSPECAO];
-}
 
 interface RespostaItem {
   resultado: InspecaoItemStatus;
@@ -57,21 +38,22 @@ const NovaExecucaoPage = () => {
   const [respostas, setRespostas] = useState<Record<string, RespostaItem>>({});
   const [saving, setSaving] = useState(false);
 
-  const setoresPermitidos = getSetoresPermitidos();
+  const { setoresPermitidos, loading: loadingSetores } = useSetoresPermitidos();
   const modelo = modelos.find((m) => m.id === selectedModeloId);
 
   useEffect(() => {
+    if (loadingSetores) return;
     void (async () => {
       try {
         const [m, t] = await Promise.all([listModelosInspecao(), listTiposNCInspecao()]);
-        // Filter models by allowed sectors
+        // Filter models by allowed sectors from backend
         setModelos(m.filter((mod) => mod.ativo && setoresPermitidos.includes(mod.setor)));
         setTiposNc(t.filter((tn) => tn.ativo));
       } catch (e) {
         toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha ao carregar dados", variant: "destructive" });
       }
     })();
-  }, []);
+  }, [loadingSetores, setoresPermitidos]);
 
   useEffect(() => {
     if (modelo) {

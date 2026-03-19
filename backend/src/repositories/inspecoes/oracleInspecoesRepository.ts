@@ -41,17 +41,47 @@ export async function listUsuarioSetor(): Promise<any[]> {
   return rows.map((r) => ({ id: r.ID, userId: r.USER_ID, setor: (r as any).SETOR }));
 }
 
-export async function getSetoresByUserId(userId: string): Promise<string[]> {
+// Profile-based sector rules (server-side source of truth)
+const PERFIL_SETOR_RULES: Record<string, string[] | "ALL"> = {
+  ADMIN: "ALL",
+  DIRETORIA: "ALL",
+  QUALIDADE: "ALL",
+  SAC: ["ALMOXARIFADO", "EMBALAGEM", "EMBALAGEM DE BASE"],
+  ASSISTENCIA: ["FECHAMENTO", "ESTOFAMENTO", "TAPEÇARIA", "EMBALAGEM"],
+  TECNICO: ["ESPUMAÇÃO", "ÁREA DE CURA", "FLOCADEIRA", "LAMINAÇÃO", "MOLA", "BORDADEIRA", "CORTE E COSTURA", "MARCENARIA", "TAPEÇARIA", "FECHAMENTO", "ESTOFAMENTO"],
+  ALMOX: ["ALMOXARIFADO"],
+  AUDITOR: "ALL",
+  VALIDACAO: "ALL",
+  INSPECAO: "ALL",
+};
+
+export async function getSetoresByUserId(userId: string, perfil?: string): Promise<string[]> {
+  // 1. Try explicit user-sector mappings first
+  let mapped: string[] = [];
   if (!isOracleEnabled()) {
-    return db.inspecoesUsuarioSetor
+    mapped = db.inspecoesUsuarioSetor
       .filter((us: any) => us.userId === userId)
       .map((us: any) => us.setor);
+  } else {
+    const rows = await queryRows<{ NOME: string }>(
+      `SELECT s.NOME FROM INS_USUARIO_SETOR us JOIN INS_SETOR s ON us.SETOR_ID = s.ID WHERE us.USER_ID = :userId`,
+      { userId },
+    );
+    mapped = rows.map((r) => r.NOME);
   }
-  const rows = await queryRows<{ NOME: string }>(
-    `SELECT s.NOME FROM INS_USUARIO_SETOR us JOIN INS_SETOR s ON us.SETOR_ID = s.ID WHERE us.USER_ID = :userId`,
-    { userId },
-  );
-  return rows.map((r) => r.NOME);
+
+  // 2. If explicit mappings exist, use them
+  if (mapped.length > 0) return mapped;
+
+  // 3. Fallback: profile-based rules (server-side SETOR_PERMITIDO)
+  if (perfil) {
+    const rule = PERFIL_SETOR_RULES[perfil.toUpperCase()];
+    if (rule === "ALL") return listSetores();
+    if (rule) return rule;
+  }
+
+  // 4. No profile provided and no mappings → return all sectors
+  return listSetores();
 }
 
 export async function addUsuarioSetor(data: any): Promise<any> {
