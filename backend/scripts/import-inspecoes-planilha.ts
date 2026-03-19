@@ -286,14 +286,13 @@ for (const [setor, items] of bySetor) {
       if (isNaN(ordem)) ordem = idx + 1;
     }
 
-    // Metadata fallback rules:
-    // - obrigatorio: use spreadsheet value if present; default TRUE (quality inspection items are obligatory)
-    // - exigeTipoNc: always TRUE (when NC, type classification is needed)
-    // - exigeEvidencia: default FALSE (not all NC items require photographic evidence;
-    //   evidence is optional unless explicitly marked in the spreadsheet)
+    // Metadata fallback rules (use spreadsheet value when present, else fallback):
+    // - obrigatorio: default TRUE (quality inspection items are obligatory)
+    // - exigeTipoNc: default TRUE (NC type classification is standard)
+    // - exigeEvidencia: default FALSE (evidence is optional, not mandatory)
     const obrigatorio = ci.obrigatorio !== null ? ci.obrigatorio : true;
-    const exigeTipoNc = true;
-    const exigeEvidencia = false; // Default: evidence is optional, not mandatory
+    const exigeTipoNc = ci.exigeTipoNc !== null ? ci.exigeTipoNc : true;
+    const exigeEvidencia = ci.exigeEvidencia !== null ? ci.exigeEvidencia : false;
 
     return {
       id: `ITEM-${String(++itemCounter).padStart(4, "0")}`,
