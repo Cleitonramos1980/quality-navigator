@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { listUsuarioSetores, listSetoresInspecao } from "@/services/inspecoes";
-import { getCurrentPerfil, type PerfilNome } from "@/lib/rbac";
-import { SETORES_INSPECAO } from "@/types/inspecoes";
+import { listUsuarioSetores } from "@/services/inspecoes";
+import { getCurrentPerfil } from "@/lib/rbac";
 
 /**
- * Fetches allowed sectors from the backend for the current user/profile.
- * Falls back to SETORES_INSPECAO only if the API call fails entirely.
+ * Fetches allowed sectors exclusively from the backend (INS_USUARIO_SETOR).
+ * No local fallback — the backend/database is the single source of truth.
  */
 export function useSetoresPermitidos(userId?: string) {
   const [setores, setSetores] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -19,10 +19,16 @@ export function useSetoresPermitidos(userId?: string) {
     (async () => {
       try {
         const result = await listUsuarioSetores(uid, perfil);
-        if (!cancelled) setSetores(result);
-      } catch {
-        // API unavailable — local fallback
-        if (!cancelled) setSetores([...SETORES_INSPECAO]);
+        if (!cancelled) {
+          setSetores(result);
+          setError(null);
+        }
+      } catch (err) {
+        // API unavailable — return empty (safe default), surface error
+        if (!cancelled) {
+          setSetores([]);
+          setError("Não foi possível carregar os setores permitidos.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -31,5 +37,5 @@ export function useSetoresPermitidos(userId?: string) {
     return () => { cancelled = true; };
   }, [userId]);
 
-  return { setoresPermitidos: setores, loading };
+  return { setoresPermitidos: setores, loading, error };
 }

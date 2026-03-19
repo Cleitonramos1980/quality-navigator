@@ -41,47 +41,24 @@ export async function listUsuarioSetor(): Promise<any[]> {
   return rows.map((r) => ({ id: r.ID, userId: r.USER_ID, setor: (r as any).SETOR }));
 }
 
-// Profile-based sector rules (server-side source of truth)
-const PERFIL_SETOR_RULES: Record<string, string[] | "ALL"> = {
-  ADMIN: "ALL",
-  DIRETORIA: "ALL",
-  QUALIDADE: "ALL",
-  SAC: ["ALMOXARIFADO", "EMBALAGEM", "EMBALAGEM DE BASE"],
-  ASSISTENCIA: ["FECHAMENTO", "ESTOFAMENTO", "TAPEÇARIA", "EMBALAGEM"],
-  TECNICO: ["ESPUMAÇÃO", "ÁREA DE CURA", "FLOCADEIRA", "LAMINAÇÃO", "MOLA", "BORDADEIRA", "CORTE E COSTURA", "MARCENARIA", "TAPEÇARIA", "FECHAMENTO", "ESTOFAMENTO"],
-  ALMOX: ["ALMOXARIFADO"],
-  AUDITOR: "ALL",
-  VALIDACAO: "ALL",
-  INSPECAO: "ALL",
-};
-
-export async function getSetoresByUserId(userId: string, perfil?: string): Promise<string[]> {
-  // 1. Try explicit user-sector mappings first
-  let mapped: string[] = [];
+/**
+ * Returns sectors allowed for a user based exclusively on INS_USUARIO_SETOR.
+ * No hardcoded profile-based fallback — the database is the single source of truth.
+ * If no explicit mapping exists, returns an empty list (safe default).
+ * Admins/new users must be configured via INS_USUARIO_SETOR (import or admin UI).
+ */
+export async function getSetoresByUserId(userId: string, _perfil?: string): Promise<string[]> {
   if (!isOracleEnabled()) {
-    mapped = db.inspecoesUsuarioSetor
+    return db.inspecoesUsuarioSetor
       .filter((us: any) => us.userId === userId)
       .map((us: any) => us.setor);
-  } else {
-    const rows = await queryRows<{ NOME: string }>(
-      `SELECT s.NOME FROM INS_USUARIO_SETOR us JOIN INS_SETOR s ON us.SETOR_ID = s.ID WHERE us.USER_ID = :userId`,
-      { userId },
-    );
-    mapped = rows.map((r) => r.NOME);
   }
 
-  // 2. If explicit mappings exist, use them
-  if (mapped.length > 0) return mapped;
-
-  // 3. Fallback: profile-based rules (server-side SETOR_PERMITIDO)
-  if (perfil) {
-    const rule = PERFIL_SETOR_RULES[perfil.toUpperCase()];
-    if (rule === "ALL") return listSetores();
-    if (rule) return rule;
-  }
-
-  // 4. No profile provided and no mappings → return all sectors
-  return listSetores();
+  const rows = await queryRows<{ NOME: string }>(
+    `SELECT s.NOME FROM INS_USUARIO_SETOR us JOIN INS_SETOR s ON us.SETOR_ID = s.ID WHERE us.USER_ID = :userId`,
+    { userId },
+  );
+  return rows.map((r) => r.NOME);
 }
 
 export async function addUsuarioSetor(data: any): Promise<any> {
