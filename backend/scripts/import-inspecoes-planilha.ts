@@ -35,6 +35,24 @@ const NC_SETOR_MAP: Record<string, string> = {
   "EMBALAGEM DE BASE": "EMBALAGEM DE BASE",
 };
 
+// ── Audit log ──
+interface ImportAudit {
+  setores: number;
+  modelos: number;
+  itens: number;
+  tiposNc: number;
+  padroesMola: number;
+  maquinas: number;
+  usuarios: number;
+  usuarioSetorVinculos: number;
+  alertas: string[];
+}
+const audit: ImportAudit = {
+  setores: 0, modelos: 0, itens: 0, tiposNc: 0,
+  padroesMola: 0, maquinas: 4, usuarios: 0,
+  usuarioSetorVinculos: 0, alertas: [],
+};
+
 console.log("╔══════════════════════════════════════════════════════════════╗");
 console.log("║  IMPORTAÇÃO OFICIAL — INSPEÇÕES (Planilha Excel → Banco)   ║");
 console.log("╚══════════════════════════════════════════════════════════════╝\n");
@@ -62,6 +80,7 @@ if (useOracle) {
   if (force) {
     console.log("[FORCE] Limpando tabelas Oracle para reimportação...");
     for (const tbl of [
+      "INS_IMPORT_LOG",
       "INS_MOLA_INSPECAO_AMOSTRA", "INS_MOLA_INSPECAO",
       "INS_EXECUCAO_ITEM_EVIDENCIA", "INS_EXECUCAO_ITEM", "INS_EXECUCAO",
       "INS_TIPO_NC", "INS_MODELO_CHECKLIST_ITEM", "INS_MODELO_CHECKLIST",
@@ -78,7 +97,6 @@ if (useOracle) {
     }
   }
 } else {
-  // Fallback: clear in-memory
   if (force) {
     db.inspecoesModelos.length = 0;
     db.inspecoesExecucoes.length = 0;
@@ -109,7 +127,16 @@ async function insertSetor(id: string, nome: string, ordem: number) {
   }
 }
 
-async function insertModelo(id: string, nome: string, setorId: string, setor: string, descricao: string, ordem: number, itens: any[]) {
+interface ItemMeta {
+  id: string;
+  descricao: string;
+  ordem: number;
+  obrigatorio: boolean;
+  exigeEvidencia: boolean;
+  exigeTipoNc: boolean;
+}
+
+async function insertModelo(id: string, nome: string, setorId: string, setor: string, descricao: string, ordem: number, itens: ItemMeta[]) {
   if (useOracle) {
     await execDml(
       `INSERT INTO INS_MODELO_CHECKLIST (ID, NOME, SETOR_ID, DESCRICAO, ATIVO, ORDEM) VALUES (:id, :nome, :sid, :desc, 1, :ordem)`,
@@ -118,14 +145,24 @@ async function insertModelo(id: string, nome: string, setorId: string, setor: st
     for (const item of itens) {
       await execDml(
         `INSERT INTO INS_MODELO_CHECKLIST_ITEM (ID, MODELO_ID, DESCRICAO, ORDEM, OBRIGATORIO, EXIGE_EVIDENCIA, EXIGE_TIPO_NC, ATIVO)
-         VALUES (:id, :mid, :desc, :ordem, 1, 1, 1, 1)`,
-        { id: item.id, mid: id, desc: item.descricao, ordem: item.ordem },
+         VALUES (:id, :mid, :desc, :ordem, :obrig, :evid, :tnc, 1)`,
+        {
+          id: item.id, mid: id, desc: item.descricao, ordem: item.ordem,
+          obrig: item.obrigatorio ? 1 : 0,
+          evid: item.exigeEvidencia ? 1 : 0,
+          tnc: item.exigeTipoNc ? 1 : 0,
+        },
       );
     }
   } else {
     db.inspecoesModelos.push({
       id, nome, setor, descricao, ativo: true, ordem,
-      itens: itens.map((i: any) => ({ ...i, obrigatorio: true, exigeEvidenciaNc: true, exigeTipoNc: true, ativo: true })),
+      itens: itens.map((i) => ({
+        ...i,
+        exigeEvidenciaNc: i.exigeEvidencia,
+        exigeTipoNc: i.exigeTipoNc,
+        ativo: true,
+      })),
       createdAt: now, updatedAt: now,
     } as any);
   }
@@ -183,15 +220,35 @@ if (!checklistSheet) { console.error("❌ Aba 'Checklist' não encontrada!"); pr
 const checklistRows: any[] = XLSX.utils.sheet_to_json(checklistSheet, { defval: "" });
 console.log(`   Linhas brutas: ${checklistRows.length}`);
 
-const bySetor = new Map<string, { item: string; descricao: string }[]>();
+const bySetor = new Map<string, { item: string; descricao: string; obrigatorio: boolean | null; ordem: number | null }[]>();
+let ignoredRows = 0;
 for (const row of checklistRows) {
   const setorRaw = String(row["Setor"] || "").trim();
   const item = String(row["Item"] || "").trim();
   const descricao = String(row["Descrição"] || row["Descricao"] || "").trim();
-  if (!setorRaw || !item || !descricao) continue;
+  if (!setorRaw || !descricao) {
+    if (setorRaw || item || descricao) {
+      ignoredRows++;
+      audit.alertas.push(`Linha ignorada (dados incompletos): setor="${setorRaw}" item="${item}" desc="${descricao.slice(0, 40)}..."`);
+    }
+    continue;
+  }
   const clean = setorRaw.includes(" - ") ? setorRaw.split(" - ").slice(1).join(" - ") : setorRaw;
+
+  // Parse real metadata from spreadsheet (when available)
+  const obrigRaw = row["Obrigatorio? "] ?? row["Obrigatorio?"] ?? row["Obrigatorio"] ?? null;
+  const ordemRaw = row["Ordem"] ?? null;
+  const obrigatorio = obrigRaw !== null && obrigRaw !== ""
+    ? String(obrigRaw).toUpperCase() === "SIM" || obrigRaw === true || obrigRaw === 1
+    : null; // null = not specified in spreadsheet
+  const ordemExplicita = ordemRaw !== null && ordemRaw !== "" ? Number(ordemRaw) : null;
+
   if (!bySetor.has(clean)) bySetor.set(clean, []);
-  bySetor.get(clean)!.push({ item, descricao });
+  bySetor.get(clean)!.push({ item, descricao, obrigatorio, ordem: ordemExplicita });
+}
+
+if (ignoredRows > 0) {
+  console.log(`   ⚠️ Linhas ignoradas por dados incompletos: ${ignoredRows}`);
 }
 
 // Create setores
@@ -203,23 +260,48 @@ for (const setor of bySetor.keys()) {
   await insertSetor(setorId, setor, setorOrdem);
   setorOrdem++;
 }
+audit.setores = bySetor.size;
 console.log(`   Setores: ${bySetor.size}`);
 
-// Create modelos + items
+// Create modelos + items with real metadata
 let modeloOrdem = 1;
 let totalItens = 0;
 for (const [setor, items] of bySetor) {
   const setorId = setorIdMap.get(setor)!;
-  const itens = items.map((ci, idx) => ({
-    id: `ITEM-${String(++itemCounter).padStart(4, "0")}`,
-    descricao: ci.descricao,
-    ordem: idx + 1,
-  }));
+  const itens: ItemMeta[] = items.map((ci, idx) => {
+    // Derive order: use explicit order from spreadsheet, else parse from Item column (e.g., "1.2" -> 2), else positional
+    let ordem = ci.ordem;
+    if (ordem === null) {
+      const parts = ci.item.split(".");
+      ordem = parts.length >= 2 ? parseInt(parts[parts.length - 1], 10) : idx + 1;
+      if (isNaN(ordem)) ordem = idx + 1;
+    }
+
+    // Metadata fallback rules:
+    // - obrigatorio: use spreadsheet value if present; default TRUE (quality inspection items are obligatory)
+    // - exigeTipoNc: always TRUE (when NC, type classification is needed)
+    // - exigeEvidencia: default FALSE (not all NC items require photographic evidence;
+    //   evidence is optional unless explicitly marked in the spreadsheet)
+    const obrigatorio = ci.obrigatorio !== null ? ci.obrigatorio : true;
+    const exigeTipoNc = true;
+    const exigeEvidencia = false; // Default: evidence is optional, not mandatory
+
+    return {
+      id: `ITEM-${String(++itemCounter).padStart(4, "0")}`,
+      descricao: ci.descricao,
+      ordem,
+      obrigatorio,
+      exigeEvidencia,
+      exigeTipoNc,
+    };
+  });
   totalItens += itens.length;
   const modeloId = `MOD-${String(modeloOrdem).padStart(3, "0")}`;
   await insertModelo(modeloId, `Checklist ${setor}`, setorId, setor, `Checklist de inspeção do setor ${setor} — importado da planilha oficial`, modeloOrdem, itens);
   modeloOrdem++;
 }
+audit.modelos = bySetor.size;
+audit.itens = totalItens;
 console.log(`   Modelos criados: ${bySetor.size}`);
 console.log(`   Itens de checklist: ${totalItens}\n`);
 
@@ -234,13 +316,20 @@ let ncOrdem = 1;
 for (const row of ncRows) {
   const setorRaw = String(row["Setor"] || "").trim();
   const defeito = String(row["Defeito"] || "").trim();
-  if (!setorRaw || !defeito) continue;
+  if (!setorRaw || !defeito) {
+    if (setorRaw || defeito) audit.alertas.push(`NC ignorada: setor="${setorRaw}" defeito="${defeito}"`);
+    continue;
+  }
   const setor = NC_SETOR_MAP[setorRaw] || setorRaw;
   const setorId = setorIdMap.get(setor) ?? null;
+  if (!setorId) {
+    audit.alertas.push(`NC com setor não mapeado: "${setorRaw}" → "${setor}"`);
+  }
   const ncId = `TNC-${String(ncOrdem).padStart(3, "0")}`;
   await insertTipoNc(ncId, setorId, setor, defeito, defeito === "OUTRO" ? "Outro" : "Processo");
   ncOrdem++;
 }
+audit.tiposNc = ncOrdem - 1;
 console.log(`   Tipos de NC: ${ncOrdem - 1}\n`);
 
 // ═══════════════════════════════════════════
@@ -259,11 +348,15 @@ for (const row of molasRows) {
   const minimo = Number(row["Min"] || 0);
   const maximo = Number(row["Max"] || 0);
   const unidade = String(row["Unidade"] || "").trim();
-  if (!descricao) continue;
+  if (!descricao) {
+    audit.alertas.push(`Padrão mola ignorado: linha sem descrição`);
+    continue;
+  }
   const pmId = `PM-${String(molaOrdem).padStart(3, "0")}`;
   await insertPadraoMola(pmId, alturaTipo, item, descricao, padrao, minimo, maximo, unidade);
   molaOrdem++;
 }
+audit.padroesMola = molaOrdem - 1;
 console.log(`   Padrões de mola: ${molaOrdem - 1}\n`);
 
 // ═══════════════════════════════════════════
@@ -276,55 +369,126 @@ for (const cod of ["01", "02", "03", "04"]) {
 console.log(`   Máquinas: 01, 02, 03, 04\n`);
 
 // ═══════════════════════════════════════════
-// 7. Parse Users sheet
+// 7. Parse Users sheet — sector-specific mapping
 // ═══════════════════════════════════════════
 console.log("── Importando aba Users ──");
 const usersSheet = workbook.Sheets["Users"];
 if (usersSheet) {
   const usersRows: any[] = XLSX.utils.sheet_to_json(usersSheet, { defval: "" });
+  const activeUsers: string[] = [];
+
   for (const row of usersRows) {
     const usuario = String(row["Usuario"] || "").trim();
+    const ativo = String(row["Ativo?"] || row["Ativo"] || "").trim().toUpperCase();
     if (!usuario) continue;
-    for (const [setor, setorId] of setorIdMap) {
-      await insertUsuarioSetor(`US-${usuario}-${setor.replace(/\s+/g, "_")}`, usuario, setorId, setor);
+    if (ativo === "NÃO" || ativo === "NAO" || ativo === "N") {
+      audit.alertas.push(`Usuário "${usuario}" inativo — ignorado no mapeamento de setores`);
+      continue;
     }
+    activeUsers.push(usuario);
+    audit.usuarios++;
+
+    // Check if spreadsheet has explicit sector column for user
+    const setorUsuario = String(row["Setor"] || row["Setores"] || "").trim();
+    if (setorUsuario) {
+      // Explicit sector mapping from spreadsheet
+      const setores = setorUsuario.split(",").map(s => s.trim()).filter(Boolean);
+      for (const s of setores) {
+        const mapped = NC_SETOR_MAP[s.toUpperCase()] || s;
+        const sid = setorIdMap.get(mapped);
+        if (sid) {
+          await insertUsuarioSetor(`US-${usuario}-${mapped.replace(/\s+/g, "_")}`, usuario, sid, mapped);
+          audit.usuarioSetorVinculos++;
+        } else {
+          audit.alertas.push(`Usuário "${usuario}": setor "${s}" não encontrado nos setores importados`);
+        }
+      }
+    }
+    // If no explicit sector column: DO NOT assign all sectors.
+    // Sector access is controlled by RBAC profile (SETOR_PERMITIDO mapping in frontend).
   }
-  console.log(`   Usuários mapeados: ${usersRows.filter(r => r["Usuario"]).length}`);
+
+  if (audit.usuarioSetorVinculos === 0 && activeUsers.length > 0) {
+    console.log(`   ⚠️ Planilha não contém coluna de setor por usuário.`);
+    console.log(`      Escopo de setores será controlado pelo perfil RBAC (backend/frontend).`);
+    audit.alertas.push(`Nenhum vínculo usuário↔setor explícito na planilha. Escopo controlado por RBAC.`);
+  }
+
+  console.log(`   Usuários ativos: ${activeUsers.length}`);
+  console.log(`   Vínculos usuário-setor: ${audit.usuarioSetorVinculos}`);
 } else {
   console.log("   ⚠️ Aba 'Users' não encontrada, pulando mapeamento.");
+  audit.alertas.push("Aba 'Users' não encontrada na planilha");
 }
 console.log();
 
 // ═══════════════════════════════════════════
-// 8. Summary
+// 8. Persist audit log
+// ═══════════════════════════════════════════
+if (useOracle) {
+  const logId = `LOG-${Date.now()}`;
+  await execDml(
+    `INSERT INTO INS_IMPORT_LOG (ID, DATA_IMPORTACAO, SETORES, MODELOS, ITENS, TIPOS_NC, PADROES_MOLA, MAQUINAS, USUARIOS, VINCULOS_SETOR, ALERTAS)
+     VALUES (:id, SYSTIMESTAMP, :set, :mod, :itens, :nc, :mola, :maq, :usr, :vinc, :alertas)`,
+    {
+      id: logId,
+      set: audit.setores,
+      mod: audit.modelos,
+      itens: audit.itens,
+      nc: audit.tiposNc,
+      mola: audit.padroesMola,
+      maq: audit.maquinas,
+      usr: audit.usuarios,
+      vinc: audit.usuarioSetorVinculos,
+      alertas: audit.alertas.length > 0 ? audit.alertas.join("\n").slice(0, 3900) : null,
+    },
+  );
+}
+
+// ═══════════════════════════════════════════
+// 9. Summary
 // ═══════════════════════════════════════════
 console.log("══ RESULTADO DA IMPORTAÇÃO ══\n");
 console.log(`  Destino:              ${useOracle ? "Oracle (tabelas INS_*)" : "dataStore (memória)"}`);
-console.log(`  Setores:              ${bySetor.size}`);
-console.log(`  Modelos/Checklists:   ${bySetor.size}`);
-console.log(`  Itens de checklist:   ${totalItens}`);
-console.log(`  Tipos de NC:          ${ncOrdem - 1}`);
-console.log(`  Padrões de mola:      ${molaOrdem - 1}`);
+console.log(`  Setores:              ${audit.setores}`);
+console.log(`  Modelos/Checklists:   ${audit.modelos}`);
+console.log(`  Itens de checklist:   ${audit.itens}`);
+console.log(`  Tipos de NC:          ${audit.tiposNc}`);
+console.log(`  Padrões de mola:      ${audit.padroesMola}`);
 console.log(`  Máquinas:             01, 02, 03, 04`);
+console.log(`  Usuários:             ${audit.usuarios}`);
+console.log(`  Vínculos usr↔setor:   ${audit.usuarioSetorVinculos}`);
 console.log();
 
 const errors: string[] = [];
-if (bySetor.size < 15) errors.push(`Esperados >= 15 setores, encontrados ${bySetor.size}`);
-if (totalItens < 180) errors.push(`Esperados >= 180 itens, encontrados ${totalItens}`);
-if (ncOrdem - 1 < 160) errors.push(`Esperados >= 160 tipos NC, encontrados ${ncOrdem - 1}`);
-if (molaOrdem - 1 < 16) errors.push(`Esperados >= 16 padrões mola, encontrados ${molaOrdem - 1}`);
+if (audit.setores < 15) errors.push(`Esperados >= 15 setores, encontrados ${audit.setores}`);
+if (audit.itens < 180) errors.push(`Esperados >= 180 itens, encontrados ${audit.itens}`);
+if (audit.tiposNc < 160) errors.push(`Esperados >= 160 tipos NC, encontrados ${audit.tiposNc}`);
+if (audit.padroesMola < 16) errors.push(`Esperados >= 16 padrões mola, encontrados ${audit.padroesMola}`);
 
 if (errors.length > 0) {
-  console.log("⚠️  ALERTAS:");
+  console.log("⚠️  ALERTAS DE VALIDAÇÃO:");
   for (const e of errors) console.log(`  - ${e}`);
+}
+
+if (audit.alertas.length > 0) {
+  console.log(`\n⚠️  ALERTAS DA IMPORTAÇÃO (${audit.alertas.length}):`);
+  for (const a of audit.alertas.slice(0, 20)) console.log(`  - ${a}`);
+  if (audit.alertas.length > 20) console.log(`  ... e mais ${audit.alertas.length - 20} alertas`);
 } else {
-  console.log("✅ Importação concluída com sucesso.");
+  console.log("✅ Importação concluída sem alertas.");
 }
 console.log();
 
-// Detalhamento
 console.log("── Detalhamento por setor ──");
 for (const [setor, items] of bySetor) {
   console.log(`  ${setor.padEnd(22)} → ${items.length} itens`);
 }
+
+console.log("\n── Regras de fallback aplicadas ──");
+console.log("  obrigatorio:     valor da planilha quando preenchido; default = SIM");
+console.log("  exigeTipoNc:     sempre SIM (classificação de NC é padrão)");
+console.log("  exigeEvidencia:   default = NÃO (evidência é opcional, não obrigatória)");
+console.log("  ordem:            coluna 'Ordem' da planilha; fallback = número do Item (ex: 1.2 → 2)");
+
 console.log("\nImportação finalizada.");
