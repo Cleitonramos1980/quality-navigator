@@ -167,9 +167,9 @@ export const mockInspecoesMola: InspecaoMola[] = [
     resultado: "REPROVADO",
     observacaoGeral: "Altura da mola abaixo do mínimo em todas as amostras",
     medicoes: [
-      { id: "M-004", padraoId: "PM-004", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: 2.2, minimo: 2.15, maximo: 2.25, unidade: "mm", valorMedido: 2.18, conforme: true },
-      { id: "M-005", padraoId: "PM-005", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: 18.0, minimo: 17.5, maximo: 18.5, unidade: "cm", valorMedido: 17.2, conforme: false },
-      { id: "M-006", padraoId: "PM-006", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: 150, minimo: 140, maximo: 160, unidade: "N", valorMedido: 145, conforme: true },
+      { id: "M-004", padraoId: "PM-004", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: "2.2 ± 0.05", minimo: 2.15, maximo: 2.25, unidade: "mm", valorMedido: 2.18, conforme: true },
+      { id: "M-005", padraoId: "PM-005", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: "18.0 ± 0.5", minimo: 17.5, maximo: 18.5, unidade: "cm", valorMedido: 17.2, conforme: false },
+      { id: "M-006", padraoId: "PM-006", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: "150 ± 10", minimo: 140, maximo: 160, unidade: "N", valorMedido: 145, conforme: true },
     ],
   },
 ];
