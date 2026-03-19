@@ -194,6 +194,10 @@ const DigitacaoInventarioPage = () => {
     });
   }, [isRecontagem, contagemOriginal, itens]);
 
+  if (!contagem) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando contagem…</div>;
+  }
+
   const renderComparisonTable = () => (
     <div className="glass-card rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
