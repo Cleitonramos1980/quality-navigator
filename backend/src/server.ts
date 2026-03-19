@@ -33,6 +33,7 @@ import { seedInventarioData, seedOperacionalData } from "./repositories/seedData
 import { seedPhasesData } from "./repositories/seedPhases.js";
 import { seedInspecoesData } from "./repositories/seedInspecoesData.js";
 import { ensureInspecoesTables } from "./repositories/inspecoes/initTables.js";
+import { isOracleEnabled } from "./db/oracle.js";
 
 const app = Fastify({
   logger: {
