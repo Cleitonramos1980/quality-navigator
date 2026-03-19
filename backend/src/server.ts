@@ -21,6 +21,7 @@ import { inventarioRoutes } from "./routes/inventario.js";
 import { operacionalRoutes } from "./routes/operacional.js";
 import { torreAgendaCustodiaRoutes } from "./routes/torreAgendaCustodia.js";
 import { inspecoesRoutes } from "./routes/inspecoes.js";
+import { assistenciaTerceirizadaRoutes } from "./routes/assistenciaTerceirizada.js";
 import {
   initPersistentCollections,
   persistAllCollections,
