@@ -220,7 +220,7 @@ if (!checklistSheet) { console.error("❌ Aba 'Checklist' não encontrada!"); pr
 const checklistRows: any[] = XLSX.utils.sheet_to_json(checklistSheet, { defval: "" });
 console.log(`   Linhas brutas: ${checklistRows.length}`);
 
-const bySetor = new Map<string, { item: string; descricao: string; obrigatorio: boolean | null; ordem: number | null }[]>();
+const bySetor = new Map<string, { item: string; descricao: string; obrigatorio: boolean | null; ordem: number | null; exigeEvidencia: boolean | null; exigeTipoNc: boolean | null }[]>();
 let ignoredRows = 0;
 for (const row of checklistRows) {
   const setorRaw = String(row["Setor"] || "").trim();
@@ -238,13 +238,22 @@ for (const row of checklistRows) {
   // Parse real metadata from spreadsheet (when available)
   const obrigRaw = row["Obrigatorio? "] ?? row["Obrigatorio?"] ?? row["Obrigatorio"] ?? null;
   const ordemRaw = row["Ordem"] ?? null;
-  const obrigatorio = obrigRaw !== null && obrigRaw !== ""
-    ? String(obrigRaw).toUpperCase() === "SIM" || obrigRaw === true || obrigRaw === 1
-    : null; // null = not specified in spreadsheet
+  const evidRaw = row["Exige Evidencia?"] ?? row["Exige Evidencia"] ?? row["ExigeEvidencia"] ?? null;
+  const tncRaw = row["Exige Tipo NC?"] ?? row["Exige Tipo NC"] ?? row["ExigeTipoNC"] ?? null;
+
+  const parseBool = (v: unknown): boolean | null => {
+    if (v === null || v === undefined || v === "") return null;
+    const s = String(v).toUpperCase().trim();
+    return s === "SIM" || s === "S" || s === "TRUE" || s === "1" || v === true || v === 1;
+  };
+
+  const obrigatorio = parseBool(obrigRaw);
+  const exigeEvidencia = parseBool(evidRaw);
+  const exigeTipoNc = parseBool(tncRaw);
   const ordemExplicita = ordemRaw !== null && ordemRaw !== "" ? Number(ordemRaw) : null;
 
   if (!bySetor.has(clean)) bySetor.set(clean, []);
-  bySetor.get(clean)!.push({ item, descricao, obrigatorio, ordem: ordemExplicita });
+  bySetor.get(clean)!.push({ item, descricao, obrigatorio, ordem: ordemExplicita, exigeEvidencia, exigeTipoNc });
 }
 
 if (ignoredRows > 0) {
