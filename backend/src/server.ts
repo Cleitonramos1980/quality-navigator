@@ -146,6 +146,7 @@ await inventarioRoutes(app);
 await operacionalRoutes(app);
 await torreAgendaCustodiaRoutes(app);
 await inspecoesRoutes(app);
+await assistenciaTerceirizadaRoutes(app);
 
 async function start() {
   await initOraclePool();
