@@ -472,7 +472,7 @@ if (usersSheet) {
 console.log();
 
 // ═══════════════════════════════════════════
-// 8. Persist audit log
+// 9. Persist audit log
 // ═══════════════════════════════════════════
 if (useOracle) {
   const logId = `LOG-${Date.now()}`;
