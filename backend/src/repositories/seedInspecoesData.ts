@@ -493,15 +493,22 @@ export function seedInspecoesData() {
 
   let modeloOrdem = 1;
   for (const [setor, items] of bySetor) {
-    const itens = items.map((ci, idx) => ({
-      id: itemId(),
-      descricao: ci.descricao,
-      ordem: idx + 1,
-      obrigatorio: true,
-      exigeEvidenciaNc: true,
-      exigeTipoNc: true,
-      ativo: true,
-    }));
+    const itens = items.map((ci, idx) => {
+      // Derive order from Item column (e.g., "1.2" -> 2), consistent with import script
+      const parts = ci.item.split(".");
+      let ordem = parts.length >= 2 ? parseInt(parts[parts.length - 1], 10) : idx + 1;
+      if (isNaN(ordem)) ordem = idx + 1;
+
+      return {
+        id: itemId(),
+        descricao: ci.descricao,
+        ordem,
+        obrigatorio: true,       // Default: all quality items are obligatory
+        exigeEvidenciaNc: false,  // Default: evidence is optional (not mandatory for every NC)
+        exigeTipoNc: true,       // Default: NC type classification is always required
+        ativo: true,
+      };
+    });
 
     db.inspecoesModelos.push({
       id: `MOD-${String(modeloOrdem).padStart(3, "0")}`,
