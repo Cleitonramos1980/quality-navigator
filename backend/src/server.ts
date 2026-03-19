@@ -32,6 +32,7 @@ import { persistCollection } from "./repositories/persistentCollectionStore.js";
 import { seedInventarioData, seedOperacionalData } from "./repositories/seedData.js";
 import { seedPhasesData } from "./repositories/seedPhases.js";
 import { seedInspecoesData } from "./repositories/seedInspecoesData.js";
+import { ensureInspecoesTables } from "./repositories/inspecoes/initTables.js";
 
 const app = Fastify({
   logger: {
