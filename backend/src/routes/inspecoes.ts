@@ -91,7 +91,8 @@ export async function inspecoesRoutes(app: FastifyInstance) {
 
   app.get("/api/inspecoes/usuario-setor/:userId", async (req) => {
     const { userId } = z.object({ userId: z.string() }).parse(req.params);
-    return repo.getSetoresByUserId(userId);
+    const { perfil } = (req.query as any) ?? {};
+    return repo.getSetoresByUserId(userId, perfil);
   });
 
   app.post("/api/inspecoes/usuario-setor", async (req) => {
