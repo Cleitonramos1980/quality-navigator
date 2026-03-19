@@ -43,7 +43,7 @@ const CadastroAssistenciaPage = () => {
 
   const openEdit = (a: AssistenciaTerceirizada) => {
     setEditing(a);
-    setForm({ nome: a.nome, razaoSocial: a.razaoSocial || "", cnpjCpf: a.cnpjCpf || "", contatoPrincipal: a.contatoPrincipal || "", telefone: a.telefone || "", email: a.email || "", endereco: a.endereco || "", cidade: a.cidade || "", uf: a.uf || "", observacoes: a.observacoes || "", status: a.status });
+    setForm({ nome: a.nome, razaoSocial: a.razaoSocial || "", cnpjCpf: a.cnpjCpf || "", contatoPrincipal: a.contatoPrincipal || "", telefone: a.telefone || "", email: a.email || "", endereco: a.endereco || "", cidade: a.cidade || "", uf: a.uf || "", observacoes: a.observacoes || "", status: a.status as string });
     setModalOpen(true);
   };
 
