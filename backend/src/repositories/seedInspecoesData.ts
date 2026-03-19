@@ -309,6 +309,11 @@ const itensLaminacao = [
   "Verificar segregação de peças com defeito",
   "Verificar contagem de produção por turno",
   "Verificar documentação de rastreabilidade completa",
+  "Verificar afiação da lâmina secundária",
+  "Verificar sistema de aspiração de pó",
+  "Verificar condição do rolo puxador",
+  "Verificar temperatura do motor durante operação",
+  "Verificar lubrificação dos guias da máquina",
 ];
 
 const itensMola = [
