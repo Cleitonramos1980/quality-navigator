@@ -288,6 +288,14 @@ export const db = {
   agendamentoKPIs: {} as any,
   custodias: [] as any[],
   custodiaKPIs: {} as any,
+
+  // Inspeções
+  inspecoesModelos: [] as any[],
+  inspecoesExecucoes: [] as any[],
+  inspecoesTiposNc: [] as any[],
+  inspecoesPadroesMola: [] as any[],
+  inspecoesMola: [] as any[],
+  inspecoesUsuarioSetor: [] as any[],
 };
 
 export function nextId(prefix: string, currentLength: number): string {
