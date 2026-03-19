@@ -513,6 +513,13 @@ const itensCorteECostura = [
   "Verificar velocidade da máquina conforme material",
   "Verificar condição dos calcadores e chapas",
   "Verificar calibração do ajuste de ponto",
+  "Verificar temperatura ambiente da área de costura",
+  "Verificar condição do pedal da máquina",
+  "Verificar condição da bobina e carretilha",
+  "Verificar nível de óleo da máquina de costura",
+  "Verificar registro de manutenção corretiva",
+  "Verificar documentação de rastreabilidade completa",
+  "Verificar envio para próxima etapa (registro)",
 ];
 
 const itensMarcenaria = [
