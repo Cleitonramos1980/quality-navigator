@@ -38,21 +38,22 @@ const NovaExecucaoPage = () => {
   const [respostas, setRespostas] = useState<Record<string, RespostaItem>>({});
   const [saving, setSaving] = useState(false);
 
-  const setoresPermitidos = getSetoresPermitidos();
+  const { setoresPermitidos, loading: loadingSetores } = useSetoresPermitidos();
   const modelo = modelos.find((m) => m.id === selectedModeloId);
 
   useEffect(() => {
+    if (loadingSetores) return;
     void (async () => {
       try {
         const [m, t] = await Promise.all([listModelosInspecao(), listTiposNCInspecao()]);
-        // Filter models by allowed sectors
+        // Filter models by allowed sectors from backend
         setModelos(m.filter((mod) => mod.ativo && setoresPermitidos.includes(mod.setor)));
         setTiposNc(t.filter((tn) => tn.ativo));
       } catch (e) {
         toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha ao carregar dados", variant: "destructive" });
       }
     })();
-  }, []);
+  }, [loadingSetores, setoresPermitidos]);
 
   useEffect(() => {
     if (modelo) {
