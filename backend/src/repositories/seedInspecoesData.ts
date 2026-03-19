@@ -661,6 +661,11 @@ const itensTapecaria = [
   "Verificar documentação de rastreabilidade completa",
   "Verificar envio para próxima etapa (registro)",
   "Verificar condição dos moldes/gabaritos de corte",
+  "Verificar cola do tecido (aderência e secagem)",
+  "Verificar condição das tesouras industriais",
+  "Verificar acabamento das bordas grampeadas",
+  "Verificar condição da mesa de tapeçaria",
+  "Verificar posicionamento do enchimento interno",
 ];
 
 const itensFechamento = [
