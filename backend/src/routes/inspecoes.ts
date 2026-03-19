@@ -1,123 +1,104 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { randomUUID } from "node:crypto";
-import { db } from "../repositories/dataStore.js";
-import { persistCollections } from "../repositories/persistentCollectionStore.js";
-
-function nextInspecaoId(prefix: string, list: any[]) {
-  return `${prefix}-${randomUUID().slice(0, 8)}`;
-}
+import * as repo from "../repositories/inspecoesRepository.js";
 
 export async function inspecoesRoutes(app: FastifyInstance) {
   // ── Modelos ──
-  app.get("/api/inspecoes/modelos", async () => db.inspecoesModelos);
+  app.get("/api/inspecoes/modelos", async () => repo.listModelos());
+
   app.get("/api/inspecoes/modelos/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const item = db.inspecoesModelos.find((m: any) => m.id === id);
+    const item = repo.getModeloById(id);
     if (!item) return reply.status(404).send({ error: { message: "Modelo não encontrado" } });
     return item;
   });
+
   app.post("/api/inspecoes/modelos", async (req) => {
-    const data = req.body as any;
-    const item = { ...data, id: data.id ?? nextInspecaoId("MOD", db.inspecoesModelos) };
-    db.inspecoesModelos.push(item);
-    return item;
+    return repo.createModelo(req.body as any);
   });
+
   app.put("/api/inspecoes/modelos/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const idx = db.inspecoesModelos.findIndex((m: any) => m.id === id);
-    if (idx === -1) return reply.status(404).send({ error: { message: "Modelo não encontrado" } });
-    db.inspecoesModelos[idx] = { ...db.inspecoesModelos[idx], ...(req.body as any), id };
-    return db.inspecoesModelos[idx];
+    const updated = repo.updateModelo(id, req.body as any);
+    if (!updated) return reply.status(404).send({ error: { message: "Modelo não encontrado" } });
+    return updated;
   });
 
   // ── Execuções ──
-  app.get("/api/inspecoes/execucoes", async () => db.inspecoesExecucoes);
+  app.get("/api/inspecoes/execucoes", async () => repo.listExecucoes());
+
   app.get("/api/inspecoes/execucoes/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const item = db.inspecoesExecucoes.find((e: any) => e.id === id);
+    const item = repo.getExecucaoById(id);
     if (!item) return reply.status(404).send({ error: { message: "Execução não encontrada" } });
     return item;
   });
+
   app.post("/api/inspecoes/execucoes", async (req) => {
-    const data = req.body as any;
-    const item = { ...data, id: data.id ?? nextInspecaoId("EXEC", db.inspecoesExecucoes) };
-    db.inspecoesExecucoes.push(item);
-    return item;
+    return repo.createExecucao(req.body as any);
   });
 
   // ── Tipos NC ──
-  app.get("/api/inspecoes/tipos-nc", async () => db.inspecoesTiposNc);
+  app.get("/api/inspecoes/tipos-nc", async () => repo.listTiposNc());
+
   app.post("/api/inspecoes/tipos-nc", async (req) => {
-    const data = req.body as any;
-    const item = { ...data, id: data.id ?? nextInspecaoId("TNC", db.inspecoesTiposNc) };
-    db.inspecoesTiposNc.push(item);
-    return item;
+    return repo.createTipoNc(req.body as any);
   });
+
   app.put("/api/inspecoes/tipos-nc/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const idx = db.inspecoesTiposNc.findIndex((t: any) => t.id === id);
-    if (idx === -1) return reply.status(404).send({ error: { message: "Tipo NC não encontrado" } });
-    db.inspecoesTiposNc[idx] = { ...db.inspecoesTiposNc[idx], ...(req.body as any), id };
-    return db.inspecoesTiposNc[idx];
+    const updated = repo.updateTipoNc(id, req.body as any);
+    if (!updated) return reply.status(404).send({ error: { message: "Tipo NC não encontrado" } });
+    return updated;
   });
 
   // ── Padrões de Mola ──
-  app.get("/api/inspecoes/molas/padroes", async () => db.inspecoesPadroesMola);
+  app.get("/api/inspecoes/molas/padroes", async () => repo.listPadroesMola());
+
   app.post("/api/inspecoes/molas/padroes", async (req) => {
-    const data = req.body as any;
-    const item = { ...data, id: data.id ?? nextInspecaoId("PM", db.inspecoesPadroesMola) };
-    db.inspecoesPadroesMola.push(item);
-    return item;
+    return repo.createPadraoMola(req.body as any);
   });
+
   app.put("/api/inspecoes/molas/padroes/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const idx = db.inspecoesPadroesMola.findIndex((p: any) => p.id === id);
-    if (idx === -1) return reply.status(404).send({ error: { message: "Padrão não encontrado" } });
-    db.inspecoesPadroesMola[idx] = { ...db.inspecoesPadroesMola[idx], ...(req.body as any), id };
-    return db.inspecoesPadroesMola[idx];
+    const updated = repo.updatePadraoMola(id, req.body as any);
+    if (!updated) return reply.status(404).send({ error: { message: "Padrão não encontrado" } });
+    return updated;
   });
 
   // ── Inspeções de Mola ──
-  app.get("/api/inspecoes/molas", async () => db.inspecoesMola);
+  app.get("/api/inspecoes/molas", async () => repo.listInspecoesMola());
+
   app.get("/api/inspecoes/molas/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const item = db.inspecoesMola.find((m: any) => m.id === id);
+    const item = repo.getInspecaoMolaById(id);
     if (!item) return reply.status(404).send({ error: { message: "Inspeção de mola não encontrada" } });
     return item;
   });
+
   app.post("/api/inspecoes/molas", async (req) => {
-    const data = req.body as any;
-    const item = { ...data, id: data.id ?? nextInspecaoId("MOLA", db.inspecoesMola) };
-    db.inspecoesMola.push(item);
-    return item;
+    return repo.createInspecaoMola(req.body as any);
   });
 
   // ── Setores ──
-  app.get("/api/inspecoes/setores", async () => {
-    const setores = new Set<string>();
-    for (const m of db.inspecoesModelos) setores.add((m as any).setor);
-    return Array.from(setores).sort();
-  });
+  app.get("/api/inspecoes/setores", async () => repo.listSetores());
 
   // ── Usuário-Setor mapping ──
-  app.get("/api/inspecoes/usuario-setor", async () => db.inspecoesUsuarioSetor);
+  app.get("/api/inspecoes/usuario-setor", async () => repo.listUsuarioSetor());
+
   app.get("/api/inspecoes/usuario-setor/:userId", async (req) => {
     const { userId } = z.object({ userId: z.string() }).parse(req.params);
-    const mappings = db.inspecoesUsuarioSetor.filter((us: any) => us.userId === userId);
-    return mappings.map((us: any) => us.setor);
+    return repo.getSetoresByUserId(userId);
   });
+
   app.post("/api/inspecoes/usuario-setor", async (req) => {
-    const data = req.body as any;
-    const item = { ...data, id: data.id ?? nextInspecaoId("US", db.inspecoesUsuarioSetor) };
-    db.inspecoesUsuarioSetor.push(item);
-    return item;
+    return repo.addUsuarioSetor(req.body as any);
   });
+
   app.delete("/api/inspecoes/usuario-setor/:id", async (req, reply) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const idx = db.inspecoesUsuarioSetor.findIndex((us: any) => us.id === id);
-    if (idx === -1) return reply.status(404).send({ error: { message: "Mapeamento não encontrado" } });
-    db.inspecoesUsuarioSetor.splice(idx, 1);
+    const removed = repo.removeUsuarioSetor(id);
+    if (!removed) return reply.status(404).send({ error: { message: "Mapeamento não encontrado" } });
     return { ok: true };
   });
 }
