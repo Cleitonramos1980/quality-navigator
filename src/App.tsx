@@ -55,6 +55,14 @@ const EstoquePage = lazy(() => import("@/pages/assistencia/EstoquePage"));
 const NovaOSPage = lazy(() => import("@/pages/assistencia/NovaOSPage"));
 const ReceberRequisicaoPage = lazy(() => import("@/pages/assistencia/ReceberRequisicaoPage"));
 const ConsumoOSPage = lazy(() => import("@/pages/assistencia/ConsumoOSPage"));
+const TerceirizadaDashboardPage = lazy(() => import("@/pages/assistencia/terceirizada/TerceirizadaDashboardPage"));
+const CadastroAssistenciaPage = lazy(() => import("@/pages/assistencia/terceirizada/CadastroAssistenciaPage"));
+const EstoqueTerceirizadaPage = lazy(() => import("@/pages/assistencia/terceirizada/EstoqueTerceirizadaPage"));
+const MovimentacoesPage = lazy(() => import("@/pages/assistencia/terceirizada/MovimentacoesPage"));
+const EnviarParaAssistenciaPage = lazy(() => import("@/pages/assistencia/terceirizada/EnviarParaAssistenciaPage"));
+const RetornoAssistenciaPage = lazy(() => import("@/pages/assistencia/terceirizada/RetornoAssistenciaPage"));
+const AssistenciaTercDetalhePage = lazy(() => import("@/pages/assistencia/terceirizada/AssistenciaDetalhePage"));
+const ItemDetalhePage = lazy(() => import("@/pages/assistencia/terceirizada/ItemDetalhePage"));
 
 // Inventory module
 const InventarioDashboardPage = lazy(() => import("@/pages/inventario/InventarioDashboardPage"));
