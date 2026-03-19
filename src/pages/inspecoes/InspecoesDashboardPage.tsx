@@ -5,28 +5,31 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import KPICard from "@/components/KPICard";
 import SectionCard from "@/components/forms/SectionCard";
-import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/ui/use-toast";
 import { listExecucoesInspecao } from "@/services/inspecoes";
 import type { ExecucaoInspecao } from "@/types/inspecoes";
+import { useSetoresPermitidos } from "@/hooks/useSetoresPermitidos";
 
 const InspecoesDashboardPage = () => {
   const { toast } = useToast();
+  const { setoresPermitidos, loading: loadingSetores } = useSetoresPermitidos();
   const [execucoes, setExecucoes] = useState<ExecucaoInspecao[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (loadingSetores) return;
     void (async () => {
       setLoading(true);
       try {
-        setExecucoes(await listExecucoesInspecao());
+        const data = await listExecucoesInspecao();
+        setExecucoes(data.filter((execucao) => setoresPermitidos.includes(execucao.setor)));
       } catch (e) {
         toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha ao carregar", variant: "destructive" });
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [loadingSetores, setoresPermitidos, toast]);
 
   const total = execucoes.length;
   const concluidas = execucoes.filter((e) => e.status === "CONCLUIDA").length;
@@ -52,7 +55,7 @@ const InspecoesDashboardPage = () => {
             Inspeções
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Gestão de checklists operacionais, execuções e inspeções dimensionais
+            Gestão de checklists operacionais, execuções e inspeções dimensionais dentro do seu escopo
           </p>
         </div>
         <div className="flex gap-2">
@@ -89,7 +92,7 @@ const InspecoesDashboardPage = () => {
           )}
         </SectionCard>
 
-        <SectionCard title="Últimas Inspeções" description={loading ? "Carregando..." : `${ultimasInspecoes.length} mais recentes`}>
+        <SectionCard title="Últimas Inspeções" description={loading || loadingSetores ? "Carregando..." : `${ultimasInspecoes.length} mais recentes`}>
           {ultimasInspecoes.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma inspeção encontrada.</p>
           ) : (

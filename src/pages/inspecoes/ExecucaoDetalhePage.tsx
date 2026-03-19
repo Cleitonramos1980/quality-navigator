@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { getExecucaoInspecao } from "@/services/inspecoes";
 import type { ExecucaoInspecao } from "@/types/inspecoes";
 import { cn } from "@/lib/utils";
+import { useSetoresPermitidos } from "@/hooks/useSetoresPermitidos";
 
 const resultIcon = (r: string) => {
   if (r === "CONFORME") return <CheckCircle2 className="w-4 h-4 text-success" />;
@@ -18,17 +19,40 @@ const resultIcon = (r: string) => {
 const ExecucaoDetalhePage = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const { setoresPermitidos, loading: loadingSetores } = useSetoresPermitidos();
   const [exec, setExec] = useState<ExecucaoInspecao | null>(null);
+  const [foraDoEscopo, setForaDoEscopo] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || loadingSetores) return;
     void (async () => {
-      try { setExec(await getExecucaoInspecao(id)); }
-      catch { toast({ title: "Erro", description: "Inspeção não encontrada.", variant: "destructive" }); }
+      try {
+        const data = await getExecucaoInspecao(id);
+        if (!setoresPermitidos.includes(data.setor)) {
+          setForaDoEscopo(true);
+          setExec(null);
+          toast({ title: "Acesso restrito", description: "Esta inspeção está fora do seu escopo por setor.", variant: "destructive" });
+          return;
+        }
+        setForaDoEscopo(false);
+        setExec(data);
+      } catch {
+        toast({ title: "Erro", description: "Inspeção não encontrada.", variant: "destructive" });
+      }
     })();
-  }, [id]);
+  }, [id, loadingSetores, setoresPermitidos, toast]);
 
-  if (!exec) return <div className="p-8 text-center text-muted-foreground">Carregando inspeção...</div>;
+  if (loadingSetores || (!exec && !foraDoEscopo)) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando inspeção...</div>;
+  }
+
+  if (foraDoEscopo) {
+    return <div className="p-8 text-center text-muted-foreground">Esta inspeção está fora do seu escopo.</div>;
+  }
+
+  if (!exec) {
+    return <div className="p-8 text-center text-muted-foreground">Inspeção não encontrada.</div>;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
