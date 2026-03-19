@@ -55,6 +55,14 @@ const EstoquePage = lazy(() => import("@/pages/assistencia/EstoquePage"));
 const NovaOSPage = lazy(() => import("@/pages/assistencia/NovaOSPage"));
 const ReceberRequisicaoPage = lazy(() => import("@/pages/assistencia/ReceberRequisicaoPage"));
 const ConsumoOSPage = lazy(() => import("@/pages/assistencia/ConsumoOSPage"));
+const TerceirizadaDashboardPage = lazy(() => import("@/pages/assistencia/terceirizada/TerceirizadaDashboardPage"));
+const CadastroAssistenciaPage = lazy(() => import("@/pages/assistencia/terceirizada/CadastroAssistenciaPage"));
+const EstoqueTerceirizadaPage = lazy(() => import("@/pages/assistencia/terceirizada/EstoqueTerceirizadaPage"));
+const MovimentacoesPage = lazy(() => import("@/pages/assistencia/terceirizada/MovimentacoesPage"));
+const EnviarParaAssistenciaPage = lazy(() => import("@/pages/assistencia/terceirizada/EnviarParaAssistenciaPage"));
+const RetornoAssistenciaPage = lazy(() => import("@/pages/assistencia/terceirizada/RetornoAssistenciaPage"));
+const AssistenciaTercDetalhePage = lazy(() => import("@/pages/assistencia/terceirizada/AssistenciaDetalhePage"));
+const ItemDetalhePage = lazy(() => import("@/pages/assistencia/terceirizada/ItemDetalhePage"));
 
 // Inventory module
 const InventarioDashboardPage = lazy(() => import("@/pages/inventario/InventarioDashboardPage"));
@@ -206,6 +214,14 @@ const App = () => (
           <Route path="/assistencia/requisicoes/:id/receber" element={<AppLayout><RequirePermission perm="ASSIST_REQ_RECEBER"><Lazy><ReceberRequisicaoPage /></Lazy></RequirePermission></AppLayout>} />
           <Route path="/assistencia/requisicoes" element={<AppLayout><RequirePermission perm="ASSIST_REQ_VIEW"><Lazy><ReqAssistListPage /></Lazy></RequirePermission></AppLayout>} />
           <Route path="/assistencia/estoque" element={<AppLayout><RequirePermission perm="ASSIST_ESTOQUE_VIEW"><Lazy><EstoquePage /></Lazy></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/terceirizada" element={<AppLayout><Lazy><TerceirizadaDashboardPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/cadastro" element={<AppLayout><Lazy><CadastroAssistenciaPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/estoque" element={<AppLayout><Lazy><EstoqueTerceirizadaPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/movimentacoes" element={<AppLayout><Lazy><MovimentacoesPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/enviar" element={<AppLayout><Lazy><EnviarParaAssistenciaPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/retorno" element={<AppLayout><Lazy><RetornoAssistenciaPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/detalhe/:id" element={<AppLayout><Lazy><AssistenciaTercDetalhePage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/itens/:id" element={<AppLayout><Lazy><ItemDetalhePage /></Lazy></AppLayout>} />
 
           {/* Operational modules */}
           <Route path="/portaria" element={<AppLayout><Lazy><AcessosListPage /></Lazy></AppLayout>} />
