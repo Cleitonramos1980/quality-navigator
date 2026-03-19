@@ -1080,6 +1080,10 @@ const itensEmbalagemBase = [
   "Verificar pistão a gás do baú funcional",
   "Verificar acabamento interno do baú",
   "Verificar contagem de produção diária",
+  "Verificar fixação do tecido lateral da base",
+  "Verificar condição das dobradiças do baú",
+  "Verificar acabamento externo da base",
+  "Verificar conformidade do modelo com catálogo",
 ];
 
 const ITENS_POR_SETOR: Record<string, string[]> = {
