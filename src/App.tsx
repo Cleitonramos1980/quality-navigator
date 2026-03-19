@@ -214,6 +214,14 @@ const App = () => (
           <Route path="/assistencia/requisicoes/:id/receber" element={<AppLayout><RequirePermission perm="ASSIST_REQ_RECEBER"><Lazy><ReceberRequisicaoPage /></Lazy></RequirePermission></AppLayout>} />
           <Route path="/assistencia/requisicoes" element={<AppLayout><RequirePermission perm="ASSIST_REQ_VIEW"><Lazy><ReqAssistListPage /></Lazy></RequirePermission></AppLayout>} />
           <Route path="/assistencia/estoque" element={<AppLayout><RequirePermission perm="ASSIST_ESTOQUE_VIEW"><Lazy><EstoquePage /></Lazy></RequirePermission></AppLayout>} />
+          <Route path="/assistencia/terceirizada" element={<AppLayout><Lazy><TerceirizadaDashboardPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/cadastro" element={<AppLayout><Lazy><CadastroAssistenciaPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/estoque" element={<AppLayout><Lazy><EstoqueTerceirizadaPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/movimentacoes" element={<AppLayout><Lazy><MovimentacoesPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/enviar" element={<AppLayout><Lazy><EnviarParaAssistenciaPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/retorno" element={<AppLayout><Lazy><RetornoAssistenciaPage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/detalhe/:id" element={<AppLayout><Lazy><AssistenciaTercDetalhePage /></Lazy></AppLayout>} />
+          <Route path="/assistencia/terceirizada/itens/:id" element={<AppLayout><Lazy><ItemDetalhePage /></Lazy></AppLayout>} />
 
           {/* Operational modules */}
           <Route path="/portaria" element={<AppLayout><Lazy><AcessosListPage /></Lazy></AppLayout>} />
