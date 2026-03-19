@@ -33,6 +33,7 @@ import { seedInventarioData, seedOperacionalData } from "./repositories/seedData
 import { seedPhasesData } from "./repositories/seedPhases.js";
 import { seedInspecoesData } from "./repositories/seedInspecoesData.js";
 import { ensureInspecoesTables } from "./repositories/inspecoes/initTables.js";
+import { isOracleEnabled } from "./db/oracle.js";
 
 const app = Fastify({
   logger: {
@@ -154,7 +155,11 @@ async function start() {
   seedInventarioData();
   seedOperacionalData();
   seedPhasesData();
-  seedInspecoesData(); // fallback seed for local dev (only used when Oracle is not configured)
+  // Inspeções: when Oracle is enabled, data comes from real INS_* tables (imported via planilha script).
+  // Only seed in-memory fallback when Oracle is NOT available (local dev).
+  if (!isOracleEnabled()) {
+    seedInspecoesData();
+  }
 
   const seedUsers = [
     { nome: "Cleiton Ramos", email: "cleiton.ramos@hotmail.com", perfil: "ADMIN" },
