@@ -52,9 +52,20 @@ const DigitacaoInventarioPage = () => {
         motivoDivergencia: undefined,
         observacao: undefined,
       }))
-    : contagem.itens;
+    : contagem?.itens ?? [];
 
   const [itens, setItens] = useState<ItemContagem[]>(initialItens);
+
+  // Sync itens when contagem loads asynchronously
+  useEffect(() => {
+    if (!isRecontagem && contagem?.itens && itens.length === 0) {
+      setItens(contagem.itens);
+    }
+  }, [contagem]);
+
+  if (!contagem) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando contagem…</div>;
+  }
 
   const headerData = isRecontagem
     ? {
