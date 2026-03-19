@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Save, Plus, Trash2, GripVertical, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,8 @@ import SectionCard from "@/components/forms/SectionCard";
 import FormField from "@/components/forms/FormField";
 import { useToast } from "@/components/ui/use-toast";
 import { createModeloInspecao, getModeloInspecao, updateModeloInspecao } from "@/services/inspecoes";
-import { SETORES_INSPECAO } from "@/types/inspecoes";
 import type { ModeloInspecaoItem } from "@/types/inspecoes";
+import { useSetoresPermitidos } from "@/hooks/useSetoresPermitidos";
 
 const emptyItem = (): ModeloInspecaoItem => ({
   id: `ITEM-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -28,19 +28,33 @@ const ModeloFormPage = () => {
   const isEdit = !!id && id !== "novo";
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setoresPermitidos, loading: loadingSetores } = useSetoresPermitidos();
 
   const [nome, setNome] = useState("");
-  const [setor, setSetor] = useState(SETORES_INSPECAO[0] as string);
+  const [setor, setSetor] = useState("");
   const [descricao, setDescricao] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [itens, setItens] = useState<ModeloInspecaoItem[]>([emptyItem()]);
   const [saving, setSaving] = useState(false);
+
+  const setoresDisponiveis = useMemo(() => [...setoresPermitidos].sort(), [setoresPermitidos]);
+
+  useEffect(() => {
+    if (!loadingSetores && !isEdit && !setor && setoresDisponiveis.length > 0) {
+      setSetor(setoresDisponiveis[0]);
+    }
+  }, [loadingSetores, isEdit, setor, setoresDisponiveis]);
 
   useEffect(() => {
     if (isEdit) {
       void (async () => {
         try {
           const modelo = await getModeloInspecao(id!);
+          if (!loadingSetores && !setoresPermitidos.includes(modelo.setor)) {
+            toast({ title: "Acesso restrito", description: "Este modelo está fora do seu escopo por setor.", variant: "destructive" });
+            navigate("/inspecoes/modelos");
+            return;
+          }
           setNome(modelo.nome);
           setSetor(modelo.setor);
           setDescricao(modelo.descricao);
@@ -51,7 +65,7 @@ const ModeloFormPage = () => {
         }
       })();
     }
-  }, [id]);
+  }, [id, isEdit, loadingSetores, navigate, setoresPermitidos, toast]);
 
   const updateItem = (idx: number, patch: Partial<ModeloInspecaoItem>) => {
     setItens((prev) => prev.map((it, i) => i === idx ? { ...it, ...patch } : it));
@@ -66,6 +80,7 @@ const ModeloFormPage = () => {
 
   const handleSave = async () => {
     if (!nome.trim()) { toast({ title: "Campos obrigatórios", description: "Informe o nome do modelo.", variant: "destructive" }); return; }
+    if (!setor) { toast({ title: "Campos obrigatórios", description: "Selecione um setor permitido.", variant: "destructive" }); return; }
     const validItens = itens.filter((it) => it.descricao.trim());
     if (validItens.length === 0) { toast({ title: "Itens", description: "Adicione ao menos um item de inspeção.", variant: "destructive" }); return; }
     setSaving(true);
@@ -102,8 +117,9 @@ const ModeloFormPage = () => {
             <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Checklist Produção Diário" />
           </FormField>
           <FormField label="Setor" required>
-            <select value={setor} onChange={(e) => setSetor(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              {SETORES_INSPECAO.map((s) => <option key={s} value={s}>{s}</option>)}
+            <select value={setor} onChange={(e) => setSetor(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" disabled={loadingSetores || setoresDisponiveis.length === 0}>
+              <option value="">Selecione...</option>
+              {setoresDisponiveis.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </FormField>
           <div className="sm:col-span-2">
@@ -162,7 +178,7 @@ const ModeloFormPage = () => {
 
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={() => navigate("/inspecoes/modelos")}>Cancelar</Button>
-        <Button onClick={handleSave} disabled={saving} className="gap-2">
+        <Button onClick={handleSave} disabled={saving || loadingSetores} className="gap-2">
           <Save className="w-4 h-4" />{saving ? "Salvando..." : "Salvar Modelo"}
         </Button>
       </div>
