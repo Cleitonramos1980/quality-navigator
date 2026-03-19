@@ -539,5 +539,6 @@ console.log("  obrigatorio:     valor da planilha quando preenchido; default = S
 console.log("  exigeTipoNc:     valor da planilha quando preenchido; default = SIM");
 console.log("  exigeEvidencia:  valor da planilha quando preenchido; default = NÃO");
 console.log("  ordem:           coluna 'Ordem' da planilha; fallback = número do Item (ex: 1.2 → 2)");
+console.log("  usr↔setor:       minerado do histórico de execuções nas abas de setor + coluna explícita de Users");
 
 console.log("\nImportação finalizada.");
