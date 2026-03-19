@@ -10,7 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { listModelosInspecao, listTiposNCInspecao, createExecucaoInspecao } from "@/services/inspecoes";
 import type { ModeloInspecao, TipoNCInspecao, InspecaoItemStatus, ExecucaoInspecaoItem } from "@/types/inspecoes";
 import { SETORES_INSPECAO } from "@/types/inspecoes";
-import { getCurrentUserName, getCurrentPerfil } from "@/lib/rbac";
+import { getCurrentUserName } from "@/lib/rbac";
+import { useSetoresPermitidos } from "@/hooks/useSetoresPermitidos";
 import { cn } from "@/lib/utils";
 
 const statusOptions: { value: InspecaoItemStatus; label: string; icon: any; color: string }[] = [
