@@ -72,12 +72,9 @@ const COLLECTION_KEYS: DbKey[] = [
   "agendamentoKPIs",
   "custodias",
   "custodiaKPIs",
-  "inspecoesModelos",
-  "inspecoesExecucoes",
-  "inspecoesTiposNc",
-  "inspecoesPadroesMola",
-  "inspecoesMola",
-  "inspecoesUsuarioSetor",
+  // Inspeções module now uses dedicated INS_* Oracle tables.
+  // These collections are NO LONGER persisted via SGQ_COLLECTION_STORE.
+  // They remain in dataStore only as in-memory fallback for local dev.
 ];
 
 let ensured = false;

@@ -32,6 +32,7 @@ import { persistCollection } from "./repositories/persistentCollectionStore.js";
 import { seedInventarioData, seedOperacionalData } from "./repositories/seedData.js";
 import { seedPhasesData } from "./repositories/seedPhases.js";
 import { seedInspecoesData } from "./repositories/seedInspecoesData.js";
+import { ensureInspecoesTables } from "./repositories/inspecoes/initTables.js";
 
 const app = Fastify({
   logger: {
@@ -147,12 +148,13 @@ await inspecoesRoutes(app);
 async function start() {
   await initOraclePool();
   await initPersistentCollections();
+  await ensureInspecoesTables();
 
   // Seed operational and inventory data if empty
   seedInventarioData();
   seedOperacionalData();
   seedPhasesData();
-  seedInspecoesData();
+  seedInspecoesData(); // fallback seed for local dev (only used when Oracle is not configured)
 
   const seedUsers = [
     { nome: "Cleiton Ramos", email: "cleiton.ramos@hotmail.com", perfil: "ADMIN" },
