@@ -377,9 +377,49 @@ for (const cod of ["01", "02", "03", "04"]) {
 console.log(`   Máquinas: 01, 02, 03, 04\n`);
 
 // ═══════════════════════════════════════════
-// 7. Parse Users sheet — sector-specific mapping
+// 7. Mine real user→sector mappings from execution history sheets
 // ═══════════════════════════════════════════
-console.log("── Importando aba Users ──");
+console.log("── Minerando vínculos usuário↔setor do histórico real ──");
+const userSectorMap = new Map<string, Set<string>>();
+for (const sheetName of workbook.SheetNames) {
+  // Sector-specific sheets follow pattern "N.0_-_SECTOR_NAME"
+  const match = sheetName.match(/^\d+\.\d+\s*[-_]\s*/);
+  if (!match) continue;
+  const sectorSheet = workbook.Sheets[sheetName];
+  if (!sectorSheet) continue;
+  const sectorRows: any[] = XLSX.utils.sheet_to_json(sectorSheet, { defval: "" });
+  for (const row of sectorRows) {
+    const usuario = String(row["Usuario"] || "").trim();
+    const setorRaw = String(row["Setor"] || "").trim();
+    if (!usuario || !setorRaw) continue;
+    const setorClean = setorRaw.includes(" - ") ? setorRaw.split(" - ").slice(1).join(" - ") : setorRaw;
+    if (!userSectorMap.has(usuario)) userSectorMap.set(usuario, new Set());
+    userSectorMap.get(usuario)!.add(setorClean);
+  }
+}
+if (userSectorMap.size > 0) {
+  console.log(`   Usuários encontrados no histórico: ${userSectorMap.size}`);
+  for (const [user, sectors] of userSectorMap) {
+    const sectorList = Array.from(sectors);
+    console.log(`     ${user} → ${sectorList.join(", ")}`);
+    for (const setor of sectorList) {
+      const sid = setorIdMap.get(setor);
+      if (sid) {
+        await insertUsuarioSetor(`US-${user}-${setor.replace(/\s+/g, "_")}`, user, sid, setor);
+        audit.usuarioSetorVinculos++;
+      } else {
+        audit.alertas.push(`Usuário "${user}": setor "${setor}" do histórico não encontrado nos setores importados`);
+      }
+    }
+  }
+} else {
+  console.log("   ⚠️ Nenhum histórico de execução encontrado nas abas de setor.");
+}
+
+// ═══════════════════════════════════════════
+// 8. Parse Users sheet — enrich with explicit mappings
+// ═══════════════════════════════════════════
+console.log("\n── Importando aba Users ──");
 const usersSheet = workbook.Sheets["Users"];
 if (usersSheet) {
   const usersRows: any[] = XLSX.utils.sheet_to_json(usersSheet, { defval: "" });
@@ -399,31 +439,32 @@ if (usersSheet) {
     // Check if spreadsheet has explicit sector column for user
     const setorUsuario = String(row["Setor"] || row["Setores"] || "").trim();
     if (setorUsuario) {
-      // Explicit sector mapping from spreadsheet
       const setores = setorUsuario.split(",").map(s => s.trim()).filter(Boolean);
       for (const s of setores) {
         const mapped = NC_SETOR_MAP[s.toUpperCase()] || s;
         const sid = setorIdMap.get(mapped);
         if (sid) {
-          await insertUsuarioSetor(`US-${usuario}-${mapped.replace(/\s+/g, "_")}`, usuario, sid, mapped);
-          audit.usuarioSetorVinculos++;
+          // Avoid duplicates with history-mined mappings
+          const existingKey = `US-${usuario}-${mapped.replace(/\s+/g, "_")}`;
+          const alreadyMined = userSectorMap.get(usuario)?.has(mapped);
+          if (!alreadyMined) {
+            await insertUsuarioSetor(existingKey, usuario, sid, mapped);
+            audit.usuarioSetorVinculos++;
+          }
         } else {
           audit.alertas.push(`Usuário "${usuario}": setor "${s}" não encontrado nos setores importados`);
         }
       }
     }
-    // If no explicit sector column: DO NOT assign all sectors.
-    // Sector access is controlled by RBAC profile (SETOR_PERMITIDO mapping in frontend).
-  }
-
-  if (audit.usuarioSetorVinculos === 0 && activeUsers.length > 0) {
-    console.log(`   ⚠️ Planilha não contém coluna de setor por usuário.`);
-    console.log(`      Escopo de setores será controlado pelo perfil RBAC (backend/frontend).`);
-    audit.alertas.push(`Nenhum vínculo usuário↔setor explícito na planilha. Escopo controlado por RBAC.`);
+    // Users without explicit sectors AND without history: no auto-assign.
+    // Their access is controlled by RBAC profile rules on the backend.
+    if (!setorUsuario && !userSectorMap.has(usuario)) {
+      audit.alertas.push(`Usuário "${usuario}": sem setor explícito nem histórico — escopo via perfil RBAC`);
+    }
   }
 
   console.log(`   Usuários ativos: ${activeUsers.length}`);
-  console.log(`   Vínculos usuário-setor: ${audit.usuarioSetorVinculos}`);
+  console.log(`   Vínculos usuário-setor totais: ${audit.usuarioSetorVinculos}`);
 } else {
   console.log("   ⚠️ Aba 'Users' não encontrada, pulando mapeamento.");
   audit.alertas.push("Aba 'Users' não encontrada na planilha");
@@ -431,7 +472,7 @@ if (usersSheet) {
 console.log();
 
 // ═══════════════════════════════════════════
-// 8. Persist audit log
+// 9. Persist audit log
 // ═══════════════════════════════════════════
 if (useOracle) {
   const logId = `LOG-${Date.now()}`;
@@ -454,7 +495,7 @@ if (useOracle) {
 }
 
 // ═══════════════════════════════════════════
-// 9. Summary
+// 10. Summary
 // ═══════════════════════════════════════════
 console.log("══ RESULTADO DA IMPORTAÇÃO ══\n");
 console.log(`  Destino:              ${useOracle ? "Oracle (tabelas INS_*)" : "dataStore (memória)"}`);
@@ -498,5 +539,6 @@ console.log("  obrigatorio:     valor da planilha quando preenchido; default = S
 console.log("  exigeTipoNc:     valor da planilha quando preenchido; default = SIM");
 console.log("  exigeEvidencia:  valor da planilha quando preenchido; default = NÃO");
 console.log("  ordem:           coluna 'Ordem' da planilha; fallback = número do Item (ex: 1.2 → 2)");
+console.log("  usr↔setor:       minerado do histórico de execuções nas abas de setor + coluna explícita de Users");
 
 console.log("\nImportação finalizada.");
