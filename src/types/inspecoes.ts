@@ -100,7 +100,7 @@ export interface MedicaoMola {
   padraoId: string;
   item: string;
   descricao: string;
-  padrao: number;
+  padrao: string;
   minimo: number;
   maximo: number;
   unidade: string;
