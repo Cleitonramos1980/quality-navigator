@@ -495,7 +495,7 @@ if (useOracle) {
 }
 
 // ═══════════════════════════════════════════
-// 9. Summary
+// 10. Summary
 // ═══════════════════════════════════════════
 console.log("══ RESULTADO DA IMPORTAÇÃO ══\n");
 console.log(`  Destino:              ${useOracle ? "Oracle (tabelas INS_*)" : "dataStore (memória)"}`);
