@@ -148,12 +148,13 @@ await inspecoesRoutes(app);
 async function start() {
   await initOraclePool();
   await initPersistentCollections();
+  await ensureInspecoesTables();
 
   // Seed operational and inventory data if empty
   seedInventarioData();
   seedOperacionalData();
   seedPhasesData();
-  seedInspecoesData();
+  seedInspecoesData(); // fallback seed for local dev (only used when Oracle is not configured)
 
   const seedUsers = [
     { nome: "Cleiton Ramos", email: "cleiton.ramos@hotmail.com", perfil: "ADMIN" },
