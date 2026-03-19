@@ -871,6 +871,11 @@ const itensEmbalagem = [
   "Verificar qualidade da impressão nas caixas",
   "Verificar separação por modelo/destino",
   "Verificar envio para expedição (registro)",
+  "Verificar condição do compressor de ar da seladora",
+  "Verificar registro de lote na etiqueta de expedição",
+  "Verificar conferência do peso por amostragem",
+  "Verificar resistência da caixa de papelão (teste)",
+  "Verificar condição do filme de proteção UV",
 ];
 
 const itensAlmoxarifado = [
