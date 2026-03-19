@@ -292,6 +292,23 @@ const itensLaminacao = [
   "Verificar condição de armazenamento temporário",
   "Verificar ventilação adequada na área",
   "Verificar limpeza ao final do turno",
+  "Verificar condição do sistema pneumático da máquina",
+  "Verificar tensão da correia do motor",
+  "Verificar condição dos rolamentos da serra",
+  "Verificar nível de vibração da máquina",
+  "Verificar funcionamento do contador de peças",
+  "Verificar temperatura do motor da máquina",
+  "Verificar fixação da máquina ao piso",
+  "Verificar condição das conexões elétricas",
+  "Verificar sensor de segurança funcional",
+  "Verificar lubrificação dos guias lineares",
+  "Verificar condição do painel de controle",
+  "Verificar registro de troca de lâmina",
+  "Verificar treinamento do operador em dia",
+  "Verificar conformidade do lote com pedido de produção",
+  "Verificar segregação de peças com defeito",
+  "Verificar contagem de produção por turno",
+  "Verificar documentação de rastreabilidade completa",
 ];
 
 const itensMola = [
