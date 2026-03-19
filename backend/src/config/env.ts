@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3333),
-  JWT_SECRET_KEY: z.string().min(1),
+  JWT_SECRET_KEY: z.string().min(1).default("dev-secret-key-change-in-production"),
   ORACLE_USER: z.string().optional(),
   ORACLE_PASSWORD: z.string().optional(),
   ORACLE_CONNECT_STRING: z.string().optional(),
