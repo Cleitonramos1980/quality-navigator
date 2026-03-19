@@ -220,7 +220,7 @@ if (!checklistSheet) { console.error("❌ Aba 'Checklist' não encontrada!"); pr
 const checklistRows: any[] = XLSX.utils.sheet_to_json(checklistSheet, { defval: "" });
 console.log(`   Linhas brutas: ${checklistRows.length}`);
 
-const bySetor = new Map<string, { item: string; descricao: string; obrigatorio: boolean | null; ordem: number | null }[]>();
+const bySetor = new Map<string, { item: string; descricao: string; obrigatorio: boolean | null; ordem: number | null; exigeEvidencia: boolean | null; exigeTipoNc: boolean | null }[]>();
 let ignoredRows = 0;
 for (const row of checklistRows) {
   const setorRaw = String(row["Setor"] || "").trim();
@@ -238,13 +238,22 @@ for (const row of checklistRows) {
   // Parse real metadata from spreadsheet (when available)
   const obrigRaw = row["Obrigatorio? "] ?? row["Obrigatorio?"] ?? row["Obrigatorio"] ?? null;
   const ordemRaw = row["Ordem"] ?? null;
-  const obrigatorio = obrigRaw !== null && obrigRaw !== ""
-    ? String(obrigRaw).toUpperCase() === "SIM" || obrigRaw === true || obrigRaw === 1
-    : null; // null = not specified in spreadsheet
+  const evidRaw = row["Exige Evidencia?"] ?? row["Exige Evidencia"] ?? row["ExigeEvidencia"] ?? null;
+  const tncRaw = row["Exige Tipo NC?"] ?? row["Exige Tipo NC"] ?? row["ExigeTipoNC"] ?? null;
+
+  const parseBool = (v: unknown): boolean | null => {
+    if (v === null || v === undefined || v === "") return null;
+    const s = String(v).toUpperCase().trim();
+    return s === "SIM" || s === "S" || s === "TRUE" || s === "1" || v === true || v === 1;
+  };
+
+  const obrigatorio = parseBool(obrigRaw);
+  const exigeEvidencia = parseBool(evidRaw);
+  const exigeTipoNc = parseBool(tncRaw);
   const ordemExplicita = ordemRaw !== null && ordemRaw !== "" ? Number(ordemRaw) : null;
 
   if (!bySetor.has(clean)) bySetor.set(clean, []);
-  bySetor.get(clean)!.push({ item, descricao, obrigatorio, ordem: ordemExplicita });
+  bySetor.get(clean)!.push({ item, descricao, obrigatorio, ordem: ordemExplicita, exigeEvidencia, exigeTipoNc });
 }
 
 if (ignoredRows > 0) {
@@ -277,14 +286,13 @@ for (const [setor, items] of bySetor) {
       if (isNaN(ordem)) ordem = idx + 1;
     }
 
-    // Metadata fallback rules:
-    // - obrigatorio: use spreadsheet value if present; default TRUE (quality inspection items are obligatory)
-    // - exigeTipoNc: always TRUE (when NC, type classification is needed)
-    // - exigeEvidencia: default FALSE (not all NC items require photographic evidence;
-    //   evidence is optional unless explicitly marked in the spreadsheet)
+    // Metadata fallback rules (use spreadsheet value when present, else fallback):
+    // - obrigatorio: default TRUE (quality inspection items are obligatory)
+    // - exigeTipoNc: default TRUE (NC type classification is standard)
+    // - exigeEvidencia: default FALSE (evidence is optional, not mandatory)
     const obrigatorio = ci.obrigatorio !== null ? ci.obrigatorio : true;
-    const exigeTipoNc = true;
-    const exigeEvidencia = false; // Default: evidence is optional, not mandatory
+    const exigeTipoNc = ci.exigeTipoNc !== null ? ci.exigeTipoNc : true;
+    const exigeEvidencia = ci.exigeEvidencia !== null ? ci.exigeEvidencia : false;
 
     return {
       id: `ITEM-${String(++itemCounter).padStart(4, "0")}`,
@@ -487,8 +495,8 @@ for (const [setor, items] of bySetor) {
 
 console.log("\n── Regras de fallback aplicadas ──");
 console.log("  obrigatorio:     valor da planilha quando preenchido; default = SIM");
-console.log("  exigeTipoNc:     sempre SIM (classificação de NC é padrão)");
-console.log("  exigeEvidencia:   default = NÃO (evidência é opcional, não obrigatória)");
-console.log("  ordem:            coluna 'Ordem' da planilha; fallback = número do Item (ex: 1.2 → 2)");
+console.log("  exigeTipoNc:     valor da planilha quando preenchido; default = SIM");
+console.log("  exigeEvidencia:  valor da planilha quando preenchido; default = NÃO");
+console.log("  ordem:           coluna 'Ordem' da planilha; fallback = número do Item (ex: 1.2 → 2)");
 
 console.log("\nImportação finalizada.");
