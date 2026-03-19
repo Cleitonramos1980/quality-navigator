@@ -63,11 +63,7 @@ const DigitacaoInventarioPage = () => {
     }
   }, [contagem]);
 
-  if (!contagem) {
-    return <div className="p-8 text-center text-muted-foreground">Carregando contagem…</div>;
-  }
-
-  const headerData = isRecontagem
+  const headerData = isRecontagem && recontagemState
     ? {
         numero: `REC-${recontagemState.recontagemOrigem}`,
         lojaNome: recontagemState.lojaNome,
