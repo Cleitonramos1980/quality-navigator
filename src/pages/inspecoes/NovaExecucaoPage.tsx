@@ -20,26 +20,6 @@ const statusOptions: { value: InspecaoItemStatus; label: string; icon: any; colo
   { value: "NAO_APLICA", label: "N/A", icon: MinusCircle, color: "text-muted-foreground border-border bg-muted/30" },
 ];
 
-// Sector permissions by profile (legacy-compatible with real sectors)
-const SETOR_PERMITIDO: Record<string, string[] | "ALL"> = {
-  ADMIN: "ALL",
-  DIRETORIA: "ALL",
-  QUALIDADE: "ALL",
-  SAC: ["ALMOXARIFADO", "EMBALAGEM", "EMBALAGEM DE BASE"],
-  ASSISTENCIA: ["FECHAMENTO", "ESTOFAMENTO", "TAPEÇARIA", "EMBALAGEM"],
-  TECNICO: ["ESPUMAÇÃO", "ÁREA DE CURA", "FLOCADEIRA", "LAMINAÇÃO", "MOLA", "BORDADEIRA", "CORTE E COSTURA", "MARCENARIA", "TAPEÇARIA", "FECHAMENTO", "ESTOFAMENTO"],
-  ALMOX: ["ALMOXARIFADO"],
-  AUDITOR: "ALL",
-  VALIDACAO: "ALL",
-  INSPECAO: "ALL",
-};
-
-export function getSetoresPermitidos(): string[] {
-  const perfil = getCurrentPerfil();
-  const regra = SETOR_PERMITIDO[perfil];
-  if (regra === "ALL") return [...SETORES_INSPECAO];
-  return regra ?? [...SETORES_INSPECAO];
-}
 
 interface RespostaItem {
   resultado: InspecaoItemStatus;
