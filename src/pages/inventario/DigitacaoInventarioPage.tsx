@@ -52,11 +52,18 @@ const DigitacaoInventarioPage = () => {
         motivoDivergencia: undefined,
         observacao: undefined,
       }))
-    : contagem.itens;
+    : contagem?.itens ?? [];
 
   const [itens, setItens] = useState<ItemContagem[]>(initialItens);
 
-  const headerData = isRecontagem
+  // Sync itens when contagem loads asynchronously
+  useEffect(() => {
+    if (!isRecontagem && contagem?.itens && itens.length === 0) {
+      setItens(contagem.itens);
+    }
+  }, [contagem]);
+
+  const headerData = isRecontagem && recontagemState
     ? {
         numero: `REC-${recontagemState.recontagemOrigem}`,
         lojaNome: recontagemState.lojaNome,
@@ -186,6 +193,10 @@ const DigitacaoInventarioPage = () => {
       };
     });
   }, [isRecontagem, contagemOriginal, itens]);
+
+  if (!contagem) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando contagem…</div>;
+  }
 
   const renderComparisonTable = () => (
     <div className="glass-card rounded-lg overflow-hidden">
