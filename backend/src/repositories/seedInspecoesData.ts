@@ -2,6 +2,8 @@
  * Seed data for Inspeções module — real legacy data.
  * 15 sectors, ~1004 checklist items, ~167 NC types, 16 spring patterns.
  */
+import { db } from "./dataStore.js";
+import { randomUUID } from "node:crypto";
 
 // ── SETORES REAIS ──
 export const SETORES_REAIS = [
@@ -34,7 +36,6 @@ function makeItem(descricao: string, ordem: number, obrigatorio = true, exigeEvi
 }
 
 // ── ITENS DE CHECKLIST POR SETOR ──
-// Based on real mattress/furniture manufacturing quality inspection legacy
 
 const itensEspumacao = [
   "Verificar temperatura do forno de espumação",
@@ -741,7 +742,6 @@ const itensEmbalagemBase = [
   "Verificar documentação de expedição",
 ];
 
-// Map all sectors to their items
 const ITENS_POR_SETOR: Record<string, string[]> = {
   "ESPUMAÇÃO": itensEspumacao,
   "ÁREA DE CURA": itensAreaCura,
@@ -976,7 +976,6 @@ const TIPOS_NC_POR_SETOR: Record<string, { nome: string; categoria: string }[]> 
 
 // ── 16 PADRÕES REAIS DE MOLA ──
 const PADROES_MOLA_REAIS = [
-  // 8 padrões para altura/tipo 130
   { alturaTipo: "130", item: "Diâmetro do arame", descricao: "Bitola do arame de aço", padrao: 1.80, minimo: 1.75, maximo: 1.85, unidade: "mm" },
   { alturaTipo: "130", item: "Altura livre", descricao: "Altura da mola sem carga", padrao: 130, minimo: 127, maximo: 133, unidade: "mm" },
   { alturaTipo: "130", item: "Diâmetro externo", descricao: "Diâmetro externo da mola", padrao: 60, minimo: 58, maximo: 62, unidade: "mm" },
@@ -985,8 +984,6 @@ const PADROES_MOLA_REAIS = [
   { alturaTipo: "130", item: "Força 50%", descricao: "Força de compressão a 50% de deflexão", padrao: 2.80, minimo: 2.50, maximo: 3.10, unidade: "kgf" },
   { alturaTipo: "130", item: "Força 75%", descricao: "Força de compressão a 75% de deflexão", padrao: 5.50, minimo: 5.00, maximo: 6.00, unidade: "kgf" },
   { alturaTipo: "130", item: "Passo da mola", descricao: "Distância entre espiras consecutivas", padrao: 23.6, minimo: 22.5, maximo: 24.7, unidade: "mm" },
-
-  // 8 padrões para altura/tipo 200
   { alturaTipo: "200", item: "Diâmetro do arame", descricao: "Bitola do arame de aço", padrao: 2.00, minimo: 1.95, maximo: 2.05, unidade: "mm" },
   { alturaTipo: "200", item: "Altura livre", descricao: "Altura da mola sem carga", padrao: 200, minimo: 196, maximo: 204, unidade: "mm" },
   { alturaTipo: "200", item: "Diâmetro externo", descricao: "Diâmetro externo da mola", padrao: 65, minimo: 63, maximo: 67, unidade: "mm" },
@@ -998,23 +995,22 @@ const PADROES_MOLA_REAIS = [
 ];
 
 // ── SEED FUNCTION ──
-export function seedInspecoesData(stores: {
-  modelos: { list(): any[]; create(d: any): any };
-  tiposNc: { list(): any[]; create(d: any): any };
-  padroesMola: { list(): any[]; create(d: any): any };
-}) {
-  // Only seed if stores are empty
-  if (stores.modelos.list().length > 0) return;
+export function seedInspecoesData() {
+  // Only seed if collections are empty
+  if (db.inspecoesModelos.length > 0) return;
 
   const now = new Date().toISOString();
+  let ncCounter = 0;
+  let pmCounter = 0;
 
-  // 1. Seed modelos (1 per sector with all items)
+  // 1. Seed modelos (1 per sector with all real items)
   for (const setor of SETORES_REAIS) {
     const itensDesc = ITENS_POR_SETOR[setor] || [];
-    _itemCounter = 0; // reset per model
+    _itemCounter = 0;
     const itens = itensDesc.map((desc, idx) => makeItem(desc, idx + 1));
 
-    stores.modelos.create({
+    db.inspecoesModelos.push({
+      id: `MOD-${setor.replace(/\s+/g, "-").replace(/[^A-Z0-9-]/gi, "")}`,
       nome: `Checklist ${setor}`,
       setor,
       descricao: `Checklist de inspeção de qualidade — setor ${setor}`,
@@ -1026,10 +1022,11 @@ export function seedInspecoesData(stores: {
     });
   }
 
-  // 2. Seed tipos NC
+  // 2. Seed tipos NC (all real types by sector)
   for (const [setor, tipos] of Object.entries(TIPOS_NC_POR_SETOR)) {
     for (const t of tipos) {
-      stores.tiposNc.create({
+      db.inspecoesTiposNc.push({
+        id: `TNC-${String(++ncCounter).padStart(3, "0")}`,
         setor,
         nome: t.nome,
         categoria: t.categoria,
@@ -1038,12 +1035,37 @@ export function seedInspecoesData(stores: {
     }
   }
 
-  // 3. Seed padrões de mola
-  if (stores.padroesMola.list().length === 0) {
-    for (const p of PADROES_MOLA_REAIS) {
-      stores.padroesMola.create({ ...p, ativo: true });
+  // 3. Seed padrões de mola (16 real patterns)
+  for (const p of PADROES_MOLA_REAIS) {
+    db.inspecoesPadroesMola.push({
+      id: `PM-${String(++pmCounter).padStart(3, "0")}`,
+      ...p,
+      ativo: true,
+    });
+  }
+
+  // 4. Seed default user-sector mappings for ADMIN (all sectors)
+  const adminUsers = db.usuarios.filter((u: any) => u.perfil === "ADMIN");
+  for (const u of adminUsers) {
+    for (const setor of SETORES_REAIS) {
+      db.inspecoesUsuarioSetor.push({
+        id: `US-${randomUUID().slice(0, 8)}`,
+        userId: u.id,
+        setor,
+      });
+    }
+  }
+  // QUALIDADE users also get all sectors
+  const qualUsers = db.usuarios.filter((u: any) => u.perfil === "QUALIDADE");
+  for (const u of qualUsers) {
+    for (const setor of SETORES_REAIS) {
+      db.inspecoesUsuarioSetor.push({
+        id: `US-${randomUUID().slice(0, 8)}`,
+        userId: u.id,
+        setor,
+      });
     }
   }
 
-  console.log("[seed] Inspeções: modelos, tipos NC e padrões de mola carregados com dados reais.");
+  console.log(`[seed] Inspeções: ${db.inspecoesModelos.length} modelos, ${db.inspecoesTiposNc.length} tipos NC, ${db.inspecoesPadroesMola.length} padrões mola carregados.`);
 }

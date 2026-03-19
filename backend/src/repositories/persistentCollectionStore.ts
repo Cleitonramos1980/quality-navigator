@@ -72,6 +72,12 @@ const COLLECTION_KEYS: DbKey[] = [
   "agendamentoKPIs",
   "custodias",
   "custodiaKPIs",
+  "inspecoesModelos",
+  "inspecoesExecucoes",
+  "inspecoesTiposNc",
+  "inspecoesPadroesMola",
+  "inspecoesMola",
+  "inspecoesUsuarioSetor",
 ];
 
 let ensured = false;

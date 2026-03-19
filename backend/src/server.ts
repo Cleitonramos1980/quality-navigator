@@ -32,7 +32,6 @@ import { persistCollection } from "./repositories/persistentCollectionStore.js";
 import { seedInventarioData, seedOperacionalData } from "./repositories/seedData.js";
 import { seedPhasesData } from "./repositories/seedPhases.js";
 import { seedInspecoesData } from "./repositories/seedInspecoesData.js";
-import { modelos as inspecoesModelos, tiposNc as inspecoesTiposNc, padroesMola as inspecoesPadroesMola } from "./routes/inspecoes.js";
 
 const app = Fastify({
   logger: {
@@ -153,7 +152,7 @@ async function start() {
   seedInventarioData();
   seedOperacionalData();
   seedPhasesData();
-  seedInspecoesData({ modelos: inspecoesModelos, tiposNc: inspecoesTiposNc, padroesMola: inspecoesPadroesMola });
+  seedInspecoesData();
 
   const seedUsers = [
     { nome: "Cleiton Ramos", email: "cleiton.ramos@hotmail.com", perfil: "ADMIN" },
