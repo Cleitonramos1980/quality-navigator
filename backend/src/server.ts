@@ -152,7 +152,7 @@ async function start() {
   seedInventarioData();
   seedOperacionalData();
   seedPhasesData();
-  seedInspecoesData({ modelos: inspecoesModelos, tiposNc: inspecoesTiposNc, padroesMola: inspecoesPadroesMola });
+  seedInspecoesData();
 
   const seedUsers = [
     { nome: "Cleiton Ramos", email: "cleiton.ramos@hotmail.com", perfil: "ADMIN" },
