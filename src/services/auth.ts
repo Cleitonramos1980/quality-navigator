@@ -49,7 +49,7 @@ export async function login(email: string, password: string): Promise<AuthLoginR
   } catch (error) {
     // Se o backend está indisponível (404, rede, etc.), usa fallback local
     const isBackendUnavailable =
-      (error instanceof ApiError && (error.status === 404 || error.status === 0 || error.status === 408)) ||
+      (error instanceof ApiError && (error.status === 404 || error.status === 0 || error.status === 408 || error.status === 500 || error.status === 502 || error.status === 503)) ||
       (error instanceof Error && error.message.toLowerCase().includes("failed to fetch"));
 
     if (isBackendUnavailable) {
