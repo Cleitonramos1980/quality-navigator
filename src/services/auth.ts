@@ -23,7 +23,7 @@ interface LocalUser {
 }
 
 const LOCAL_USERS: LocalUser[] = [
-  { id: "usr-001", nome: "Cleiton Ramos", email: "cleiton.ramos@hotmail.com", password: "123456", perfil: "ADMIN" },
+  { id: "usr-001", nome: "Cleiton Ramos", email: "cleiton.ramos@hotmail.com", password: "123", perfil: "ADMIN" },
   { id: "usr-002", nome: "Atendente SAC", email: "sac@rodrigues.com.br", password: "123456", perfil: "SAC" },
   { id: "usr-003", nome: "Qualidade", email: "qualidade@rodrigues.com.br", password: "123456", perfil: "QUALIDADE" },
   { id: "usr-004", nome: "Diretor", email: "diretoria@rodrigues.com.br", password: "123456", perfil: "DIRETORIA" },
