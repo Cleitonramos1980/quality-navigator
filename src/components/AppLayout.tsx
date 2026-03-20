@@ -109,6 +109,7 @@ const allNavItems: NavItem[] = [
       { path: "/assistencia/consumo", label: "Registrar Consumo" },
       { path: "/assistencia/estoque", label: "Estoque" },
       { path: "/assistencia/terceirizada", label: "Assistências Externas" },
+      { path: "/assistencia/terceirizada/cadastro", label: "Cadastro de Assistências" },
       { path: "/assistencia/terceirizada/estoque", label: "Estoque em Poder" },
       { path: "/assistencia/terceirizada/movimentacoes", label: "Movimentações" },
       { path: "/assistencia/terceirizada/enviar", label: "Enviar para Assistência" },
