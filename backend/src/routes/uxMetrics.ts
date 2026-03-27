@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { db, nextId } from "../repositories/dataStore.js";
+import { getObservabilitySnapshot } from "../utils/observability.js";
 
 const uxMetricSchema = z.object({
   type: z.enum(["PAGE_VIEW", "ACTION", "ERROR", "SCREEN_TIME"]),
@@ -13,6 +14,23 @@ const uxMetricSchema = z.object({
 });
 
 export async function uxMetricsRoutes(app: FastifyInstance) {
+  app.get("/api/metrics/observability", async (req, reply) => {
+    const perfil = String((req as any)?.authUser?.perfil || "");
+    const allowedProfiles = new Set([
+      "ADMIN",
+      "DIRETORIA",
+      "DIRETOR_EXECUTIVO_SST",
+      "CORPORATIVO_SST",
+      "AUDITOR",
+    ]);
+
+    if (!allowedProfiles.has(perfil)) {
+      return reply.status(403).send({ error: { message: "Perfil sem acesso aos indicadores de observabilidade." } });
+    }
+
+    return getObservabilitySnapshot();
+  });
+
   app.get("/api/metrics/ux", async (req) => {
     const { limit } = z.object({ limit: z.coerce.number().int().positive().max(500).optional() }).parse(req.query);
     return db.uxMetrics.slice(0, limit ?? 100);

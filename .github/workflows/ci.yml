@@ -32,6 +32,13 @@ jobs:
       - name: Install backend dependencies
         run: npm --prefix backend ci
 
+      - name: Frontend lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Frontend unit tests
+        run: npm run test
+
       - name: Frontend typecheck
         run: npm run typecheck
 
@@ -47,3 +54,14 @@ jobs:
       - name: Critical E2E regression
         run: npm run e2e:critical
 
+      - name: Route smoke E2E
+        run: npm run e2e:smoke
+
+      - name: Action/state matrix E2E
+        run: npm run e2e:matrix
+
+      - name: Real integration E2E
+        run: npm run e2e:real
+
+      - name: Observability snapshot
+        run: npm run runtime:observability

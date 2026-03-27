@@ -1,13 +1,9 @@
-﻿import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { installApiMock } from "./helpers/mockApi";
+import { authenticateAs } from "./helpers/authSession";
 
 async function loginSac(page: Page): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel("E-mail").fill("sac@sgq.local");
-  await page.getByLabel("Senha").fill("123456");
-  await page.locator("form button[role='combobox']").click();
-  await page.getByRole("option", { name: "SAC", exact: true }).click();
-  await page.getByRole("button", { name: "Entrar", exact: true }).click();
+  await authenticateAs(page, "SAC");
 }
 
 async function preencherContextoNovoAtendimento(page: Page) {
@@ -53,8 +49,8 @@ test("Falha controlada no save SAC mantém tela estável e mostra erro", async (
 
   await page.getByRole("button", { name: /Salvar Atendimento/i }).click();
 
-  await expect(page.getByText("Erro ao salvar atendimento")).toBeVisible();
-  await expect(page.getByText("Oracle indisponível para gravação")).toBeVisible();
+  await expect(page.getByText("Erro ao salvar atendimento").first()).toBeVisible();
+  await expect(page.getByText("Oracle indisponível para gravação").first()).toBeVisible();
   await expect(page).toHaveURL(/\/sac\/novo$/);
   await expect(descricao).toHaveValue("Teste de resiliência SAC");
 });
@@ -92,6 +88,3 @@ test("Falha controlada no Criar OS mantém tela estável e mostra erro", async (
   await expect(page).toHaveURL(/\/assistencia\/os\/nova$/);
   await expect(descricaoProblema).toHaveValue("Teste de resiliência OS");
 });
-
-
-

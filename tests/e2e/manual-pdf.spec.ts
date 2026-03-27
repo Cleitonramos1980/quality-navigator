@@ -1,7 +1,8 @@
-﻿import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { installManualApiMock } from "./helpers/manualApiMock";
+import { authenticateAs } from "./helpers/authSession";
 
 type PerfilManual = "ADMIN" | "SAC" | "ASSISTENCIA";
 
@@ -27,9 +28,9 @@ const screens: ManualScreen[] = [
     titulo: "Login",
     rota: "/login",
     perfil: "ADMIN",
-    objetivo: "Autenticar o usuário e selecionar o perfil operacional para navegação.",
-    partes: ["Campos E-mail e Senha", "Seletor de Perfil", "Botão Entrar"],
-    passos: ["Informe credenciais", "Selecione o perfil", "Clique em Entrar"],
+    objetivo: "Autenticar o usuário no sistema SGQ.",
+    partes: ["Campo E-mail", "Campo Senha", "Botao Entrar"],
+    passos: ["Informe credenciais", "Clique em Entrar"],
   },
   {
     id: "dashboard",
@@ -333,11 +334,7 @@ function escapeHtml(input: string): string {
 }
 
 async function setPerfil(page: Page, perfil: PerfilManual): Promise<void> {
-  await page.goto("/login", { waitUntil: "domcontentloaded" });
-  await page.evaluate(
-    ({ key, value }) => window.localStorage.setItem(key, value),
-    { key: "sgq.currentPerfil", value: perfil },
-  );
+  await authenticateAs(page, perfil);
 }
 
 async function maybeOpenModal(page: Page, modal?: ManualScreen["abrirModal"]): Promise<void> {
@@ -487,7 +484,3 @@ test("gera manual em PDF com passo a passo e prints das telas", async ({ page, c
 
   expect(await fs.stat(PDF_PATH)).toBeTruthy();
 });
-
-
-
-

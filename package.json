@@ -2,6 +2,7 @@
   "name": "vite_react_shadcn_ts",
   "private": true,
   "version": "0.0.0",
+  "packageManager": "npm@10.9.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,11 +20,17 @@
     "runtime:load": "node tests/runtime/load-latency.mjs",
     "runtime:soak": "node tests/runtime/soak.mjs",
     "runtime:upload": "node tests/runtime/upload-stress.mjs",
+    "runtime:observability": "node tests/runtime/observability-snapshot.mjs",
     "e2e:critical": "playwright test tests/e2e/critical-buttons.spec.ts tests/e2e/rbac-matrix.spec.ts --workers=1",
+    "e2e:smoke": "playwright test tests/e2e/all-routes-smoke.spec.ts tests/e2e/sesmt-route-smoke.spec.ts --workers=1",
+    "e2e:matrix": "playwright test tests/e2e/action-matrix.spec.ts tests/e2e/sesmt-state-resilience.spec.ts --workers=1",
+    "e2e:real": "playwright test tests/e2e/sesmt-crud-real.spec.ts tests/e2e/sesmt-form-negative.spec.ts tests/e2e/sesmt-context.spec.ts tests/e2e/sesmt-rbac-sensitive-real.spec.ts tests/e2e/sesmt-consistency-real.spec.ts tests/e2e/observability-real.spec.ts --workers=1",
+    "e2e:full": "playwright test tests/e2e/critical-buttons.spec.ts tests/e2e/failure-resilience.spec.ts tests/e2e/rbac-matrix.spec.ts tests/e2e/sesmt-navigation.spec.ts tests/e2e/sesmt-route-smoke.spec.ts tests/e2e/all-routes-smoke.spec.ts tests/e2e/action-matrix.spec.ts tests/e2e/sesmt-state-resilience.spec.ts tests/e2e/sesmt-crud-real.spec.ts tests/e2e/sesmt-form-negative.spec.ts tests/e2e/sesmt-context.spec.ts tests/e2e/sesmt-rbac-sensitive-real.spec.ts tests/e2e/sesmt-consistency-real.spec.ts tests/e2e/observability-real.spec.ts --workers=1",
     "e2e:rbac": "playwright test tests/e2e/rbac-matrix.spec.ts",
     "e2e:failure": "playwright test tests/e2e/failure-resilience.spec.ts",
     "manual:pdf": "playwright test tests/e2e/manual-pdf.spec.ts --project=chromium --workers=1",
-    "verify:critical": "npm run typecheck && npm run build && npm run backend:build && npm run e2e:critical"
+    "verify:critical": "npm run typecheck && npm run build && npm run backend:build && npm run e2e:critical",
+    "verify:release": "npm run typecheck && npm run build && npm run backend:build && npm run e2e:full && npm run runtime:observability"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

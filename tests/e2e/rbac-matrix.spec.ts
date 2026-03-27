@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { installApiMock } from "./helpers/mockApi";
+import { authenticateAs } from "./helpers/authSession";
 
 type PerfilCode =
   | "ADMIN"
@@ -53,12 +54,7 @@ const perfis: PerfilCode[] = [
 ];
 
 async function setPerfilAtivo(page: Page, perfil: PerfilCode) {
-  await page.goto("/login");
-  await page.evaluate((perfilNome) => {
-    window.localStorage.setItem("sgq.currentPerfil", perfilNome);
-  }, perfil);
-  await page.goto("/");
-  await page.reload();
+  await authenticateAs(page, perfil);
 }
 
 test("Matriz RBAC por perfil e rota critica", async ({ page }) => {

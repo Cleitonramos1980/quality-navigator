@@ -1,13 +1,9 @@
-﻿import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { installApiMock } from "./helpers/mockApi";
+import { authenticateAs } from "./helpers/authSession";
 
-async function loginAs(page: Page, perfil: "Administrador" | "SAC"): Promise<void> {
-  await page.goto("/login");
-  await page.getByLabel("E-mail").fill("qa@sgq.local");
-  await page.getByLabel("Senha").fill("123456");
-  await page.locator("form button[role='combobox']").click();
-  await page.getByRole("option", { name: perfil, exact: true }).click();
-  await page.getByRole("button", { name: "Entrar", exact: true }).click();
+async function loginAs(page: Page, perfil: "ADMIN" | "SAC"): Promise<void> {
+  await authenticateAs(page, perfil);
 }
 
 async function selectByLabel(page: Page, label: string, option: string): Promise<void> {
@@ -73,7 +69,7 @@ test("Assistência: Criar OS funciona", async ({ page }) => {
 });
 
 test("Qualidade: botões de salvar (Garantia, NC e CAPA) funcionam", async ({ page }) => {
-  await loginAs(page, "Administrador");
+  await loginAs(page, "ADMIN");
 
   await page.goto("/garantias/nova");
   await fillInputByLabel(page, "CODCLI", "10");
@@ -104,7 +100,7 @@ test("Qualidade: botões de salvar (Garantia, NC e CAPA) funcionam", async ({ pa
 });
 
 test("Auditorias: botão Salvar funciona", async ({ page }) => {
-  await loginAs(page, "Administrador");
+  await loginAs(page, "ADMIN");
   await page.goto("/auditorias/nova");
 
   await page.getByPlaceholder("Ex: PROCESSO").fill("PROCESSO");
@@ -117,7 +113,7 @@ test("Auditorias: botão Salvar funciona", async ({ page }) => {
 });
 
 test("Admin: botões de salvar de Usuário e Parâmetros funcionam", async ({ page }) => {
-  await loginAs(page, "Administrador");
+  await loginAs(page, "ADMIN");
 
   await page.goto("/administracao/usuarios");
   await page.getByRole("button", { name: /Novo Usuário/i }).click();

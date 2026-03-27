@@ -1,4 +1,4 @@
-﻿import type { Page, Route } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 
 type JsonRecord = Record<string, any>;
 
@@ -428,6 +428,7 @@ export async function installManualApiMock(page: Page): Promise<void> {
     { id: "USR-001", nome: "Admin QA", email: "admin@sgq.local", perfil: "ADMIN", ativo: true },
     { id: "USR-002", nome: "Maria Costa", email: "sac@sgq.local", perfil: "SAC", ativo: true },
   ];
+  let authUser: JsonRecord | null = usuarios[0];
 
   const perfis = ["ADMIN", "SAC", "QUALIDADE", "AUDITOR", "ASSISTENCIA", "TECNICO", "ALMOX", "DIRETORIA", "VALIDACAO"];
 
@@ -460,6 +461,28 @@ export async function installManualApiMock(page: Page): Promise<void> {
         contentType: "application/json",
         body: JSON.stringify(data),
       });
+
+    if (method === "POST" && path === "/api/auth/login") {
+      const body = readJsonBody(route);
+      const email = String(body.email || "").toLowerCase();
+      const found = usuarios.find((u) => String(u.email || "").toLowerCase() === email) ?? usuarios[0];
+      authUser = found;
+      return json(
+        {
+          token: `mock-token-${String(found.id || "USR-001")}`,
+          user: found,
+          expiresIn: 8 * 60 * 60,
+        },
+        200,
+      );
+    }
+
+    if (method === "GET" && path === "/api/auth/me") {
+      if (!authUser) {
+        return json({ error: { message: "Nao autenticado." } }, 401);
+      }
+      return json(authUser, 200);
+    }
 
     const findById = (collection: JsonRecord[], id: string) =>
       collection.find((item) => String(item.id) === id) || null;
@@ -844,7 +867,3 @@ export async function installManualApiMock(page: Page): Promise<void> {
     return json({});
   });
 }
-
-
-
-
