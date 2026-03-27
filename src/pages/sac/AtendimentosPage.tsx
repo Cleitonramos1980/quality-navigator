@@ -12,8 +12,10 @@ import { getAtendimentos } from "@/services/sac";
 import { evaluateSlaFromOpenedAt } from "@/lib/sla";
 import SLABadge from "@/components/common/SLABadge";
 import { useUxMetrics } from "@/hooks/useUxMetrics";
+import { useToast } from "@/components/ui/use-toast";
 
 const AtendimentosPage = () => {
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [plantaFilter, setPlantaFilter] = useState<string>("ALL");
@@ -21,8 +23,13 @@ const AtendimentosPage = () => {
   const { trackAction } = useUxMetrics("SAC_ATENDIMENTOS_LISTA");
 
   useEffect(() => {
-    getAtendimentos().then(setAtendimentos);
-  }, []);
+    getAtendimentos()
+      .then(setAtendimentos)
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar atendimentos.";
+        toast({ title: "Erro ao carregar atendimentos", description: message, variant: "destructive" });
+      });
+  }, [toast]);
 
   const filtered = atendimentos.filter((a) => {
     const matchSearch = a.id.toLowerCase().includes(search.toLowerCase()) || a.clienteNome.toLowerCase().includes(search.toLowerCase()) || a.cgcent.includes(search);
@@ -49,5 +56,4 @@ const AtendimentosPage = () => {
 };
 
 export default AtendimentosPage;
-
 

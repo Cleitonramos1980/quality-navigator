@@ -10,9 +10,11 @@ import type { NCRegistro } from "@/types/sgq";
 import { evaluateSlaFromDueDate } from "@/lib/sla";
 import SLABadge from "@/components/common/SLABadge";
 import { useUxMetrics } from "@/hooks/useUxMetrics";
+import { useToast } from "@/components/ui/use-toast";
 
 const NCPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [ncs, setNcs] = useState<NCRegistro[]>([]);
   const [selectedNC, setSelectedNC] = useState<NCRegistro | null>(null);
@@ -20,7 +22,7 @@ const NCPage = () => {
   const { trackAction } = useUxMetrics("NC_LISTA");
 
   useEffect(() => {
-    getNCs().then(setNcs);
+    getNCs().then(setNcs).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const filtered = ncs.filter(
@@ -195,5 +197,6 @@ const NCPage = () => {
 };
 
 export default NCPage;
+
 
 

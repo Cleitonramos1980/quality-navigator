@@ -9,6 +9,7 @@ import RelatedActionsPanel from "@/components/operacional/RelatedActionsPanel";
 import CustodiaActionPanel from "@/components/custodia/CustodiaActionPanel";
 import ExcecoesRelacionadasPanel from "@/components/custodia/ExcecoesRelacionadasPanel";
 import { getCustodiaById } from "@/services/custodia";
+import { toast } from "@/hooks/use-toast";
 import type { CustodiaNF } from "@/types/custodiaDigital";
 import { CUSTODIA_STATUS_LABELS, CUSTODIA_STATUS_COLORS } from "@/types/custodiaDigital";
 
@@ -32,7 +33,17 @@ const CustodiaDetalhePage = () => {
   const [data, setData] = useState<CustodiaNF | null>(null);
 
   const reload = useCallback(() => {
-    if (id) getCustodiaById(id).then(d => setData(d || null));
+    if (!id) {
+      setData(null);
+      return;
+    }
+    getCustodiaById(id)
+      .then((d) => setData(d || null))
+      .catch((error) => {
+        setData(null);
+        const message = error instanceof Error ? error.message : "Falha ao carregar detalhes da custodia.";
+        toast({ title: "Erro ao carregar custodia", description: message, variant: "destructive" });
+      });
   }, [id]);
 
   useEffect(reload, [reload]);

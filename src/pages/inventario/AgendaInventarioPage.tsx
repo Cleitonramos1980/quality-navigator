@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,11 @@ import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import { getTarefas, getLojas } from "@/services/inventario";
 import type { TarefaInventario, LojaInventario } from "@/types/inventario";
 import { FREQUENCIA_LABELS, type InventarioStatus } from "@/types/inventario";
+import { useToast } from "@/components/ui/use-toast";
 
 const AgendaInventarioPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [busca, setBusca] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("TODOS");
   const [lojaFilter, setLojaFilter] = useState<string>("TODAS");
@@ -19,8 +21,8 @@ const AgendaInventarioPage = () => {
   const [lojas, setLojas] = useState<LojaInventario[]>([]);
 
   useEffect(() => {
-    getTarefas().then(setTarefas);
-    getLojas().then(setLojas);
+    getTarefas().then(setTarefas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getLojas().then(setLojas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const filtered = useMemo(() => {
@@ -39,8 +41,8 @@ const AgendaInventarioPage = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Agenda de Inventário</h1>
-          <p className="text-sm text-muted-foreground">Tarefas programadas por loja, departamento e frequência</p>
+          <h1 className="text-2xl font-bold text-foreground">Agenda de InventÃ¡rio</h1>
+          <p className="text-sm text-muted-foreground">Tarefas programadas por loja, departamento e frequÃªncia</p>
         </div>
         <ExportActionsBar />
       </div>
@@ -51,11 +53,11 @@ const AgendaInventarioPage = () => {
           <SelectTrigger className="w-44"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="TODOS">Todos os Status</SelectItem>
-            <SelectItem value="NAO_INICIADO">Não Iniciado</SelectItem>
+            <SelectItem value="NAO_INICIADO">NÃ£o Iniciado</SelectItem>
             <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
-            <SelectItem value="CONCLUIDO">Concluído</SelectItem>
+            <SelectItem value="CONCLUIDO">ConcluÃ­do</SelectItem>
             <SelectItem value="VALIDADO">Validado</SelectItem>
-            <SelectItem value="NAO_FEITO">Não Feito</SelectItem>
+            <SelectItem value="NAO_FEITO">NÃ£o Feito</SelectItem>
             <SelectItem value="ATRASADO">Atrasado</SelectItem>
             <SelectItem value="RECONTAGEM">Recontagem</SelectItem>
           </SelectContent>
@@ -80,10 +82,10 @@ const AgendaInventarioPage = () => {
                 <th className="text-left p-3 font-medium text-muted-foreground">Gerente</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Supervisor</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Departamento</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Frequência</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Responsável</th>
+                <th className="text-left p-3 font-medium text-muted-foreground">FrequÃªncia</th>
+                <th className="text-left p-3 font-medium text-muted-foreground">ResponsÃ¡vel</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Ações</th>
+                <th className="text-left p-3 font-medium text-muted-foreground">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody>
@@ -120,3 +122,4 @@ const AgendaInventarioPage = () => {
 };
 
 export default AgendaInventarioPage;
+

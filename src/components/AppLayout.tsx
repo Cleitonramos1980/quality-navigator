@@ -17,6 +17,7 @@ import {
   Activity,
   FileText,
   PackageSearch,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Planta, PLANTA_LABELS } from "@/types/sgq";
@@ -26,12 +27,14 @@ import {
   canSeeModulo,
   canSeeQualidadeSubmenu,
   canSeeSacSubmenu,
+  canSeeSesmtSubmenu,
   getCurrentPapel,
   PAPEL_LABELS,
   type NavModulo,
 } from "@/lib/workflowOs";
 import { prefetchRoute } from "@/lib/routePrefetch";
 import GlobalCommandPalette from "@/components/navigation/GlobalCommandPalette";
+import { SESMT_MENU_CHILDREN } from "@/lib/sesmtMenu";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -76,6 +79,10 @@ const allNavItems: NavItem[] = [
       { path: "/qualidade/core-tools", label: "Core Tools Fornecedor" },
       { path: "/qualidade/iso-readiness", label: "ISO 9001 Readiness" },
     ],
+  },
+  {
+    path: "/sesmt/visao-executiva/painel-mestre", label: "SESMT / SST", icon: Shield, modulo: "sesmt",
+    children: SESMT_MENU_CHILDREN.map((item) => ({ path: item.path, label: item.label })),
   },
   {
     path: "/inspecoes", label: "Inspeções", icon: ClipboardCheck, modulo: "inspecoes",
@@ -194,6 +201,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           children = children.filter((child) => canSeeSacSubmenu(child.path));
         } else if (item.modulo === "qualidade") {
           children = children.filter((child) => canSeeQualidadeSubmenu(child.path));
+        } else if (item.modulo === "sesmt") {
+          children = children.filter((child) => canSeeSesmtSubmenu(child.path));
         } else if (item.modulo === "assistencia") {
           children = children.filter((child) => canSeeAssistSubmenu(child.path));
         }

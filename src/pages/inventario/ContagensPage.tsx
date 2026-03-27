@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,14 +8,16 @@ import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import { getContagens } from "@/services/inventario";
 import type { Contagem } from "@/types/inventario";
 import { FREQUENCIA_LABELS } from "@/types/inventario";
+import { useToast } from "@/components/ui/use-toast";
 
 const ContagensPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [busca, setBusca] = useState("");
   const [statusFilter, setStatusFilter] = useState("TODOS");
   const [contagens, setContagens] = useState<Contagem[]>([]);
 
-  useEffect(() => { getContagens().then(setContagens); }, []);
+  useEffect(() => { getContagens().then(setContagens).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); }); }, []);
 
   const filtered = useMemo(() => {
     return contagens.filter((c) => {
@@ -39,16 +41,16 @@ const ContagensPage = () => {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Input placeholder="Buscar número, loja, supervisor..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-64" />
+        <Input placeholder="Buscar nÃºmero, loja, supervisor..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-64" />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="TODOS">Todos</SelectItem>
-            <SelectItem value="NAO_INICIADO">Não Iniciado</SelectItem>
+            <SelectItem value="NAO_INICIADO">NÃ£o Iniciado</SelectItem>
             <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
-            <SelectItem value="CONCLUIDO">Concluído</SelectItem>
+            <SelectItem value="CONCLUIDO">ConcluÃ­do</SelectItem>
             <SelectItem value="VALIDADO">Validado</SelectItem>
-            <SelectItem value="NAO_FEITO">Não Feito</SelectItem>
+            <SelectItem value="NAO_FEITO">NÃ£o Feito</SelectItem>
             <SelectItem value="ATRASADO">Atrasado</SelectItem>
             <SelectItem value="RECONTAGEM">Recontagem</SelectItem>
           </SelectContent>
@@ -60,17 +62,17 @@ const ContagensPage = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left p-3 font-medium text-muted-foreground">Número</th>
+                <th className="text-left p-3 font-medium text-muted-foreground">NÃºmero</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Data</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Loja</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Supervisor</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Departamento</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Frequência</th>
+                <th className="text-left p-3 font-medium text-muted-foreground">FrequÃªncia</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
                 <th className="text-right p-3 font-medium text-muted-foreground">Contados</th>
                 <th className="text-right p-3 font-medium text-muted-foreground">Divergentes</th>
                 <th className="text-right p-3 font-medium text-muted-foreground">Acuracidade</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Ações</th>
+                <th className="text-left p-3 font-medium text-muted-foreground">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody>
@@ -85,7 +87,7 @@ const ContagensPage = () => {
                   <td className="p-3"><InventoryStatusPill status={c.status} /></td>
                   <td className="p-3 text-right">{c.itensContados}</td>
                   <td className="p-3 text-right font-medium">{c.itensDivergentes > 0 ? <span className="text-destructive">{c.itensDivergentes}</span> : "0"}</td>
-                  <td className="p-3 text-right">{c.acuracidade > 0 ? `${c.acuracidade}%` : "—"}</td>
+                  <td className="p-3 text-right">{c.acuracidade > 0 ? `${c.acuracidade}%` : "â€”"}</td>
                   <td className="p-3">
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => navigate(`/qualidade/inventario/digitacao/${c.id}`)}>Ver</Button>
@@ -103,3 +105,4 @@ const ContagensPage = () => {
 };
 
 export default ContagensPage;
+

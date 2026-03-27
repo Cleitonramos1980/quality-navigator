@@ -114,3 +114,67 @@ export function RequireRole({ roles, children }: RequireRoleProps) {
 
   return <>{children}</>;
 }
+
+interface RequireSesmtAccessProps {
+  children: ReactNode;
+}
+
+const SESMT_ALLOWED_PROFILES = new Set([
+  "ADMIN",
+  "CORPORATIVO_SST",
+  "SESMT",
+  "TECNICO_SEGURANCA",
+  "ENFERMAGEM_TRABALHO",
+  "MEDICO_TRABALHO",
+  "RH",
+  "GESTOR_UNIDADE",
+  "AUDITOR",
+  "DIRETORIA",
+  "LEITOR_RESTRITO",
+  "GESTOR_CONTRATOS",
+  "TERCEIRO_CONSULTA_LIMITADA",
+  "LIDER_OPERACIONAL",
+  "RH_OCUPACIONAL",
+  "COMITE_SST",
+  "DIRETOR_EXECUTIVO_SST",
+  "QUALIDADE",
+  "ASSISTENCIA",
+  "SAC",
+]);
+
+const SESMT_SENSITIVE_ALLOWED_PROFILES = new Set([
+  "ADMIN",
+  "CORPORATIVO_SST",
+  "SESMT",
+  "MEDICO_TRABALHO",
+  "ENFERMAGEM_TRABALHO",
+  "RH_OCUPACIONAL",
+  "DIRETOR_EXECUTIVO_SST",
+]);
+
+const SESMT_SENSITIVE_PATHS = [
+  "/sesmt/visao-executiva/gerencial-ocupacional",
+  "/sesmt/pessoas-e-saude/saude-ocupacional",
+  "/sesmt/pessoas-e-saude/exames",
+  "/sesmt/pessoas-e-saude/ambulatorio-prontuario",
+  "/sesmt/pessoas-e-saude/medicamentos-vacinas",
+];
+
+function isSensitiveSesmtPath(pathname: string): boolean {
+  return SESMT_SENSITIVE_PATHS.some((prefix) => pathname.startsWith(prefix));
+}
+
+export function RequireSesmtAccess({ children }: RequireSesmtAccessProps) {
+  const location = useLocation();
+  const perfil = getCurrentPerfil();
+
+  if (!SESMT_ALLOWED_PROFILES.has(perfil)) {
+    return <AccessDeniedCard perm="SESMT_READ" />;
+  }
+
+  if (isSensitiveSesmtPath(location.pathname) && !SESMT_SENSITIVE_ALLOWED_PROFILES.has(perfil)) {
+    return <AccessDeniedCard perm="SESMT_SENSITIVE_READ" />;
+  }
+
+  return <>{children}</>;
+}

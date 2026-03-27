@@ -1,73 +1,104 @@
-# Welcome to your Lovable project
+# Quality Navigator (SGQ)
 
-## Project info
+Aplicação web com frontend React/Vite e backend Fastify/TypeScript para operação de SAC, qualidade, inventário e assistência técnica.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Stack
 
-## How can I edit this code?
+- Frontend: React 18, Vite, TypeScript, Tailwind, React Query
+- Backend: Fastify, TypeScript, Zod, Oracle (`oracledb`)
+- Testes: Vitest (unitários), Playwright (E2E)
+- CI: GitHub Actions
 
-There are several ways of editing your application.
+## Pré-requisitos
 
-**Use Lovable**
+- Node.js 20+
+- npm 10+
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Use apenas `npm` neste repositório para evitar drift de lockfile.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Setup local
 
-**Use your preferred IDE**
+1. Instale dependências:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm ci
+npm --prefix backend ci
 ```
 
-**Edit a file directly in GitHub**
+2. Crie o arquivo de ambiente a partir do exemplo:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+cp .env.example .env
+```
 
-**Use GitHub Codespaces**
+3. Defina obrigatoriamente segredos fortes:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- `JWT_SECRET_KEY` com no mínimo 32 caracteres
+- `AUTH_STATIC_PASSWORD` com no mínimo 8 caracteres
 
-## What technologies are used for this project?
+4. Suba frontend e backend em terminais separados:
 
-This project is built with:
+```bash
+npm run dev
+npm --prefix backend run dev
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Scripts úteis
 
-## How can I deploy this project?
+- Frontend
+  - `npm run dev`
+  - `npm run build`
+  - `npm run lint`
+  - `npm run test`
+  - `npm run typecheck`
+- Backend
+  - `npm --prefix backend run dev`
+  - `npm --prefix backend run build`
+- E2E
+  - `npm run e2e`
+  - `npm run e2e:critical`
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Runtime tests autenticados
 
-## Can I connect a custom domain to my Lovable project?
+Os scripts de runtime agora exigem autenticação para endpoints protegidos.
 
-Yes, you can!
+Opção 1 (recomendada): token pronto
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+RUNTIME_AUTH_TOKEN=<token> npm run runtime:load
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Opção 2: login automático
+
+```bash
+RUNTIME_AUTH_EMAIL=<email> RUNTIME_AUTH_PASSWORD=<senha> npm run runtime:load
+```
+
+Também vale para:
+
+- `npm run runtime:soak`
+- `npm run runtime:upload`
+
+## Segurança de autenticação
+
+- Backend não aceita senha fallback hardcoded.
+- `JWT_SECRET_KEY` e `AUTH_STATIC_PASSWORD` fracos são rejeitados na inicialização.
+- Fallback local no frontend fica desabilitado por padrão e só pode ser habilitado em dev com:
+
+```env
+VITE_ENABLE_LOCAL_AUTH_FALLBACK=true
+```
+
+## CI
+
+Pipeline em `.github/workflows/ci.yml` executa:
+
+- install (frontend + backend)
+- lint
+- testes unitários (Vitest)
+- typecheck/build (frontend + backend)
+- Playwright critical E2E
+
+## Higiene de repositório
+
+Arquivos gerados de testes e runtime estão ignorados via `.gitignore` (ex.: `playwright-report/`, `test-results/`, `tests/runtime/results/`, `backend/uploads/`).

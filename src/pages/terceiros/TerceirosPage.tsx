@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Truck, Building2, Users, Clock, AlertTriangle, Calendar, Eye } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
@@ -8,8 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getTransportadoras, getMotoristasTerceiros, getVeiculosTerceiros, getOperacoes, getAgendamentos } from "@/services/operacional";
 import type { Transportadora, MotoristaTerceiro, VeiculoTerceiro, OperacaoTerceiro, AgendamentoDoca } from "@/types/operacional";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/components/ui/use-toast";
 
 const TerceirosPage = () => {
+  const { toast } = useToast();
   const [tab, setTab] = useState("transportadoras");
   const [transportadoras, setTransportadoras] = useState<Transportadora[]>([]);
   const [motoristas, setMotoristas] = useState<MotoristaTerceiro[]>([]);
@@ -18,25 +20,25 @@ const TerceirosPage = () => {
   const [agendamentos, setAgendamentos] = useState<AgendamentoDoca[]>([]);
 
   useEffect(() => {
-    getTransportadoras().then(setTransportadoras);
-    getMotoristasTerceiros().then(setMotoristas);
-    getVeiculosTerceiros().then(setVeiculos);
-    getOperacoes().then(setOperacoes);
-    getAgendamentos().then(setAgendamentos);
+    getTransportadoras().then(setTransportadoras).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getMotoristasTerceiros().then(setMotoristas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getVeiculosTerceiros().then(setVeiculos).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getOperacoes().then(setOperacoes).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getAgendamentos().then(setAgendamentos).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Terceiros / Transportadoras</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gestão de transportadoras, motoristas terceiros, operações e agendamentos</p>
+        <p className="text-sm text-muted-foreground mt-1">GestÃ£o de transportadoras, motoristas terceiros, operaÃ§Ãµes e agendamentos</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <KPICard title="Transportadoras" value={transportadoras.filter(t => t.status === "ATIVA").length} icon={<Building2 className="w-5 h-5" />} subtitle="ativas" />
         <KPICard title="Motoristas" value={motoristas.filter(m => m.status === "ATIVO").length} icon={<Users className="w-5 h-5" />} subtitle="ativos" />
-        <KPICard title="Veículos na Unidade" value={veiculos.length} icon={<Truck className="w-5 h-5" />} />
-        <KPICard title="Operações Hoje" value={operacoes.length} icon={<Clock className="w-5 h-5" />} />
+        <KPICard title="VeÃ­culos na Unidade" value={veiculos.length} icon={<Truck className="w-5 h-5" />} />
+        <KPICard title="OperaÃ§Ãµes Hoje" value={operacoes.length} icon={<Clock className="w-5 h-5" />} />
         <KPICard title="Janelas Perdidas" value={agendamentos.filter(a => a.status === "JANELA_PERDIDA").length} icon={<AlertTriangle className="w-5 h-5" />} />
       </div>
 
@@ -44,8 +46,8 @@ const TerceirosPage = () => {
         <TabsList>
           <TabsTrigger value="transportadoras">Transportadoras</TabsTrigger>
           <TabsTrigger value="motoristas">Motoristas</TabsTrigger>
-          <TabsTrigger value="veiculos">Veículos</TabsTrigger>
-          <TabsTrigger value="operacoes">Operações</TabsTrigger>
+          <TabsTrigger value="veiculos">VeÃ­culos</TabsTrigger>
+          <TabsTrigger value="operacoes">OperaÃ§Ãµes</TabsTrigger>
           <TabsTrigger value="agendamentos">Agendamento de Docas</TabsTrigger>
         </TabsList>
       </Tabs>
@@ -54,7 +56,7 @@ const TerceirosPage = () => {
         <div className="glass-card rounded-lg p-5">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Nome</TableHead><TableHead>CNPJ</TableHead><TableHead>Contato</TableHead><TableHead>RNTRC</TableHead><TableHead>Operações</TableHead><TableHead>Atraso Médio</TableHead><TableHead>SLA Score</TableHead><TableHead>Status</TableHead>
+              <TableHead>Nome</TableHead><TableHead>CNPJ</TableHead><TableHead>Contato</TableHead><TableHead>RNTRC</TableHead><TableHead>OperaÃ§Ãµes</TableHead><TableHead>Atraso MÃ©dio</TableHead><TableHead>SLA Score</TableHead><TableHead>Status</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {transportadoras.map((t) => (
@@ -83,7 +85,7 @@ const TerceirosPage = () => {
         <div className="glass-card rounded-lg p-5">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Nome</TableHead><TableHead>Documento</TableHead><TableHead>Transportadora</TableHead><TableHead>Telefone</TableHead><TableHead>Última Entrada</TableHead><TableHead>Status</TableHead>
+              <TableHead>Nome</TableHead><TableHead>Documento</TableHead><TableHead>Transportadora</TableHead><TableHead>Telefone</TableHead><TableHead>Ãšltima Entrada</TableHead><TableHead>Status</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {motoristas.map((m) => (
@@ -92,7 +94,7 @@ const TerceirosPage = () => {
                   <TableCell className="text-xs">{m.documento}</TableCell>
                   <TableCell>{m.transportadoraNome}</TableCell>
                   <TableCell className="text-xs">{m.telefone}</TableCell>
-                  <TableCell className="text-xs">{m.ultimaEntrada ? new Date(m.ultimaEntrada).toLocaleString("pt-BR") : "—"}</TableCell>
+                  <TableCell className="text-xs">{m.ultimaEntrada ? new Date(m.ultimaEntrada).toLocaleString("pt-BR") : "â€”"}</TableCell>
                   <TableCell><StatusSemaphore status={m.status} /></TableCell>
                 </TableRow>
               ))}
@@ -105,7 +107,7 @@ const TerceirosPage = () => {
         <div className="glass-card rounded-lg p-5">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Placa</TableHead><TableHead>Tipo</TableHead><TableHead>Transportadora</TableHead><TableHead>Motorista</TableHead><TableHead>Localização</TableHead><TableHead>Doca</TableHead><TableHead>Status</TableHead>
+              <TableHead>Placa</TableHead><TableHead>Tipo</TableHead><TableHead>Transportadora</TableHead><TableHead>Motorista</TableHead><TableHead>LocalizaÃ§Ã£o</TableHead><TableHead>Doca</TableHead><TableHead>Status</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {veiculos.map((v) => (
@@ -115,7 +117,7 @@ const TerceirosPage = () => {
                   <TableCell>{v.transportadoraNome}</TableCell>
                   <TableCell>{v.motoristaNome}</TableCell>
                   <TableCell>{v.localizacao}</TableCell>
-                  <TableCell className="text-xs">{v.docaAtual || "—"}</TableCell>
+                  <TableCell className="text-xs">{v.docaAtual || "â€”"}</TableCell>
                   <TableCell><StatusSemaphore status={v.statusOperacao} /></TableCell>
                 </TableRow>
               ))}
@@ -128,7 +130,7 @@ const TerceirosPage = () => {
         <div className="glass-card rounded-lg p-5">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Código</TableHead><TableHead>Tipo</TableHead><TableHead>Transportadora</TableHead><TableHead>Motorista</TableHead><TableHead>Placa</TableHead><TableHead>Doca</TableHead><TableHead>Previsto</TableHead><TableHead>Chegada</TableHead><TableHead>NF</TableHead><TableHead>Status</TableHead>
+              <TableHead>CÃ³digo</TableHead><TableHead>Tipo</TableHead><TableHead>Transportadora</TableHead><TableHead>Motorista</TableHead><TableHead>Placa</TableHead><TableHead>Doca</TableHead><TableHead>Previsto</TableHead><TableHead>Chegada</TableHead><TableHead>NF</TableHead><TableHead>Status</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {operacoes.map((o) => (
@@ -138,10 +140,10 @@ const TerceirosPage = () => {
                   <TableCell>{o.transportadoraNome}</TableCell>
                   <TableCell>{o.motoristaNome}</TableCell>
                   <TableCell className="font-mono text-xs">{o.placa}</TableCell>
-                  <TableCell>{o.docaNome || "—"}</TableCell>
+                  <TableCell>{o.docaNome || "â€”"}</TableCell>
                   <TableCell className="text-xs">{new Date(o.horarioPrevisto).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
-                  <TableCell className="text-xs">{o.horarioChegada ? new Date(o.horarioChegada).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}</TableCell>
-                  <TableCell className="text-xs">{o.nfVinculada || "—"}</TableCell>
+                  <TableCell className="text-xs">{o.horarioChegada ? new Date(o.horarioChegada).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "â€”"}</TableCell>
+                  <TableCell className="text-xs">{o.nfVinculada || "â€”"}</TableCell>
                   <TableCell><StatusSemaphore status={o.status} /></TableCell>
                 </TableRow>
               ))}
@@ -155,7 +157,7 @@ const TerceirosPage = () => {
           <h3 className="text-sm font-semibold text-foreground mb-4">Agendamento de Docas</h3>
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Código</TableHead><TableHead>Doca</TableHead><TableHead>Transportadora</TableHead><TableHead>Operação</TableHead><TableHead>Placa</TableHead><TableHead>Motorista</TableHead><TableHead>Previsto</TableHead><TableHead>ETA</TableHead><TableHead>Status</TableHead>
+              <TableHead>CÃ³digo</TableHead><TableHead>Doca</TableHead><TableHead>Transportadora</TableHead><TableHead>OperaÃ§Ã£o</TableHead><TableHead>Placa</TableHead><TableHead>Motorista</TableHead><TableHead>Previsto</TableHead><TableHead>ETA</TableHead><TableHead>Status</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {agendamentos.map((a) => (
@@ -164,10 +166,10 @@ const TerceirosPage = () => {
                   <TableCell className="font-medium">{a.docaNome}</TableCell>
                   <TableCell>{a.transportadoraNome}</TableCell>
                   <TableCell><span className="status-badge bg-secondary text-secondary-foreground">{a.operacao}</span></TableCell>
-                  <TableCell className="font-mono text-xs">{a.placa || "—"}</TableCell>
-                  <TableCell className="text-xs">{a.motorista || "—"}</TableCell>
+                  <TableCell className="font-mono text-xs">{a.placa || "â€”"}</TableCell>
+                  <TableCell className="text-xs">{a.motorista || "â€”"}</TableCell>
                   <TableCell className="text-xs">{new Date(a.horarioPrevisto).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
-                  <TableCell className="text-xs">{a.etaEstimado ? new Date(a.etaEstimado).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}</TableCell>
+                  <TableCell className="text-xs">{a.etaEstimado ? new Date(a.etaEstimado).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "â€”"}</TableCell>
                   <TableCell><StatusSemaphore status={a.status} /></TableCell>
                 </TableRow>
               ))}
@@ -180,3 +182,4 @@ const TerceirosPage = () => {
 };
 
 export default TerceirosPage;
+

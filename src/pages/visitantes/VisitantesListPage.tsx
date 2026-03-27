@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Users, UserCheck, Clock, XCircle, Plus, Eye, Send, QrCode } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -9,21 +9,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getVisitantes } from "@/services/operacional";
 import type { Visitante } from "@/types/operacional";
+import { useToast } from "@/components/ui/use-toast";
 
 const TABS = [
   { value: "todos", label: "Todos" },
   { value: "pendentes", label: "Pendentes", filter: (s: string) => ["CONVITE_CRIADO", "LINK_ENVIADO", "CADASTRO_PREENCHIDO", "AGUARDANDO_VALIDACAO"].includes(s) },
   { value: "aprovados", label: "Aprovados", filter: (s: string) => ["APROVADO", "QR_GERADO"].includes(s) },
   { value: "presentes", label: "Em Visita", filter: (s: string) => ["ENTRADA_REALIZADA", "VISITA_EM_ANDAMENTO"].includes(s) },
-  { value: "historico", label: "Histórico", filter: (s: string) => ["ENCERRADO", "SAIDA_REALIZADA", "REJEITADO", "EXPIRADO"].includes(s) },
+  { value: "historico", label: "HistÃ³rico", filter: (s: string) => ["ENCERRADO", "SAIDA_REALIZADA", "REJEITADO", "EXPIRADO"].includes(s) },
 ];
 
 const VisitantesListPage = () => {
+  const { toast } = useToast();
   const [tab, setTab] = useState("todos");
   const [busca, setBusca] = useState("");
   const [allVisitantes, setAllVisitantes] = useState<Visitante[]>([]);
 
-  useEffect(() => { getVisitantes().then(setAllVisitantes); }, []);
+  useEffect(() => { getVisitantes().then(setAllVisitantes).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); }); }, []);
 
   const visitantes = useMemo(() => {
     const activeTab = TABS.find((t) => t.value === tab);
@@ -48,9 +50,9 @@ const VisitantesListPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Visitantes</h1>
-          <p className="text-sm text-muted-foreground mt-1">Pré-autorizações, aprovações e histórico de visitas</p>
+          <p className="text-sm text-muted-foreground mt-1">PrÃ©-autorizaÃ§Ãµes, aprovaÃ§Ãµes e histÃ³rico de visitas</p>
         </div>
-        <Button size="sm" asChild><Link to="/visitantes/pre-autorizacao"><Plus className="mr-1.5 h-4 w-4" />Nova Pré-autorização</Link></Button>
+        <Button size="sm" asChild><Link to="/visitantes/pre-autorizacao"><Plus className="mr-1.5 h-4 w-4" />Nova PrÃ©-autorizaÃ§Ã£o</Link></Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -74,15 +76,15 @@ const VisitantesListPage = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Código</TableHead>
+                <TableHead>CÃ³digo</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Documento</TableHead>
                 <TableHead>Empresa</TableHead>
                 <TableHead>Telefone</TableHead>
-                <TableHead>Última Visita</TableHead>
-                <TableHead>Veículo</TableHead>
+                <TableHead>Ãšltima Visita</TableHead>
+                <TableHead>VeÃ­culo</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead>AÃ§Ãµes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -96,8 +98,8 @@ const VisitantesListPage = () => {
                   <TableCell className="text-xs">{v.documento}</TableCell>
                   <TableCell>{v.empresa}</TableCell>
                   <TableCell className="text-xs">{v.telefone}</TableCell>
-                  <TableCell className="text-xs">{v.ultimaVisita || "—"}</TableCell>
-                  <TableCell>{v.possuiVeiculo ? "Sim" : "Não"}</TableCell>
+                  <TableCell className="text-xs">{v.ultimaVisita || "â€”"}</TableCell>
+                  <TableCell>{v.possuiVeiculo ? "Sim" : "NÃ£o"}</TableCell>
                   <TableCell><StatusSemaphore status={v.status} /></TableCell>
                   <TableCell>
                     <div className="flex gap-1">
@@ -116,3 +118,4 @@ const VisitantesListPage = () => {
 };
 
 export default VisitantesListPage;
+

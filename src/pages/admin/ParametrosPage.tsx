@@ -14,8 +14,13 @@ const ParametrosPage = () => {
   const [params, setParams] = useState<Parametro[]>([]);
 
   useEffect(() => {
-    getParametros().then(setParams);
-  }, []);
+    getParametros()
+      .then(setParams)
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar parâmetros.";
+        toast({ title: "Erro ao carregar parâmetros", description: message, variant: "destructive" });
+      });
+  }, [toast]);
 
   const updateParam = (chave: string, valor: string) => {
     setParams((prev) => prev.map((p) => (p.chave === chave ? { ...p, valor } : p)));
@@ -37,6 +42,5 @@ const ParametrosPage = () => {
 };
 
 export default ParametrosPage;
-
 
 

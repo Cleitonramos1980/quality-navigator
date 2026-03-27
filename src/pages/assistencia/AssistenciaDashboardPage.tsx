@@ -11,6 +11,7 @@ import { OS_STATUS_LABELS, OS_STATUS_COLORS, OS_PRIORIDADE_COLORS, OS_PRIORIDADE
 import type { OrdemServico, RequisicaoAssistencia } from "@/types/assistencia";
 import { getCurrentPapel, FILA_POR_PAPEL, PAPEL_LABELS, canCreateOS } from "@/lib/workflowOs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { useToast } from "@/components/ui/use-toast";
 
 const CHART_COLORS = [
   "hsl(200, 80%, 50%)",
@@ -22,6 +23,7 @@ const CHART_COLORS = [
 
 const AssistenciaDashboardPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [counters, setCounters] = useState<Awaited<ReturnType<typeof getDashboardCounters>> | null>(null);
   const [osList, setOsList] = useState<OrdemServico[]>([]);
   const [reqList, setReqList] = useState<RequisicaoAssistencia[]>([]);
@@ -34,10 +36,42 @@ const AssistenciaDashboardPage = () => {
   const isAdmin = papel === "ADMIN";
 
   useEffect(() => {
-    getDashboardCounters().then(setCounters);
-    listarOS().then(setOsList);
-    listarReqAssistencia().then(setReqList);
-  }, []);
+    let cancelled = false;
+    void (async () => {
+      const [countersRes, osRes, reqRes] = await Promise.allSettled([
+        getDashboardCounters(),
+        listarOS(),
+        listarReqAssistencia(),
+      ]);
+
+      if (cancelled) return;
+
+      if (countersRes.status === "fulfilled") {
+        setCounters(countersRes.value);
+      } else {
+        const message = countersRes.reason instanceof Error ? countersRes.reason.message : "Falha ao carregar indicadores.";
+        toast({ title: "Erro no dashboard", description: message, variant: "destructive" });
+      }
+
+      if (osRes.status === "fulfilled") {
+        setOsList(osRes.value);
+      } else {
+        const message = osRes.reason instanceof Error ? osRes.reason.message : "Falha ao carregar ordens de serviço.";
+        toast({ title: "Erro ao carregar OS", description: message, variant: "destructive" });
+      }
+
+      if (reqRes.status === "fulfilled") {
+        setReqList(reqRes.value);
+      } else {
+        const message = reqRes.reason instanceof Error ? reqRes.reason.message : "Falha ao carregar requisições.";
+        toast({ title: "Erro ao carregar requisições", description: message, variant: "destructive" });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [toast]);
 
   if (!counters) return null;
 
@@ -316,5 +350,4 @@ const AssistenciaDashboardPage = () => {
 };
 
 export default AssistenciaDashboardPage;
-
 

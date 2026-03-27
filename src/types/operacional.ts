@@ -10,6 +10,57 @@ export type AcessoStatus =
 
 export type TipoAcesso = "VISITANTE" | "MOTORISTA" | "PRESTADOR" | "FUNCIONARIO" | "ENTREGA";
 
+export type SolicitacaoAcessoStatus =
+  | "LINK_GERADO" | "ENVIADO" | "PREENCHIDO"
+  | "VALIDADO" | "RECUSADO" | "EXPIRADO" | "CONVERTIDO_EM_ACESSO";
+
+export interface SolicitacaoAcessoHistorico {
+  id: string;
+  tipo: string;
+  descricao: string;
+  dataHora: string;
+  usuario: string;
+}
+
+export interface SolicitacaoAcessoPreenchimento {
+  nome: string;
+  documento: string;
+  empresa: string;
+  telefone: string;
+  email?: string;
+  possuiVeiculo: boolean;
+  placa?: string;
+  tipoVeiculo?: string;
+  modelo?: string;
+  cor?: string;
+  obs?: string;
+  selfieUrl?: string;
+}
+
+export interface SolicitacaoAcesso {
+  id: string;
+  codigo: string;
+  token: string;
+  linkPreenchimento: string;
+  status: SolicitacaoAcessoStatus;
+  tipoAcesso: TipoAcesso;
+  responsavelInterno: string;
+  setorDestino: string;
+  unidadePlanta: string;
+  validadeHoras: number;
+  observacaoInterna?: string;
+  solicitadoPor: string;
+  horarioPrevisto: string;
+  expiraEm: string;
+  criadoEm: string;
+  atualizadoEm: string;
+  preenchidoEm?: string;
+  acessoId: string;
+  visitanteId?: string | null;
+  preenchimento?: SolicitacaoAcessoPreenchimento | null;
+  historico: SolicitacaoAcessoHistorico[];
+}
+
 export interface Acesso {
   id: string;
   tipo: TipoAcesso;
@@ -33,6 +84,10 @@ export interface Acesso {
   criadoPor: string;
   ultimaAtualizacao: string;
   obs?: string;
+  solicitacaoId?: string;
+  linkPreenchimento?: string;
+  expiraEm?: string;
+  visitanteId?: string;
 }
 
 // ── Visitantes ──
@@ -341,6 +396,11 @@ export const OPERACIONAL_STATUS_COLORS: Record<string, string> = {
   PRE_AUTORIZADO: "bg-info/15 text-info",
   AGUARDANDO_PREENCHIMENTO: "bg-warning/15 text-warning",
   AGUARDANDO_VALIDACAO: "bg-warning/15 text-warning",
+  LINK_GERADO: "bg-info/15 text-info",
+  ENVIADO: "bg-info/15 text-info",
+  PREENCHIDO: "bg-warning/15 text-warning",
+  VALIDADO: "bg-success/15 text-success",
+  CONVERTIDO_EM_ACESSO: "bg-success/15 text-success",
   APROVADO: "bg-success/15 text-success",
   ENTRADA_LIBERADA: "bg-success/15 text-success",
   ENTRADA_REGISTRADA: "bg-primary/15 text-primary",

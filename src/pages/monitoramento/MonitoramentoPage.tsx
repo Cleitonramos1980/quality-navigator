@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Activity, Users, Truck, Layers, AlertTriangle, Bell, Shield, Eye, Clock } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -10,26 +10,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getDashboardOperacional, getAlertas, getExcecoes } from "@/services/operacional";
 import type { AlertaOperacional, ExcecaoOperacional } from "@/types/operacional";
 import type { DashboardOperacionalData } from "@/services/operacional";
+import { useToast } from "@/components/ui/use-toast";
 
 const defaultDash: DashboardOperacionalData = { visitantesPresentes: 0, veiculosVisitantesPresentes: 0, terceirosNaUnidade: 0, frotaEmDeslocamento: 0, docasOcupadas: 0, docasTotal: 0, alertasAtivos: 0, nfsEmTransito: 0, nfsEmRisco: 0, nfsSemConfirmacao: 0, valorEmTransito: 0, valorEmRisco: 0, mediaDiasTransito: 0, filaExterna: 0, filaInterna: 0, veiculosParados: 0, tempoMedioPatio: 0, slaGeral: 0 };
 
 const MonitoramentoPage = () => {
+  const { toast } = useToast();
   const [tab, setTab] = useState("tempo-real");
   const [d, setD] = useState<DashboardOperacionalData>(defaultDash);
   const [alertas, setAlertas] = useState<AlertaOperacional[]>([]);
   const [excecoes, setExcecoes] = useState<ExcecaoOperacional[]>([]);
 
   useEffect(() => {
-    getDashboardOperacional().then(setD);
-    getAlertas().then(setAlertas);
-    getExcecoes().then(setExcecoes);
+    getDashboardOperacional().then(setD).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getAlertas().then(setAlertas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getExcecoes().then(setExcecoes).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Monitoramento em Tempo Real</h1>
-        <p className="text-sm text-muted-foreground mt-1">Torre de controle operacional — visão consolidada</p>
+        <p className="text-sm text-muted-foreground mt-1">Torre de controle operacional â€” visÃ£o consolidada</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -42,19 +44,19 @@ const MonitoramentoPage = () => {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="tempo-real">Operação</TabsTrigger>
+          <TabsTrigger value="tempo-real">OperaÃ§Ã£o</TabsTrigger>
           <TabsTrigger value="alertas">Alertas ({alertas.filter(a => a.status === "ATIVO").length})</TabsTrigger>
-          <TabsTrigger value="excecoes">Exceções ({excecoes.filter(e => e.status !== "RESOLVIDA").length})</TabsTrigger>
+          <TabsTrigger value="excecoes">ExceÃ§Ãµes ({excecoes.filter(e => e.status !== "RESOLVIDA").length})</TabsTrigger>
         </TabsList>
       </Tabs>
 
       {tab === "tempo-real" && (
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="glass-card rounded-lg p-5">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-4"><Users className="h-4 w-4 text-primary" />Quem está dentro agora</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-4"><Users className="h-4 w-4 text-primary" />Quem estÃ¡ dentro agora</h3>
             <div className="space-y-2">
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Visitantes</span><span className="font-semibold">{d.visitantesPresentes}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Veículos Visitantes</span><span className="font-semibold">{d.veiculosVisitantesPresentes}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">VeÃ­culos Visitantes</span><span className="font-semibold">{d.veiculosVisitantesPresentes}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Terceiros na Unidade</span><span className="font-semibold">{d.terceirosNaUnidade}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Motoristas na Fila</span><span className="font-semibold">{d.filaExterna + d.filaInterna}</span></div>
             </div>
@@ -62,18 +64,18 @@ const MonitoramentoPage = () => {
           <div className="glass-card rounded-lg p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-4"><Activity className="h-4 w-4 text-primary" />Gargalos Operacionais</h3>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Fila Externa</span><span className="font-semibold">{d.filaExterna} veículos</span></div>
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Veículos Parados</span><span className="font-semibold">{d.veiculosParados}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Tempo Médio Pátio</span><span className="font-semibold">{d.tempoMedioPatio} min</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Fila Externa</span><span className="font-semibold">{d.filaExterna} veÃ­culos</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">VeÃ­culos Parados</span><span className="font-semibold">{d.veiculosParados}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Tempo MÃ©dio PÃ¡tio</span><span className="font-semibold">{d.tempoMedioPatio} min</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">SLA Geral</span><span className={`font-bold ${d.slaGeral >= 80 ? "text-success" : d.slaGeral >= 60 ? "text-warning" : "text-destructive"}`}>{d.slaGeral}%</span></div>
             </div>
           </div>
           <div className="glass-card rounded-lg p-5">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-4"><Shield className="h-4 w-4 text-primary" />NF em Trânsito</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-4"><Shield className="h-4 w-4 text-primary" />NF em TrÃ¢nsito</h3>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Em Trânsito</span><span className="font-semibold">{d.nfsEmTransito}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Em TrÃ¢nsito</span><span className="font-semibold">{d.nfsEmTransito}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Em Risco</span><span className="font-semibold text-destructive">{d.nfsEmRisco}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Sem Confirmação</span><span className="font-semibold text-warning">{d.nfsSemConfirmacao}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Sem ConfirmaÃ§Ã£o</span><span className="font-semibold text-warning">{d.nfsSemConfirmacao}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Valor em Risco</span><span className="font-semibold text-destructive">R$ {(d.valorEmRisco / 1000).toFixed(0)}k</span></div>
             </div>
           </div>
@@ -95,7 +97,7 @@ const MonitoramentoPage = () => {
         <div className="glass-card rounded-lg p-5">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Tipo</TableHead><TableHead>Descrição</TableHead><TableHead>Origem</TableHead><TableHead>Criticidade</TableHead><TableHead>Responsável</TableHead><TableHead>Status</TableHead><TableHead>Criado em</TableHead>
+              <TableHead>Tipo</TableHead><TableHead>DescriÃ§Ã£o</TableHead><TableHead>Origem</TableHead><TableHead>Criticidade</TableHead><TableHead>ResponsÃ¡vel</TableHead><TableHead>Status</TableHead><TableHead>Criado em</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {alertas.map((a) => (
@@ -119,7 +121,7 @@ const MonitoramentoPage = () => {
           <div className="glass-card rounded-lg p-5">
             <Table>
               <TableHeader><TableRow>
-                <TableHead>Código</TableHead><TableHead>Tipo</TableHead><TableHead>Descrição</TableHead><TableHead>Criticidade</TableHead><TableHead>Responsável</TableHead><TableHead>Prazo</TableHead><TableHead>Status</TableHead>
+                <TableHead>CÃ³digo</TableHead><TableHead>Tipo</TableHead><TableHead>DescriÃ§Ã£o</TableHead><TableHead>Criticidade</TableHead><TableHead>ResponsÃ¡vel</TableHead><TableHead>Prazo</TableHead><TableHead>Status</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {excecoes.map((e) => (
@@ -144,3 +146,4 @@ const MonitoramentoPage = () => {
 };
 
 export default MonitoramentoPage;
+

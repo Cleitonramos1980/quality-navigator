@@ -6,14 +6,16 @@ import { Input } from "@/components/ui/input";
 import StatusBadge from "@/components/StatusBadge";
 import { getGarantias } from "@/services/garantias";
 import type { GarantiaCaso } from "@/types/sgq";
+import { useToast } from "@/components/ui/use-toast";
 
 const GarantiasPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [garantias, setGarantias] = useState<GarantiaCaso[]>([]);
 
   useEffect(() => {
-    getGarantias().then(setGarantias);
+    getGarantias().then(setGarantias).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const filtered = garantias.filter(
@@ -91,5 +93,6 @@ const GarantiasPage = () => {
 };
 
 export default GarantiasPage;
+
 
 

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Car, Eye } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getVeiculosVisitantes } from "@/services/operacional";
 import type { VeiculoVisitante } from "@/types/operacional";
+import { useToast } from "@/components/ui/use-toast";
 
 const VeiculosVisitantesPage = () => {
+  const { toast } = useToast();
   const [busca, setBusca] = useState("");
   const [allVeiculos, setAllVeiculos] = useState<VeiculoVisitante[]>([]);
-  useEffect(() => { getVeiculosVisitantes().then(setAllVeiculos); }, []);
+  useEffect(() => { getVeiculosVisitantes().then(setAllVeiculos).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); }); }, []);
   const veiculos = useMemo(() => {
     if (!busca) return allVeiculos;
     const q = busca.toLowerCase();
@@ -22,20 +24,20 @@ const VeiculosVisitantesPage = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Veículos de Visitantes</h1>
-        <p className="text-sm text-muted-foreground mt-1">Controle de veículos vinculados a visitantes</p>
+        <h1 className="text-2xl font-bold text-foreground">VeÃ­culos de Visitantes</h1>
+        <p className="text-sm text-muted-foreground mt-1">Controle de veÃ­culos vinculados a visitantes</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard title="Total" value={allVeiculos.length} icon={<Car className="w-5 h-5" />} />
         <KPICard title="Estacionados" value={allVeiculos.filter((v) => v.status === "ESTACIONADO").length} icon={<Car className="w-5 h-5" />} />
         <KPICard title="Aguardando" value={allVeiculos.filter((v) => v.status === "AGUARDANDO_CHEGADA").length} icon={<Car className="w-5 h-5" />} />
-        <KPICard title="Saíram" value={allVeiculos.filter((v) => v.status === "SAIU").length} icon={<Car className="w-5 h-5" />} />
+        <KPICard title="SaÃ­ram" value={allVeiculos.filter((v) => v.status === "SAIU").length} icon={<Car className="w-5 h-5" />} />
       </div>
 
       <div className="glass-card rounded-lg p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-foreground">Veículos Cadastrados</h3>
+          <h3 className="text-sm font-semibold text-foreground">VeÃ­culos Cadastrados</h3>
           <Input placeholder="Buscar por placa, modelo ou visitante..." value={busca} onChange={(e) => setBusca(e.target.value)} className="max-w-xs" />
         </div>
         <Table>
@@ -50,7 +52,7 @@ const VeiculosVisitantesPage = () => {
               <TableHead>Vaga</TableHead>
               <TableHead>Entrada</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Ações</TableHead>
+              <TableHead>AÃ§Ãµes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -62,8 +64,8 @@ const VeiculosVisitantesPage = () => {
                 <TableCell>{v.cor}</TableCell>
                 <TableCell>{v.visitanteNome}</TableCell>
                 <TableCell>{v.empresaOrigem}</TableCell>
-                <TableCell className="text-xs">{v.localVaga || "—"}</TableCell>
-                <TableCell className="text-xs">{v.horarioEntrada ? new Date(v.horarioEntrada).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}</TableCell>
+                <TableCell className="text-xs">{v.localVaga || "â€”"}</TableCell>
+                <TableCell className="text-xs">{v.horarioEntrada ? new Date(v.horarioEntrada).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "â€”"}</TableCell>
                 <TableCell><StatusSemaphore status={v.status} /></TableCell>
                 <TableCell><Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button></TableCell>
               </TableRow>
@@ -76,3 +78,4 @@ const VeiculosVisitantesPage = () => {
 };
 
 export default VeiculosVisitantesPage;
+

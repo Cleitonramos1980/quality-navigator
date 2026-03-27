@@ -32,3 +32,10 @@ export const updatePadraoMola = (id: string, data: Partial<PadraoMola>) => apiPu
 export const listInspecoesMola = () => apiGet<InspecaoMola[]>("/inspecoes/molas");
 export const getInspecaoMola = (id: string) => apiGet<InspecaoMola>(`/inspecoes/molas/${id}`);
 export const createInspecaoMola = (data: Omit<InspecaoMola, "id">) => apiPost<InspecaoMola>("/inspecoes/molas", data);
+
+// Setores
+export const listSetoresInspecao = () => apiGet<string[]>("/inspecoes/setores");
+
+// Usuário-Setor mapping
+export const listUsuarioSetores = (userId: string, perfil?: string) =>
+  apiGet<string[]>(`/inspecoes/usuario-setor/${userId}${perfil ? `?perfil=${encodeURIComponent(perfil)}` : ""}`);

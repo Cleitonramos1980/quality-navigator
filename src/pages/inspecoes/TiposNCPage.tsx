@@ -1,44 +1,75 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Plus, Save, Search, Edit, Power, PowerOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import SectionCard from "@/components/forms/SectionCard";
 import FormField from "@/components/forms/FormField";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { listTiposNCInspecao, createTipoNCInspecao, updateTipoNCInspecao } from "@/services/inspecoes";
 import type { TipoNCInspecao } from "@/types/inspecoes";
-import { SETORES_INSPECAO, CATEGORIAS_NC } from "@/types/inspecoes";
+import { CATEGORIAS_NC } from "@/types/inspecoes";
+import { useSetoresPermitidos } from "@/hooks/useSetoresPermitidos";
+import { hasSetorPermitido, isSameSetor } from "@/lib/inspecoesChecklist";
+import SetorEscopoAlert from "@/components/inspecoes/SetorEscopoAlert";
 
 const TiposNCPage = () => {
   const { toast } = useToast();
+  const { setoresPermitidos, loading: loadingSetores, error: setoresError } = useSetoresPermitidos();
   const [tipos, setTipos] = useState<TipoNCInspecao[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [filtroSetor, setFiltroSetor] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ setor: SETORES_INSPECAO[0] as string, nome: "", categoria: "Visual", observacao: "" });
+  const [form, setForm] = useState({ setor: "", nome: "", categoria: "Visual", observacao: "" });
+
+  const setoresDisponiveis = useMemo(() => [...setoresPermitidos].sort(), [setoresPermitidos]);
+
+  const resetForm = () => {
+    setForm({ setor: setoresDisponiveis[0] ?? "", nome: "", categoria: "Visual", observacao: "" });
+    setEditId(null);
+    setShowForm(false);
+  };
 
   const load = async () => {
     setLoading(true);
-    try { setTipos(await listTiposNCInspecao()); }
-    catch (e) { toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha", variant: "destructive" }); }
-    finally { setLoading(false); }
+    try {
+      const data = await listTiposNCInspecao();
+      setTipos(data.filter((tipo) => tipo.setor === "Geral" || hasSetorPermitido(setoresPermitidos, tipo.setor)));
+    } catch (e) {
+      toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    if (!loadingSetores && !setoresError && !form.setor && setoresDisponiveis.length > 0) {
+      setForm((prev) => ({ ...prev, setor: setoresDisponiveis[0] }));
+    }
+  }, [loadingSetores, setoresError, form.setor, setoresDisponiveis]);
+
+  useEffect(() => {
+    if (loadingSetores || setoresError) return;
+    void load();
+  }, [loadingSetores, setoresError, setoresPermitidos]);
+
+  useEffect(() => {
+    if (filtroSetor && !hasSetorPermitido(setoresDisponiveis, filtroSetor)) {
+      setFiltroSetor("");
+    }
+  }, [filtroSetor, setoresDisponiveis]);
 
   const filtered = tipos.filter((t) => {
     if (search && !t.nome.toLowerCase().includes(search.toLowerCase())) return false;
-    if (filtroSetor && t.setor !== filtroSetor) return false;
+    if (filtroSetor && !isSameSetor(t.setor, filtroSetor)) return false;
     return true;
   });
 
   const handleSave = async () => {
     if (!form.nome.trim()) { toast({ title: "Informe o nome", variant: "destructive" }); return; }
+    if (!form.setor) { toast({ title: "Selecione um setor permitido", variant: "destructive" }); return; }
     try {
       if (editId) {
         await updateTipoNCInspecao(editId, { ...form, ativo: true });
@@ -47,9 +78,7 @@ const TiposNCPage = () => {
         await createTipoNCInspecao({ ...form, ativo: true });
         toast({ title: "Tipo criado" });
       }
-      setForm({ setor: SETORES_INSPECAO[0] as string, nome: "", categoria: "Visual", observacao: "" });
-      setShowForm(false);
-      setEditId(null);
+      resetForm();
       await load();
     } catch (e) {
       toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha", variant: "destructive" });
@@ -80,19 +109,33 @@ const TiposNCPage = () => {
             <AlertTriangle className="w-6 h-6 text-primary" />
             Tipos de Não Conformidade
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Cadastro de tipos de NC por setor para inspeções</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Cadastro de tipos de NC por setor dentro do seu escopo</p>
         </div>
-        <Button size="sm" onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ setor: SETORES_INSPECAO[0] as string, nome: "", categoria: "Visual", observacao: "" }); }}>
+        <Button
+          size="sm"
+          onClick={() => {
+            if (showForm) {
+              resetForm();
+              return;
+            }
+            setEditId(null);
+            setForm({ setor: setoresDisponiveis[0] ?? "", nome: "", categoria: "Visual", observacao: "" });
+            setShowForm(true);
+          }}
+        >
           <Plus className="w-4 h-4 mr-1" />{showForm ? "Fechar" : "Novo Tipo"}
         </Button>
       </div>
+
+      <SetorEscopoAlert loading={loadingSetores} error={setoresError} setoresPermitidos={setoresPermitidos} />
 
       {showForm && (
         <SectionCard title={editId ? "Editar Tipo de NC" : "Novo Tipo de NC"}>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <FormField label="Setor" required>
-              <select value={form.setor} onChange={(e) => setForm((p) => ({ ...p, setor: e.target.value }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                {SETORES_INSPECAO.map((s) => <option key={s} value={s}>{s}</option>)}
+              <select value={form.setor} onChange={(e) => setForm((p) => ({ ...p, setor: e.target.value }))} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" disabled={loadingSetores || setoresDisponiveis.length === 0}>
+                <option value="">Selecione...</option>
+                {setoresDisponiveis.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </FormField>
             <FormField label="Nome" required>
@@ -108,8 +151,8 @@ const TiposNCPage = () => {
             </FormField>
           </div>
           <div className="flex justify-end mt-3 gap-2">
-            <Button variant="outline" onClick={() => { setShowForm(false); setEditId(null); }}>Cancelar</Button>
-            <Button onClick={handleSave} className="gap-2"><Save className="w-4 h-4" />Salvar</Button>
+            <Button variant="outline" onClick={resetForm}>Cancelar</Button>
+            <Button onClick={handleSave} className="gap-2" disabled={loadingSetores}><Save className="w-4 h-4" />Salvar</Button>
           </div>
         </SectionCard>
       )}
@@ -121,11 +164,11 @@ const TiposNCPage = () => {
         </div>
         <select value={filtroSetor} onChange={(e) => setFiltroSetor(e.target.value)} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
           <option value="">Todos os Setores</option>
-          {SETORES_INSPECAO.map((s) => <option key={s} value={s}>{s}</option>)}
+          {setoresDisponiveis.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
 
-      <SectionCard title="Tipos Cadastrados" description={loading ? "Carregando..." : `${filtered.length} tipo(s)`}>
+      <SectionCard title="Tipos Cadastrados" description={loading || loadingSetores ? "Carregando..." : `${filtered.length} tipo(s)`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

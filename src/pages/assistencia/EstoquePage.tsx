@@ -9,16 +9,23 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { listarEstoque } from "@/services/assistencia";
 import type { EstoqueItem } from "@/types/assistencia";
+import { useToast } from "@/components/ui/use-toast";
 
 const EstoquePage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [estoque, setEstoque] = useState<EstoqueItem[]>([]);
   const [search, setSearch] = useState("");
   const [filterCategoria, setFilterCategoria] = useState("ALL");
 
   useEffect(() => {
-    listarEstoque().then(setEstoque);
-  }, []);
+    listarEstoque()
+      .then(setEstoque)
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar estoque.";
+        toast({ title: "Erro ao carregar estoque", description: message, variant: "destructive" });
+      });
+  }, [toast]);
 
   const categorias = [...new Set(estoque.map((e) => e.categoria))];
 
@@ -122,6 +129,5 @@ const EstoquePage = () => {
 };
 
 export default EstoquePage;
-
 
 

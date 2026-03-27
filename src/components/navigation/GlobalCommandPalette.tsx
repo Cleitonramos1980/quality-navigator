@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Search, LayoutDashboard, Headphones, Wrench, ClipboardCheck, Settings,
-  DoorOpen, Users, Truck, Activity, FileText, PackageSearch, Layers, Eye, UserPlus, QrCode, Car,
+  DoorOpen, Users, Truck, Activity, FileText, PackageSearch, Layers, Eye, UserPlus, QrCode, Car, Shield,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -14,10 +14,11 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import { canSeeModulo, canSeeAssistSubmenu, canSeeQualidadeSubmenu, canSeeSacSubmenu } from "@/lib/workflowOs";
+import { canSeeModulo, canSeeAssistSubmenu, canSeeQualidadeSubmenu, canSeeSacSubmenu, canSeeSesmtSubmenu } from "@/lib/workflowOs";
 import type { NavModulo } from "@/lib/workflowOs";
 import { prefetchRoute } from "@/lib/routePrefetch";
 import { useUxMetrics } from "@/hooks/useUxMetrics";
+import { SESMT_MENU_CHILDREN } from "@/lib/sesmtMenu";
 
 interface CommandRoute {
   label: string;
@@ -104,12 +105,20 @@ const COMMAND_ROUTES: CommandRoute[] = [
   { label: "Perfis", path: "/administracao/perfis", icon: Settings, modulo: "admin", group: "Administração" },
   { label: "Log de Auditoria", path: "/administracao/log-auditoria", icon: Settings, modulo: "admin", group: "Administração" },
   { label: "Parâmetros", path: "/administracao/parametros", icon: Settings, modulo: "admin", group: "Administração" },
+  ...SESMT_MENU_CHILDREN.map((item) => ({
+    label: item.label,
+    path: item.path,
+    icon: Shield,
+    modulo: "sesmt" as NavModulo,
+    group: "SESMT / SST",
+  })),
 ];
 
 function canAccessPath(path: string, modulo: CommandRoute["modulo"]): boolean {
   if (!canSeeModulo(modulo)) return false;
   if (modulo === "sac") return canSeeSacSubmenu(path);
   if (modulo === "qualidade") return canSeeQualidadeSubmenu(path);
+  if (modulo === "sesmt") return canSeeSesmtSubmenu(path);
   if (modulo === "assistencia") return canSeeAssistSubmenu(path);
   return true;
 }

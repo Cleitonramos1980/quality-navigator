@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   ShieldAlert, AlertTriangle, Clock, Users, Filter, Eye, ExternalLink,
@@ -19,6 +19,7 @@ import {
   CRITICIDADE_LABELS, CRITICIDADE_COLORS,
 } from "@/types/torreControle";
 import type { ExcecaoCategoria, ExcecaoCriticidade, ExcecaoStatus } from "@/types/torreControle";
+import { useToast } from "@/components/ui/use-toast";
 
 const CATEGORY_ICONS: Record<string, typeof ShieldAlert> = {
   PATIO: Layers, PORTARIA: DoorOpen, FROTA: Truck, NF_TRANSITO: FileText,
@@ -27,6 +28,7 @@ const CATEGORY_ICONS: Record<string, typeof ShieldAlert> = {
 };
 
 const TorreControlePage = () => {
+  const { toast } = useToast();
   const [excecoes, setExcecoes] = useState<ExcecaoTorre[]>([]);
   const [kpis, setKpis] = useState<TorreKPIs | null>(null);
   const [tab, setTab] = useState("todas");
@@ -36,8 +38,8 @@ const TorreControlePage = () => {
   const [filtroStatus, setFiltroStatus] = useState<string>("ALL");
 
   useEffect(() => {
-    getExcecoesTorre().then(setExcecoes);
-    getTorreKPIs().then(setKpis);
+    getExcecoesTorre().then(setExcecoes).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getTorreKPIs().then(setKpis).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const filtered = useMemo(() => {
@@ -71,20 +73,20 @@ const TorreControlePage = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <ShieldAlert className="h-6 w-6 text-destructive" /> Torre de Controle de Exceções
+          <ShieldAlert className="h-6 w-6 text-destructive" /> Torre de Controle de ExceÃ§Ãµes
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Centro de priorização operacional — o que exige ação imediata
+          Centro de priorizaÃ§Ã£o operacional â€” o que exige aÃ§Ã£o imediata
         </p>
       </div>
 
       {/* KPIs */}
       {kpis && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <KPICard title="Abertas" value={kpis.totalAbertas} icon={<AlertTriangle className="w-5 h-5" />} subtitle="exceções ativas" onClick={() => setTab("todas")} />
-          <KPICard title="Críticas" value={kpis.criticas} icon={<ShieldAlert className="w-5 h-5" />} subtitle="ação imediata" onClick={() => setTab("criticas")} />
+          <KPICard title="Abertas" value={kpis.totalAbertas} icon={<AlertTriangle className="w-5 h-5" />} subtitle="exceÃ§Ãµes ativas" onClick={() => setTab("todas")} />
+          <KPICard title="CrÃ­ticas" value={kpis.criticas} icon={<ShieldAlert className="w-5 h-5" />} subtitle="aÃ§Ã£o imediata" onClick={() => setTab("criticas")} />
           <KPICard title="SLA Estourado" value={kpis.slaEstourado} icon={<Clock className="w-5 h-5" />} subtitle="prazo vencido" onClick={() => setTab("vencendo")} />
-          <KPICard title="Sem Responsável" value={kpis.semResponsavel} icon={<Users className="w-5 h-5" />} subtitle="sem dono" onClick={() => setTab("sem-responsavel")} />
+          <KPICard title="Sem ResponsÃ¡vel" value={kpis.semResponsavel} icon={<Users className="w-5 h-5" />} subtitle="sem dono" onClick={() => setTab("sem-responsavel")} />
           <KPICard title="NFs em Risco" value={kpis.nfsEmRisco} icon={<FileText className="w-5 h-5" />} />
           <KPICard title="Resolvidas Hoje" value={kpis.resolvidasHoje} icon={<CheckCircle2 className="w-5 h-5" />} subtitle="no dia" />
         </div>
@@ -115,14 +117,14 @@ const TorreControlePage = () => {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="todas">Todas ({excecoes.filter(e => e.status !== "RESOLVIDA" && e.status !== "ENCERRADA").length})</TabsTrigger>
-            <TabsTrigger value="criticas">Críticas</TabsTrigger>
+            <TabsTrigger value="criticas">CrÃ­ticas</TabsTrigger>
             <TabsTrigger value="vencendo">Vencendo</TabsTrigger>
             <TabsTrigger value="sem-responsavel">Sem Dono</TabsTrigger>
             <TabsTrigger value="reincidentes">Reincidentes</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="flex-1" />
-        <Input placeholder="Buscar exceção..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-[200px]" />
+        <Input placeholder="Buscar exceÃ§Ã£o..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-[200px]" />
         <Select value={filtroCrit} onValueChange={setFiltroCrit}>
           <SelectTrigger className="w-[140px]"><SelectValue placeholder="Criticidade" /></SelectTrigger>
           <SelectContent>
@@ -149,13 +151,13 @@ const TorreControlePage = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[60px]">Crit.</TableHead>
-              <TableHead>Exceção</TableHead>
+              <TableHead>ExceÃ§Ã£o</TableHead>
               <TableHead>Categoria</TableHead>
-              <TableHead>Responsável</TableHead>
+              <TableHead>ResponsÃ¡vel</TableHead>
               <TableHead>Prazo</TableHead>
               <TableHead>Reinc.</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[80px]">Ações</TableHead>
+              <TableHead className="w-[80px]">AÃ§Ãµes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -163,8 +165,8 @@ const TorreControlePage = () => {
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
                   <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-success" />
-                  <p className="font-medium">Nenhuma exceção encontrada</p>
-                  <p className="text-xs">Todos os indicadores estão dentro dos limites operacionais</p>
+                  <p className="font-medium">Nenhuma exceÃ§Ã£o encontrada</p>
+                  <p className="text-xs">Todos os indicadores estÃ£o dentro dos limites operacionais</p>
                 </TableCell>
               </TableRow>
             )}
@@ -199,13 +201,13 @@ const TorreControlePage = () => {
                     {exc.responsavel || <span className="text-destructive font-medium">Sem dono</span>}
                   </TableCell>
                   <TableCell className={`text-xs font-medium ${prazoVencido ? "text-destructive" : "text-foreground"}`}>
-                    {exc.prazo ? new Date(exc.prazo).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}
+                    {exc.prazo ? new Date(exc.prazo).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "â€”"}
                     {prazoVencido && <span className="block text-[10px]">VENCIDO</span>}
                   </TableCell>
                   <TableCell className="text-xs text-center">
                     {exc.reincidencias > 0 ? (
                       <Badge variant="destructive" className="text-[10px]">{exc.reincidencias}x</Badge>
-                    ) : "—"}
+                    ) : "â€”"}
                   </TableCell>
                   <TableCell>
                     <Badge className={`text-[10px] ${EXCECAO_STATUS_COLORS[exc.status]}`}>
@@ -283,3 +285,4 @@ const TorreControlePage = () => {
 };
 
 export default TorreControlePage;
+

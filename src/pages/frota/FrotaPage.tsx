@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Truck, CheckCircle, AlertTriangle, Wrench, Ban, MapPin, Eye, PlusCircle, Send } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -11,11 +11,13 @@ import { getVeiculosFrota, getDeslocamentos, getDocas } from "@/services/operaci
 import type { VeiculoFrota, DeslocamentoFrota, Doca } from "@/types/operacional";
 import RegistrarMovimentacaoModal from "@/components/frota/RegistrarMovimentacaoModal";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { useToast } from "@/components/ui/use-toast";
 
 const COLORS = ["hsl(152, 60%, 40%)", "hsl(220, 70%, 45%)", "hsl(200, 80%, 50%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(280, 60%, 50%)"];
 
 const FrotaPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [tab, setTab] = useState("visao");
   const [busca, setBusca] = useState("");
   const [movVeiculo, setMovVeiculo] = useState<VeiculoFrota | null>(null);
@@ -24,9 +26,9 @@ const FrotaPage = () => {
   const [allDocas, setAllDocas] = useState<Doca[]>([]);
 
   useEffect(() => {
-    getVeiculosFrota().then(setAllFrota);
-    getDeslocamentos().then(setAllDeslocamentos);
-    getDocas().then(setAllDocas);
+    getVeiculosFrota().then(setAllFrota).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getDeslocamentos().then(setAllDeslocamentos).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getDocas().then(setAllDocas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const getLocalizacao = (v: VeiculoFrota) => {
@@ -69,7 +71,7 @@ const FrotaPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Frota</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gestão da frota própria — veículos, deslocamentos e manutenções</p>
+          <p className="text-sm text-muted-foreground mt-1">GestÃ£o da frota prÃ³pria â€” veÃ­culos, deslocamentos e manutenÃ§Ãµes</p>
         </div>
         <Button onClick={() => navigate("/frota/despacho")} className="gap-2">
           <Send className="h-4 w-4" /> Novo Despacho
@@ -78,19 +80,19 @@ const FrotaPage = () => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <KPICard title="Total" value={kpis.total} icon={<Truck className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
-        <KPICard title="Disponíveis" value={kpis.disponiveis} icon={<CheckCircle className="w-5 h-5" />} onClick={() => { setTab("veiculos"); setBusca(""); }} />
+        <KPICard title="DisponÃ­veis" value={kpis.disponiveis} icon={<CheckCircle className="w-5 h-5" />} onClick={() => { setTab("veiculos"); setBusca(""); }} />
         <KPICard title="Deslocamento" value={kpis.emDeslocamento} icon={<MapPin className="w-5 h-5" />} onClick={() => setTab("deslocamentos")} />
         <KPICard title="Parados" value={kpis.paradosNP} icon={<AlertTriangle className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
-        <KPICard title="Manutenção" value={kpis.emManutencao} icon={<Wrench className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
+        <KPICard title="ManutenÃ§Ã£o" value={kpis.emManutencao} icon={<Wrench className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
         <KPICard title="Bloqueados" value={kpis.bloqueados} icon={<Ban className="w-5 h-5" />} onClick={() => setTab("veiculos")} />
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="visao">Visão Geral</TabsTrigger>
-          <TabsTrigger value="veiculos">Veículos</TabsTrigger>
+          <TabsTrigger value="visao">VisÃ£o Geral</TabsTrigger>
+          <TabsTrigger value="veiculos">VeÃ­culos</TabsTrigger>
           <TabsTrigger value="deslocamentos">Deslocamentos</TabsTrigger>
-          <TabsTrigger value="localizacao">Localização</TabsTrigger>
+          <TabsTrigger value="localizacao">LocalizaÃ§Ã£o</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -110,7 +112,7 @@ const FrotaPage = () => {
             </div>
           </div>
           <div className="glass-card rounded-lg p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Veículos por Tipo</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">VeÃ­culos por Tipo</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={tipoData}>
@@ -129,7 +131,7 @@ const FrotaPage = () => {
       {tab === "veiculos" && (
         <div className="glass-card rounded-lg p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Veículos da Frota</h3>
+            <h3 className="text-sm font-semibold text-foreground">VeÃ­culos da Frota</h3>
             <Input placeholder="Buscar por placa, modelo ou motorista..." value={busca} onChange={(e) => setBusca(e.target.value)} className="max-w-xs" />
           </div>
           <Table>
@@ -144,7 +146,7 @@ const FrotaPage = () => {
                 <TableHead>Km</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Alertas</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead>AÃ§Ãµes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -161,11 +163,11 @@ const FrotaPage = () => {
                   <TableCell>
                     {v.alertas.length > 0 ? (
                       <span className="flex items-center gap-1 text-xs text-warning"><AlertTriangle className="h-3 w-3" />{v.alertas.length}</span>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                    ) : <span className="text-xs text-muted-foreground">â€”</span>}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setMovVeiculo(v)} title="Registrar Movimentação">
+                      <Button variant="ghost" size="sm" onClick={() => setMovVeiculo(v)} title="Registrar MovimentaÃ§Ã£o">
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/frota/${v.id}`)} title="Ver Detalhe">
@@ -191,8 +193,8 @@ const FrotaPage = () => {
                 <TableHead>Origem</TableHead>
                 <TableHead>Destino</TableHead>
                 <TableHead>NFs</TableHead>
-                <TableHead>Saída</TableHead>
-                <TableHead>Previsão</TableHead>
+                <TableHead>SaÃ­da</TableHead>
+                <TableHead>PrevisÃ£o</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -206,7 +208,7 @@ const FrotaPage = () => {
                   <TableCell className="text-xs">
                     {d.notasFiscais && d.notasFiscais.length > 0
                       ? d.notasFiscais.map((nf) => nf.numero).join(", ")
-                      : "—"}
+                      : "â€”"}
                   </TableCell>
                   <TableCell className="text-xs">{new Date(d.horarioSaida).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
                   <TableCell className="text-xs">{new Date(d.horarioPrevistoChegada).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
@@ -221,7 +223,7 @@ const FrotaPage = () => {
       {tab === "localizacao" && (
         <div className="glass-card rounded-lg p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" /> Painel de Localização da Frota
+            <MapPin className="h-4 w-4 text-primary" /> Painel de LocalizaÃ§Ã£o da Frota
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {allFrota.map((v) => {
@@ -236,7 +238,7 @@ const FrotaPage = () => {
                     <span className="font-mono font-bold text-sm text-foreground">{v.placa}</span>
                     <StatusSemaphore status={v.status} />
                   </div>
-                  <p className="text-xs text-muted-foreground">{v.modelo} • {v.tipo}</p>
+                  <p className="text-xs text-muted-foreground">{v.modelo} â€¢ {v.tipo}</p>
                   <p className="text-xs text-muted-foreground mt-1">{v.motoristaResponsavel}</p>
                   <div className="mt-3 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5 text-primary" />
@@ -264,3 +266,4 @@ const FrotaPage = () => {
 };
 
 export default FrotaPage;
+

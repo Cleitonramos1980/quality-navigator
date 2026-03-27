@@ -14,17 +14,24 @@ import { cn } from "@/lib/utils";
 import { evaluateSlaFromOpenedAt } from "@/lib/sla";
 import SLABadge from "@/components/common/SLABadge";
 import { useUxMetrics } from "@/hooks/useUxMetrics";
+import { useToast } from "@/components/ui/use-toast";
 
 const RequisicaoListPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [filtroPlanta, setFiltroPlanta] = useState("ALL");
   const [filtroCliente, setFiltroCliente] = useState("");
   const [requisicoes, setRequisicoes] = useState<SACRequisicao[]>([]);
   const { trackAction } = useUxMetrics("SAC_REQUISICOES_LISTA");
 
   useEffect(() => {
-    getRequisicoes().then(setRequisicoes).catch(() => undefined);
-  }, []);
+    getRequisicoes()
+      .then(setRequisicoes)
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar requisições.";
+        toast({ title: "Erro ao carregar requisições", description: message, variant: "destructive" });
+      });
+  }, [toast]);
 
   const pendentes = useMemo(() => requisicoes.filter((r) => ["PENDENTE", "RASCUNHO"].includes(r.status)), [requisicoes]);
   const atendidas = useMemo(() => requisicoes.filter((r) => ["ATENDIDA", "PARCIAL", "NEGADA"].includes(r.status)), [requisicoes]);

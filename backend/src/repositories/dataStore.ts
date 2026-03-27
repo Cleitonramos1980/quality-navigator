@@ -279,6 +279,7 @@ export const db = {
   operacionalMovimentacoesFrota: [] as any[],
   operacionalTimeline: [] as any[],
   operacionalDashboard: {} as any,
+  operacionalSolicitacoesAcesso: [] as any[],
 
   // Phase 1-3: Torre de Controle, Agendamento Inteligente, Cadeia de Custódia
   torreExcecoes: [] as any[],
@@ -288,6 +289,17 @@ export const db = {
   agendamentoKPIs: {} as any,
   custodias: [] as any[],
   custodiaKPIs: {} as any,
+
+  // Inspeções
+  inspecoesModelos: [] as any[],
+  inspecoesExecucoes: [] as any[],
+  inspecoesTiposNc: [] as any[],
+  inspecoesPadroesMola: [] as any[],
+  inspecoesMola: [] as any[],
+  inspecoesUsuarioSetor: [] as any[],
+
+  // SESMT / SST (seeded below)
+  sesmt: {} as any,
 };
 
 export function nextId(prefix: string, currentLength: number): string {

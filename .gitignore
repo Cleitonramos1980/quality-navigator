@@ -28,3 +28,10 @@ dist-ssr
 .env.*
 backend/.env
 
+# Generated QA/runtime artifacts
+playwright-report/
+test-results/
+tests/runtime/results/
+tests/runtime/soak-progress.json
+backend/uploads/
+.tmp_backend_pid.txt

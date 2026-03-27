@@ -9,20 +9,54 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Headphones, Clock, UserCheck, CheckCircle, Archive, Package, PackageCheck, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 const colorByIndex = (i: number) => `hsl(${(i * 67) % 360}, 65%, 50%)`;
 
 const SACDashboardPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [dashboard, setDashboard] = useState<any>({ porStatus: [], porTipo: [], porPlanta: [], porDia: [] });
   const [reqData, setReqData] = useState<any>({ pendentes: 0, atendidasMes: 0, porPlanta: [], ultimasPendentes: [] });
   const [atendimentos, setAtendimentos] = useState<any[]>([]);
 
   useEffect(() => {
-    getSACDashboard().then(setDashboard);
-    getRequisicaoDashboardData().then(setReqData);
-    getAtendimentos().then(setAtendimentos);
-  }, []);
+    let cancelled = false;
+    void (async () => {
+      const [dashboardRes, reqRes, atendRes] = await Promise.allSettled([
+        getSACDashboard(),
+        getRequisicaoDashboardData(),
+        getAtendimentos(),
+      ]);
+
+      if (cancelled) return;
+
+      if (dashboardRes.status === "fulfilled") {
+        setDashboard(dashboardRes.value);
+      } else {
+        const message = dashboardRes.reason instanceof Error ? dashboardRes.reason.message : "Falha ao carregar dashboard SAC.";
+        toast({ title: "Erro no dashboard SAC", description: message, variant: "destructive" });
+      }
+
+      if (reqRes.status === "fulfilled") {
+        setReqData(reqRes.value);
+      } else {
+        const message = reqRes.reason instanceof Error ? reqRes.reason.message : "Falha ao carregar dashboard de requisições.";
+        toast({ title: "Erro nas requisições", description: message, variant: "destructive" });
+      }
+
+      if (atendRes.status === "fulfilled") {
+        setAtendimentos(atendRes.value);
+      } else {
+        const message = atendRes.reason instanceof Error ? atendRes.reason.message : "Falha ao carregar atendimentos.";
+        toast({ title: "Erro ao carregar atendimentos", description: message, variant: "destructive" });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [toast]);
 
   const abertos = useMemo(() => atendimentos.filter((a) => a.status === "ABERTO"), [atendimentos]);
   const aguardando = useMemo(() => atendimentos.filter((a) => a.status === "AGUARDANDO_CLIENTE"), [atendimentos]);

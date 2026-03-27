@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { DoorOpen, UserCheck, Clock, XCircle, Shield, Users, Plus, QrCode, Camera, Eye } from "lucide-react";
 import KPICard from "@/components/KPICard";
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAcessos } from "@/services/operacional";
 import type { Acesso } from "@/types/operacional";
 import type { AcessoStatus } from "@/types/operacional";
+import { useToast } from "@/components/ui/use-toast";
 
 const TABS: { value: string; label: string; filter?: (s: AcessoStatus) => boolean }[] = [
   { value: "todos", label: "Todos" },
@@ -21,11 +22,12 @@ const TABS: { value: string; label: string; filter?: (s: AcessoStatus) => boolea
 ];
 
 const AcessosListPage = () => {
+  const { toast } = useToast();
   const [tab, setTab] = useState("todos");
   const [busca, setBusca] = useState("");
   const [allAcessos, setAllAcessos] = useState<Acesso[]>([]);
 
-  useEffect(() => { getAcessos().then(setAllAcessos); }, []);
+  useEffect(() => { getAcessos().then(setAllAcessos).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); }); }, []);
 
   const acessos = useMemo(() => {
     const activeTab = TABS.find((t) => t.value === tab);
@@ -50,7 +52,7 @@ const AcessosListPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Acessos / Portaria</h1>
-          <p className="text-sm text-muted-foreground mt-1">Controle de entrada e saída de pessoas e veículos</p>
+          <p className="text-sm text-muted-foreground mt-1">Controle de entrada e saÃ­da de pessoas e veÃ­culos</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild><Link to="/portaria/qr"><QrCode className="mr-1.5 h-4 w-4" />Leitura QR</Link></Button>
@@ -61,7 +63,7 @@ const AcessosListPage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard title="Presentes" value={kpis.presentes} icon={<Users className="w-5 h-5" />} subtitle="na unidade agora" />
-        <KPICard title="Pendentes" value={kpis.pendentes} icon={<Clock className="w-5 h-5" />} subtitle="aguardando validação" />
+        <KPICard title="Pendentes" value={kpis.pendentes} icon={<Clock className="w-5 h-5" />} subtitle="aguardando validaÃ§Ã£o" />
         <KPICard title="Encerrados Hoje" value={kpis.encerradosHoje} icon={<UserCheck className="w-5 h-5" />} />
         <KPICard title="Recusados / Expirados" value={kpis.recusados} icon={<XCircle className="w-5 h-5" />} />
       </div>
@@ -73,24 +75,24 @@ const AcessosListPage = () => {
               {TABS.map((t) => <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>)}
             </TabsList>
           </Tabs>
-          <Input placeholder="Buscar por nome, empresa, código ou placa..." value={busca} onChange={(e) => setBusca(e.target.value)} className="max-w-xs" />
+          <Input placeholder="Buscar por nome, empresa, cÃ³digo ou placa..." value={busca} onChange={(e) => setBusca(e.target.value)} className="max-w-xs" />
         </div>
 
         <div className="mt-4 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Código</TableHead>
+                <TableHead>CÃ³digo</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Documento</TableHead>
                 <TableHead>Empresa</TableHead>
                 <TableHead>Placa</TableHead>
-                <TableHead>Responsável</TableHead>
+                <TableHead>ResponsÃ¡vel</TableHead>
                 <TableHead>Previsto</TableHead>
                 <TableHead>Real</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead>AÃ§Ãµes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -104,13 +106,17 @@ const AcessosListPage = () => {
                   <TableCell className="font-medium">{a.nome}</TableCell>
                   <TableCell className="text-xs">{a.documento}</TableCell>
                   <TableCell>{a.empresa}</TableCell>
-                  <TableCell className="font-mono text-xs">{a.placa || "—"}</TableCell>
+                  <TableCell className="font-mono text-xs">{a.placa || "â€”"}</TableCell>
                   <TableCell className="text-xs">{a.responsavelInterno}</TableCell>
                   <TableCell className="text-xs">{new Date(a.horarioPrevisto).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
-                  <TableCell className="text-xs">{a.horarioReal ? new Date(a.horarioReal).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}</TableCell>
+                  <TableCell className="text-xs">{a.horarioReal ? new Date(a.horarioReal).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "â€”"}</TableCell>
                   <TableCell><StatusSemaphore status={a.status} /></TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" asChild><Link to={`/portaria/${a.id}`}><Eye className="h-4 w-4" /></Link></Button>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to={a.solicitacaoId ? `/portaria/solicitacoes/${a.solicitacaoId}` : `/portaria/${a.id}`}>
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -123,3 +129,4 @@ const AcessosListPage = () => {
 };
 
 export default AcessosListPage;
+

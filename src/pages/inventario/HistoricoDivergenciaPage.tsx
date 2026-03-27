@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,16 +11,18 @@ import { getDivergencias, getLojas } from "@/services/inventario";
 import { AlertTriangle, BarChart3, Store, RotateCcw, TrendingDown, ShieldAlert } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { DivergenciaDiaria, InventarioStatus, LojaInventario } from "@/types/inventario";
+import { useToast } from "@/components/ui/use-toast";
 
 const HistoricoDivergenciaPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [lojaFilter, setLojaFilter] = useState("TODAS");
   const [divergencias, setDivergencias] = useState<DivergenciaDiaria[]>([]);
   const [lojas, setLojas] = useState<LojaInventario[]>([]);
 
   useEffect(() => {
-    getDivergencias().then(setDivergencias);
-    getLojas().then(setLojas);
+    getDivergencias().then(setDivergencias).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getLojas().then(setLojas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const filtered = useMemo(() => {
@@ -67,8 +69,8 @@ const HistoricoDivergenciaPage = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Histórico de Divergência</h1>
-          <p className="text-sm text-muted-foreground">Análise visual dia a dia do histórico de divergência por loja</p>
+          <h1 className="text-2xl font-bold text-foreground">HistÃ³rico de DivergÃªncia</h1>
+          <p className="text-sm text-muted-foreground">AnÃ¡lise visual dia a dia do histÃ³rico de divergÃªncia por loja</p>
         </div>
         <ExportActionsBar />
       </div>
@@ -84,16 +86,16 @@ const HistoricoDivergenciaPage = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KPICard title="Com Divergência" value={comDivergencia} icon={<AlertTriangle className="h-4 w-4" />} />
+        <KPICard title="Com DivergÃªncia" value={comDivergencia} icon={<AlertTriangle className="h-4 w-4" />} />
         <KPICard title="Itens Divergentes" value={totalDiv} icon={<BarChart3 className="h-4 w-4" />} />
-        <KPICard title="Acuracidade Média" value={`${Math.round(avgAcur * 10) / 10}%`} icon={<TrendingDown className="h-4 w-4" />} />
+        <KPICard title="Acuracidade MÃ©dia" value={`${Math.round(avgAcur * 10) / 10}%`} icon={<TrendingDown className="h-4 w-4" />} />
         <KPICard title="Sem Contagem" value={semContagem} icon={<Store className="h-4 w-4" />} />
         <KPICard title="Com Recontagem" value={comRecontagem} icon={<RotateCcw className="h-4 w-4" />} />
         <KPICard title="Lojas Reincidentes" value={lojaRanking.filter((l) => l.divergentes > 5).length} icon={<ShieldAlert className="h-4 w-4" />} />
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-sm font-medium">Heatmap de Divergência (últimos 14 dias)</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm font-medium">Heatmap de DivergÃªncia (Ãºltimos 14 dias)</CardTitle></CardHeader>
         <CardContent>
           <InventoryDivergenceHeatmap data={filtered} onCellClick={handleCellClick} />
         </CardContent>
@@ -101,7 +103,7 @@ const HistoricoDivergenciaPage = () => {
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Tendência Diária</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium">TendÃªncia DiÃ¡ria</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={trendData}>
@@ -117,7 +119,7 @@ const HistoricoDivergenciaPage = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Ranking — Lojas com Maior Divergência</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium">Ranking â€” Lojas com Maior DivergÃªncia</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
               {lojaRanking.map((l, i) => (
@@ -163,7 +165,7 @@ const HistoricoDivergenciaPage = () => {
                     <td className="p-3">{d.departamento}</td>
                     <td className="p-3 text-right">{d.itensContados}</td>
                     <td className="p-3 text-right font-medium">{d.itensDivergentes > 0 ? <span className="text-destructive">{d.itensDivergentes}</span> : "0"}</td>
-                    <td className="p-3 text-right">{d.acuracidade > 0 ? `${d.acuracidade}%` : "—"}</td>
+                    <td className="p-3 text-right">{d.acuracidade > 0 ? `${d.acuracidade}%` : "â€”"}</td>
                     <td className="p-3"><InventoryStatusPill status={d.status as any} /></td>
                   </tr>
                 ))}
@@ -177,3 +179,4 @@ const HistoricoDivergenciaPage = () => {
 };
 
 export default HistoricoDivergenciaPage;
+

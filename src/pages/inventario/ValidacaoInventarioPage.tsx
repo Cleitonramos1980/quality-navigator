@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+﻿import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft, ShieldCheck, RotateCcw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,14 @@ import { getContagens } from "@/services/inventario";
 import type { Contagem } from "@/types/inventario";
 import { FREQUENCIA_LABELS } from "@/types/inventario";
 import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 const ValidacaoInventarioPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [allContagens, setAllContagens] = useState<Contagem[]>([]);
-  useEffect(() => { getContagens().then(setAllContagens); }, []);
+  useEffect(() => { getContagens().then(setAllContagens).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); }); }, []);
   const contagem = allContagens.find((c) => c.id === id) || allContagens.find((c) => c.status === "CONCLUIDO") || allContagens[0];
   if (!contagem) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
   const divergentes = contagem.itens.filter((i) => i.diferenca !== null && i.diferenca !== 0);
@@ -25,11 +27,11 @@ const ValidacaoInventarioPage = () => {
   };
 
   const handleReabrir = () => {
-    toast({ title: "Contagem reaberta", description: "O responsável será notificado." });
+    toast({ title: "Contagem reaberta", description: "O responsÃ¡vel serÃ¡ notificado." });
   };
 
   const handleRecontagem = () => {
-    toast({ title: "Recontagem solicitada", description: "Uma nova contagem será criada a partir desta." });
+    toast({ title: "Recontagem solicitada", description: "Uma nova contagem serÃ¡ criada a partir desta." });
     navigate("/qualidade/inventario/digitacao", {
       state: {
         recontagem: true,
@@ -51,7 +53,7 @@ const ValidacaoInventarioPage = () => {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" /></Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-foreground">Validação de Contagem</h1>
+          <h1 className="text-2xl font-bold text-foreground">ValidaÃ§Ã£o de Contagem</h1>
           <p className="text-sm text-muted-foreground">{contagem.numero}</p>
         </div>
         <ExportActionsBar />
@@ -65,11 +67,11 @@ const ValidacaoInventarioPage = () => {
               <div><span className="text-muted-foreground text-xs block">Loja</span><span className="font-medium">{contagem.lojaNome}</span></div>
               <div><span className="text-muted-foreground text-xs block">Supervisor</span><span className="font-medium text-primary">{contagem.supervisor}</span></div>
               <div><span className="text-muted-foreground text-xs block">Departamento</span><span className="font-medium">{contagem.departamentoNome}</span></div>
-              <div><span className="text-muted-foreground text-xs block">Frequência</span><span className="font-medium">{FREQUENCIA_LABELS[contagem.frequencia]}</span></div>
-              <div><span className="text-muted-foreground text-xs block">Responsável</span><span className="font-medium">{contagem.responsavel}</span></div>
+              <div><span className="text-muted-foreground text-xs block">FrequÃªncia</span><span className="font-medium">{FREQUENCIA_LABELS[contagem.frequencia]}</span></div>
+              <div><span className="text-muted-foreground text-xs block">ResponsÃ¡vel</span><span className="font-medium">{contagem.responsavel}</span></div>
               <div><span className="text-muted-foreground text-xs block">Status</span><InventoryStatusPill status={contagem.status} /></div>
-              <div><span className="text-muted-foreground text-xs block">Início</span><span className="font-mono text-xs">{contagem.iniciadoEm || "—"}</span></div>
-              <div><span className="text-muted-foreground text-xs block">Conclusão</span><span className="font-mono text-xs">{contagem.concluidoEm || "—"}</span></div>
+              <div><span className="text-muted-foreground text-xs block">InÃ­cio</span><span className="font-mono text-xs">{contagem.iniciadoEm || "â€”"}</span></div>
+              <div><span className="text-muted-foreground text-xs block">ConclusÃ£o</span><span className="font-mono text-xs">{contagem.concluidoEm || "â€”"}</span></div>
             </div>
             {contagem.validadoPor && (
               <div className="pt-2 border-t border-border">
@@ -99,7 +101,7 @@ const ValidacaoInventarioPage = () => {
             </div>
             {contagem.recontagem && (
               <div className="mt-3 p-2 rounded bg-warning/10 text-warning text-xs flex items-center gap-2">
-                <AlertTriangle className="h-3.5 w-3.5" /> Esta é uma recontagem (origem: {contagem.recontagemOrigem})
+                <AlertTriangle className="h-3.5 w-3.5" /> Esta Ã© uma recontagem (origem: {contagem.recontagemOrigem})
               </div>
             )}
           </CardContent>
@@ -108,17 +110,17 @@ const ValidacaoInventarioPage = () => {
 
       {divergentes.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium text-destructive">Itens com Divergência ({divergentes.length})</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium text-destructive">Itens com DivergÃªncia ({divergentes.length})</CardTitle></CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left p-2 text-muted-foreground text-xs">Código</th>
-                    <th className="text-left p-2 text-muted-foreground text-xs">Descrição</th>
+                    <th className="text-left p-2 text-muted-foreground text-xs">CÃ³digo</th>
+                    <th className="text-left p-2 text-muted-foreground text-xs">DescriÃ§Ã£o</th>
                     <th className="text-right p-2 text-muted-foreground text-xs">Sistema</th>
                     <th className="text-right p-2 text-muted-foreground text-xs">Contado</th>
-                    <th className="text-right p-2 text-muted-foreground text-xs">Diferença</th>
+                    <th className="text-right p-2 text-muted-foreground text-xs">DiferenÃ§a</th>
                     <th className="text-left p-2 text-muted-foreground text-xs">Motivo</th>
                   </tr>
                 </thead>
@@ -130,7 +132,7 @@ const ValidacaoInventarioPage = () => {
                       <td className="p-2 text-right">{item.estoqueSistema}</td>
                       <td className="p-2 text-right">{item.quantidadeContada}</td>
                       <td className="p-2 text-right font-bold text-destructive">{item.diferenca! > 0 ? `+${item.diferenca}` : item.diferenca}</td>
-                      <td className="p-2 text-xs">{item.motivoDivergencia || "—"}</td>
+                      <td className="p-2 text-xs">{item.motivoDivergencia || "â€”"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -153,3 +155,4 @@ const ValidacaoInventarioPage = () => {
 };
 
 export default ValidacaoInventarioPage;
+

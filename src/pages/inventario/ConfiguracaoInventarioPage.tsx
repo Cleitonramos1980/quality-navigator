@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,12 +9,14 @@ import type { FrequenciaConfig } from "@/types/inventario";
 import { FREQUENCIA_LABELS } from "@/types/inventario";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const ConfiguracaoInventarioPage = () => {
+  const { toast } = useToast();
   const [busca, setBusca] = useState("");
   const [configs, setConfigs] = useState<FrequenciaConfig[]>([]);
 
-  useEffect(() => { getFrequenciaConfigs().then(setConfigs); }, []);
+  useEffect(() => { getFrequenciaConfigs().then(setConfigs).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); }); }, []);
 
   const filtered = configs.filter((c) => {
     if (!busca) return true;
@@ -24,15 +26,15 @@ const ConfiguracaoInventarioPage = () => {
 
   const toggleAtivo = (id: string) => {
     setConfigs((prev) => prev.map((c) => c.id === id ? { ...c, ativo: !c.ativo } : c));
-    toast({ title: "Configuração atualizada" });
+    toast({ title: "ConfiguraÃ§Ã£o atualizada" });
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Configuração de Frequências</h1>
-          <p className="text-sm text-muted-foreground">Administre as regras de agenda de inventário por loja e departamento</p>
+          <h1 className="text-2xl font-bold text-foreground">ConfiguraÃ§Ã£o de FrequÃªncias</h1>
+          <p className="text-sm text-muted-foreground">Administre as regras de agenda de inventÃ¡rio por loja e departamento</p>
         </div>
         <div className="flex gap-3">
           <ExportActionsBar />
@@ -54,9 +56,9 @@ const ConfiguracaoInventarioPage = () => {
                 <th className="text-left p-3 font-medium text-muted-foreground">Gerente</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Supervisor</th>
                 <th className="text-left p-3 font-medium text-muted-foreground">Departamento</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Frequência</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Próxima Execução</th>
-                <th className="text-left p-3 font-medium text-muted-foreground">Responsável</th>
+                <th className="text-left p-3 font-medium text-muted-foreground">FrequÃªncia</th>
+                <th className="text-left p-3 font-medium text-muted-foreground">PrÃ³xima ExecuÃ§Ã£o</th>
+                <th className="text-left p-3 font-medium text-muted-foreground">ResponsÃ¡vel</th>
                 <th className="text-center p-3 font-medium text-muted-foreground">Ativo</th>
               </tr>
             </thead>
@@ -85,3 +87,4 @@ const ConfiguracaoInventarioPage = () => {
 };
 
 export default ConfiguracaoInventarioPage;
+

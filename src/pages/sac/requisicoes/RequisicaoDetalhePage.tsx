@@ -8,6 +8,7 @@ import { getRequisicaoById } from "@/services/sacRequisicoes";
 import { REQUISICAO_MOTIVO_LABELS, REQUISICAO_PRIORIDADE_LABELS, type SACRequisicao } from "@/types/sacRequisicao";
 import { PLANTA_LABELS } from "@/types/sgq";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const RequisicaoDetalhePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +17,13 @@ const RequisicaoDetalhePage = () => {
 
   useEffect(() => {
     if (!id) return;
-    getRequisicaoById(id).then((r) => setReq(r || null));
+    getRequisicaoById(id)
+      .then((r) => setReq(r || null))
+      .catch((error) => {
+        setReq(null);
+        const message = error instanceof Error ? error.message : "Falha ao carregar requisicao.";
+        toast({ title: "Erro ao carregar requisicao", description: message, variant: "destructive" });
+      });
   }, [id]);
 
   if (!req) return <div className="flex flex-col items-center justify-center py-20 gap-4"><p className="text-muted-foreground">Requisição não encontrada</p><Button variant="outline" onClick={() => navigate("/sac/requisicoes")}>Voltar</Button></div>;
@@ -27,5 +34,4 @@ const RequisicaoDetalhePage = () => {
 };
 
 export default RequisicaoDetalhePage;
-
 

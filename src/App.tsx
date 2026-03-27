@@ -1,13 +1,14 @@
 import { lazy, Suspense } from "react";
 import type { ReactNode } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/AppLayout";
-import { RequirePermission, RequireRole } from "@/components/RequireAuthz";
+import { RequirePermission, RequireRole, RequireSesmtAccess } from "@/components/RequireAuthz";
 import PageSkeleton from "@/components/layout/PageSkeleton";
+import RouteErrorBoundary from "@/components/layout/RouteErrorBoundary";
 
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const GarantiasPage = lazy(() => import("@/pages/GarantiasPage"));
@@ -72,6 +73,7 @@ const AcessosListPage = lazy(() => import("@/pages/portaria/AcessosListPage"));
 const AcessoDetalhePage = lazy(() => import("@/pages/portaria/AcessoDetalhePage"));
 const PresencaPainelPage = lazy(() => import("@/pages/portaria/PresencaPainelPage"));
 const NovoAcessoPage = lazy(() => import("@/pages/portaria/NovoAcessoPage"));
+const SolicitacaoAcessoDetalhePage = lazy(() => import("@/pages/portaria/SolicitacaoAcessoDetalhePage"));
 const LeituraQrPage = lazy(() => import("@/pages/portaria/LeituraQrPage"));
 const LeituraPlacaPage = lazy(() => import("@/pages/portaria/LeituraPlacaPage"));
 const VisitantesListPage = lazy(() => import("@/pages/visitantes/VisitantesListPage"));
@@ -110,11 +112,15 @@ const NovaInspecaoMolaPage = lazy(() => import("@/pages/inspecoes/NovaInspecaoMo
 const MolaDetalhePage = lazy(() => import("@/pages/inspecoes/MolaDetalhePage"));
 const MolasHistoricoPage = lazy(() => import("@/pages/inspecoes/MolasHistoricoPage"));
 const PadroesMolaPage = lazy(() => import("@/pages/inspecoes/PadroesMolaPage"));
+const SesmtExecutivePage = lazy(() => import("@/pages/sesmt/SesmtExecutivePage"));
+const SesmtModulePage = lazy(() => import("@/pages/sesmt/SesmtModulePage"));
 
 const queryClient = new QueryClient();
 
 const Lazy = ({ children }: { children: ReactNode }) => (
-  <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
+  <RouteErrorBoundary>
+    <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
+  </RouteErrorBoundary>
 );
 
 const App = () => (
@@ -213,6 +219,7 @@ const App = () => (
           <Route path="/portaria/qr" element={<AppLayout><Lazy><LeituraQrPage /></Lazy></AppLayout>} />
           <Route path="/portaria/placa" element={<AppLayout><Lazy><LeituraPlacaPage /></Lazy></AppLayout>} />
           <Route path="/portaria/presenca" element={<AppLayout><Lazy><PresencaPainelPage /></Lazy></AppLayout>} />
+          <Route path="/portaria/solicitacoes/:id" element={<AppLayout><Lazy><SolicitacaoAcessoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/portaria/:id" element={<AppLayout><Lazy><AcessoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/visitantes" element={<AppLayout><Lazy><VisitantesListPage /></Lazy></AppLayout>} />
           <Route path="/visitantes/pre-autorizacao" element={<AppLayout><Lazy><NovaPreAutorizacaoPage /></Lazy></AppLayout>} />
@@ -233,6 +240,29 @@ const App = () => (
           <Route path="/patio/agendamento/:id" element={<AppLayout><Lazy><AgendamentoDetalhePage /></Lazy></AppLayout>} />
           <Route path="/custodia" element={<AppLayout><Lazy><CadeiasCustodiaPage /></Lazy></AppLayout>} />
           <Route path="/custodia/:id" element={<AppLayout><Lazy><CustodiaDetalhePage /></Lazy></AppLayout>} />
+
+          {/* SESMT / SST */}
+          <Route path="/sesmt" element={<Navigate to="/sesmt/visao-executiva/painel-mestre" replace />} />
+          <Route
+            path="/sesmt/visao-executiva/:viewKey"
+            element={
+              <AppLayout>
+                <RequireSesmtAccess>
+                  <Lazy><SesmtExecutivePage /></Lazy>
+                </RequireSesmtAccess>
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/sesmt/:groupKey/:moduleKey"
+            element={
+              <AppLayout>
+                <RequireSesmtAccess>
+                  <Lazy><SesmtModulePage /></Lazy>
+                </RequireSesmtAccess>
+              </AppLayout>
+            }
+          />
           <Route
             path="*"
             element={

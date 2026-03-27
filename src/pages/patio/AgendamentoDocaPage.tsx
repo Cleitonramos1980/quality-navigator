@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+﻿import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   CalendarDays, Clock, Truck, Layers, AlertTriangle, CheckCircle2,
@@ -14,6 +14,7 @@ import { getAgendamentosSlots, getDockCapacity, getAgendamentoKPIs } from "@/ser
 import AgendamentoActionMenu from "@/components/agendamento/AgendamentoActionMenu";
 import type { AgendamentoDockSlot, DockCapacity, AgendamentoKPIs } from "@/types/agendamento";
 import { AGENDAMENTO_STATUS_LABELS, AGENDAMENTO_STATUS_COLORS, PRIORIDADE_COLORS } from "@/types/agendamento";
+import { useToast } from "@/components/ui/use-toast";
 
 const SLOT_COLORS: Record<string, string> = {
   livre: "bg-success/20",
@@ -25,6 +26,7 @@ const SLOT_COLORS: Record<string, string> = {
 
 const AgendamentoDocaPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [slots, setSlots] = useState<AgendamentoDockSlot[]>([]);
   const [capacity, setCapacity] = useState<DockCapacity[]>([]);
   const [kpis, setKpis] = useState<AgendamentoKPIs | null>(null);
@@ -32,16 +34,16 @@ const AgendamentoDocaPage = () => {
   const [filtroStatus, setFiltroStatus] = useState("ALL");
 
   const reload = useCallback(() => {
-    getAgendamentosSlots().then(setSlots);
-    getDockCapacity().then(setCapacity);
-    getAgendamentoKPIs().then(setKpis);
+    getAgendamentosSlots().then(setSlots).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getDockCapacity().then(setCapacity).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getAgendamentoKPIs().then(setKpis).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   useEffect(reload, [reload]);
 
   const handleSlotUpdate = (updated: AgendamentoDockSlot) => {
     setSlots(prev => prev.map(s => s.id === updated.id ? updated : s));
-    getAgendamentoKPIs().then(setKpis);
+    getAgendamentoKPIs().then(setKpis).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   };
 
   const filteredSlots = useMemo(() => {
@@ -60,7 +62,7 @@ const AgendamentoDocaPage = () => {
             <CalendarDays className="h-6 w-6 text-primary" /> Agendamento de Docas
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Planejamento, priorização e alocação inteligente de docas e pátio
+            Planejamento, priorizaÃ§Ã£o e alocaÃ§Ã£o inteligente de docas e pÃ¡tio
           </p>
         </div>
         <Button onClick={() => navigate("/patio/agendamento/novo")} className="gap-2">
@@ -71,8 +73,8 @@ const AgendamentoDocaPage = () => {
       {/* KPIs */}
       {kpis && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <KPICard title="Taxa Ocupação" value={`${kpis.taxaOcupacao}%`} icon={<Layers className="w-5 h-5" />} subtitle="docas hoje" />
-          <KPICard title="Tempo Médio Espera" value={`${kpis.tempoMedioEspera} min`} icon={<Clock className="w-5 h-5" />} />
+          <KPICard title="Taxa OcupaÃ§Ã£o" value={`${kpis.taxaOcupacao}%`} icon={<Layers className="w-5 h-5" />} subtitle="docas hoje" />
+          <KPICard title="Tempo MÃ©dio Espera" value={`${kpis.tempoMedioEspera} min`} icon={<Clock className="w-5 h-5" />} />
           <KPICard title="Dentro da Janela" value={`${kpis.dentroJanela}%`} icon={<CheckCircle2 className="w-5 h-5" />} subtitle="% pontualidade" />
           <KPICard title="Atrasos Hoje" value={kpis.atrasosDia} icon={<AlertTriangle className="w-5 h-5" />} subtitle={`${kpis.noShow} no-show`} />
           <KPICard title="Throughput" value={`${kpis.throughputDoca}/h`} icon={<BarChart3 className="w-5 h-5" />} subtitle="op/doca/dia" />
@@ -91,12 +93,12 @@ const AgendamentoDocaPage = () => {
       {tab === "grade" && (
         <div className="glass-card rounded-lg p-5 overflow-x-auto">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">Capacidade por Faixa Horária — Hoje</h3>
+            <h3 className="text-sm font-semibold text-foreground">Capacidade por Faixa HorÃ¡ria â€” Hoje</h3>
             <div className="flex gap-2 text-[10px]">
               {Object.entries(SLOT_COLORS).map(([key, color]) => (
                 <span key={key} className="flex items-center gap-1">
                   <span className={`inline-block h-3 w-3 rounded ${color}`} />
-                  {key === "livre" ? "Livre" : key === "agendado" ? "Agendado" : key === "ocupado" ? "Ocupado" : key === "conflito" ? "Conflito" : "Manutenção"}
+                  {key === "livre" ? "Livre" : key === "agendado" ? "Agendado" : key === "ocupado" ? "Ocupado" : key === "conflito" ? "Conflito" : "ManutenÃ§Ã£o"}
                 </span>
               ))}
             </div>
@@ -119,7 +121,7 @@ const AgendamentoDocaPage = () => {
                       <div
                         role="button"
                         tabIndex={0}
-                        title={slot.status === "livre" ? `Agendar ${dock.docaNome} às ${slot.hora}` : slot.status === "agendado" ? "Já agendado" : slot.status}
+                        title={slot.status === "livre" ? `Agendar ${dock.docaNome} Ã s ${slot.hora}` : slot.status === "agendado" ? "JÃ¡ agendado" : slot.status}
                         className={`h-8 rounded flex items-center justify-center transition-all ${SLOT_COLORS[slot.status]} ${
                           slot.status === "livre" ? "cursor-pointer hover:ring-2 hover:ring-primary/50 hover:scale-105" :
                           slot.status === "agendado" ? "cursor-pointer hover:ring-2 hover:ring-info/50" : ""
@@ -168,18 +170,18 @@ const AgendamentoDocaPage = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Código</TableHead>
+                <TableHead>CÃ³digo</TableHead>
                 <TableHead>Janela</TableHead>
                 <TableHead>Transportadora</TableHead>
                 <TableHead>Placa</TableHead>
-                <TableHead>Operação</TableHead>
+                <TableHead>OperaÃ§Ã£o</TableHead>
                 <TableHead>Doca</TableHead>
-                <TableHead>Duração</TableHead>
+                <TableHead>DuraÃ§Ã£o</TableHead>
                 <TableHead>Prioridade</TableHead>
                 <TableHead>SLA</TableHead>
                 <TableHead>Status</TableHead>
-                 <TableHead>Pendências</TableHead>
-                 <TableHead className="w-[60px]">Ações</TableHead>
+                 <TableHead>PendÃªncias</TableHead>
+                 <TableHead className="w-[60px]">AÃ§Ãµes</TableHead>
                </TableRow>
              </TableHeader>
              <TableBody>
@@ -191,12 +193,12 @@ const AgendamentoDocaPage = () => {
                    <TableCell className="font-mono text-xs font-medium">{slot.codigo}</TableCell>
                    <TableCell className="text-xs">
                      <div>{new Date(slot.janelaInicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
-                     <div className="text-muted-foreground">até {new Date(slot.janelaFim).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
+                     <div className="text-muted-foreground">atÃ© {new Date(slot.janelaFim).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
                    </TableCell>
                    <TableCell className="text-xs">{slot.transportadoraNome}</TableCell>
-                   <TableCell className="font-mono text-xs">{slot.placa || "—"}</TableCell>
+                   <TableCell className="font-mono text-xs">{slot.placa || "â€”"}</TableCell>
                    <TableCell><Badge variant="secondary" className="text-[10px]">{slot.tipoOperacao}</Badge></TableCell>
-                   <TableCell className="text-xs font-medium">{slot.docaRealNome || slot.docaPrevistaNome || "—"}</TableCell>
+                   <TableCell className="text-xs font-medium">{slot.docaRealNome || slot.docaPrevistaNome || "â€”"}</TableCell>
                    <TableCell className="text-xs">{slot.duracaoPrevistaMin} min</TableCell>
                    <TableCell>
                      <Badge className={`text-[10px] ${PRIORIDADE_COLORS[slot.prioridade]}`}>{slot.prioridade}</Badge>
@@ -218,7 +220,7 @@ const AgendamentoDocaPage = () => {
                            <p key={i} className="text-[10px] text-destructive leading-tight">{p}</p>
                          ))}
                        </div>
-                     ) : <span className="text-xs text-muted-foreground">—</span>}
+                     ) : <span className="text-xs text-muted-foreground">â€”</span>}
                    </TableCell>
                    <TableCell>
                      <AgendamentoActionMenu slot={slot} onUpdate={handleSlotUpdate} />
@@ -243,8 +245,8 @@ const AgendamentoDocaPage = () => {
                   <div key={s.id} className="flex items-start gap-3 rounded-md border border-destructive/20 bg-destructive/5 p-3">
                     <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground">{s.codigo} — {s.transportadoraNome}</p>
-                      <p className="text-[10px] text-muted-foreground">{s.tipoOperacao} · {s.docaPrevistaNome || "Sem doca"} · {s.placa || "Sem placa"}</p>
+                      <p className="text-xs font-medium text-foreground">{s.codigo} â€” {s.transportadoraNome}</p>
+                      <p className="text-[10px] text-muted-foreground">{s.tipoOperacao} Â· {s.docaPrevistaNome || "Sem doca"} Â· {s.placa || "Sem placa"}</p>
                       {s.pendencias.map((p, i) => (
                         <p key={i} className="text-[10px] text-destructive mt-0.5">{p}</p>
                       ))}
@@ -265,7 +267,7 @@ const AgendamentoDocaPage = () => {
 
             <div className="glass-card rounded-lg p-5">
               <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-primary" /> Próximas Operações
+                <CalendarDays className="h-4 w-4 text-primary" /> PrÃ³ximas OperaÃ§Ãµes
               </h3>
               <div className="space-y-3">
                 {slots.filter(s => ["AGENDADO", "CONFIRMADO", "EM_DESLOCAMENTO"].includes(s.status))
@@ -281,7 +283,7 @@ const AgendamentoDocaPage = () => {
                       <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-foreground">{s.transportadoraNome}</p>
-                        <p className="text-[10px] text-muted-foreground">{s.tipoOperacao} · {s.docaPrevistaNome || "Doca a definir"}</p>
+                        <p className="text-[10px] text-muted-foreground">{s.tipoOperacao} Â· {s.docaPrevistaNome || "Doca a definir"}</p>
                       </div>
                       <Badge className={`text-[10px] shrink-0 ${AGENDAMENTO_STATUS_COLORS[s.status]}`}>
                         {AGENDAMENTO_STATUS_LABELS[s.status]}
@@ -297,9 +299,9 @@ const AgendamentoDocaPage = () => {
             <div className="glass-card rounded-lg p-5">
               <h3 className="text-sm font-semibold text-foreground mb-4">Indicadores do Dia</h3>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
-                <div><p className="text-2xl font-bold text-foreground">{kpis.tempoMedioOperacao} min</p><p className="text-xs text-muted-foreground">Tempo médio operação</p></div>
-                <div><p className="text-2xl font-bold text-foreground">{kpis.permanenciaMedia} min</p><p className="text-xs text-muted-foreground">Permanência média</p></div>
-                <div><p className="text-2xl font-bold text-warning">{kpis.remarcacoes}</p><p className="text-xs text-muted-foreground">Remarcações</p></div>
+                <div><p className="text-2xl font-bold text-foreground">{kpis.tempoMedioOperacao} min</p><p className="text-xs text-muted-foreground">Tempo mÃ©dio operaÃ§Ã£o</p></div>
+                <div><p className="text-2xl font-bold text-foreground">{kpis.permanenciaMedia} min</p><p className="text-xs text-muted-foreground">PermanÃªncia mÃ©dia</p></div>
+                <div><p className="text-2xl font-bold text-warning">{kpis.remarcacoes}</p><p className="text-xs text-muted-foreground">RemarcaÃ§Ãµes</p></div>
                 <div><p className="text-2xl font-bold text-destructive">{kpis.conflitoAgenda}</p><p className="text-xs text-muted-foreground">Conflitos</p></div>
                 <div><p className={`text-2xl font-bold ${kpis.dentroJanela >= 80 ? "text-success" : kpis.dentroJanela >= 60 ? "text-warning" : "text-destructive"}`}>{kpis.dentroJanela}%</p><p className="text-xs text-muted-foreground">Dentro da janela</p></div>
               </div>
@@ -312,3 +314,4 @@ const AgendamentoDocaPage = () => {
 };
 
 export default AgendamentoDocaPage;
+

@@ -5,28 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import KPICard from "@/components/KPICard";
 import SectionCard from "@/components/forms/SectionCard";
-import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/ui/use-toast";
 import { listExecucoesInspecao } from "@/services/inspecoes";
 import type { ExecucaoInspecao } from "@/types/inspecoes";
+import { useSetoresPermitidos } from "@/hooks/useSetoresPermitidos";
+import { hasSetorPermitido } from "@/lib/inspecoesChecklist";
+import SetorEscopoAlert from "@/components/inspecoes/SetorEscopoAlert";
 
 const InspecoesDashboardPage = () => {
   const { toast } = useToast();
+  const { setoresPermitidos, loading: loadingSetores, error: setoresError } = useSetoresPermitidos();
   const [execucoes, setExecucoes] = useState<ExecucaoInspecao[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (loadingSetores || setoresError) return;
     void (async () => {
       setLoading(true);
       try {
-        setExecucoes(await listExecucoesInspecao());
+        const data = await listExecucoesInspecao();
+        setExecucoes(data.filter((execucao) => hasSetorPermitido(setoresPermitidos, execucao.setor)));
       } catch (e) {
         toast({ title: "Erro", description: e instanceof Error ? e.message : "Falha ao carregar", variant: "destructive" });
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [loadingSetores, setoresError, setoresPermitidos, toast]);
 
   const total = execucoes.length;
   const concluidas = execucoes.filter((e) => e.status === "CONCLUIDA").length;
@@ -52,7 +57,7 @@ const InspecoesDashboardPage = () => {
             Inspeções
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Gestão de checklists operacionais, execuções e inspeções dimensionais
+            Gestão de checklists operacionais, execuções e inspeções dimensionais dentro do seu escopo
           </p>
         </div>
         <div className="flex gap-2">
@@ -64,6 +69,8 @@ const InspecoesDashboardPage = () => {
           </Button>
         </div>
       </div>
+
+      <SetorEscopoAlert loading={loadingSetores} error={setoresError} setoresPermitidos={setoresPermitidos} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KPICard title="Total no Período" value={total} icon={<BarChart3 className="w-5 h-5" />} />
@@ -89,7 +96,7 @@ const InspecoesDashboardPage = () => {
           )}
         </SectionCard>
 
-        <SectionCard title="Últimas Inspeções" description={loading ? "Carregando..." : `${ultimasInspecoes.length} mais recentes`}>
+        <SectionCard title="Últimas Inspeções" description={loading || loadingSetores ? "Carregando..." : `${ultimasInspecoes.length} mais recentes`}>
           {ultimasInspecoes.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma inspeção encontrada.</p>
           ) : (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2, Save, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { getLojas, getDepartamentos } from "@/services/inventario";
 import type { LojaInventario, DepartamentoInventario } from "@/types/inventario";
 import { FREQUENCIA_LABELS, type FrequenciaInventario } from "@/types/inventario";
 import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PlanoLinha {
   id: string;
@@ -184,6 +185,7 @@ const MultiSelectPopover = ({
 
 const NovoPlanoInventarioPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [dataInicio, setDataInicio] = useState("2026-03-15");
@@ -194,8 +196,8 @@ const NovoPlanoInventarioPage = () => {
   const [allDepartamentos, setAllDepartamentos] = useState<DepartamentoInventario[]>([]);
 
   useEffect(() => {
-    getLojas().then(setAllLojas);
-    getDepartamentos().then(setAllDepartamentos);
+    getLojas().then(setAllLojas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getDepartamentos().then(setAllDepartamentos).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const toggleLoja = (lojaId: string) => {
@@ -249,14 +251,14 @@ const NovoPlanoInventarioPage = () => {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-foreground">Novo Plano de Inventário</h1>
+          <h1 className="text-2xl font-bold text-foreground">Novo Plano de InventÃ¡rio</h1>
           <p className="text-sm text-muted-foreground">
-            Cadastre um plano com lojas, departamentos, frequências e quantidade de itens a contar
+            Cadastre um plano com lojas, departamentos, frequÃªncias e quantidade de itens a contar
           </p>
         </div>
       </div>
 
-      {/* Dados básicos */}
+      {/* Dados bÃ¡sicos */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">Dados do Plano</CardTitle>
@@ -266,14 +268,14 @@ const NovoPlanoInventarioPage = () => {
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Nome do Plano *</Label>
               <Input
-                placeholder="Ex: Inventário Q1 2026 — Colchões Diário"
+                placeholder="Ex: InventÃ¡rio Q1 2026 â€” ColchÃµes DiÃ¡rio"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Data Início</Label>
+                <Label className="text-xs text-muted-foreground">Data InÃ­cio</Label>
                 <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
               </div>
               <div className="space-y-1.5">
@@ -283,9 +285,9 @@ const NovoPlanoInventarioPage = () => {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Descrição / Observações</Label>
+            <Label className="text-xs text-muted-foreground">DescriÃ§Ã£o / ObservaÃ§Ãµes</Label>
             <Textarea
-              placeholder="Descreva o objetivo e escopo deste plano de inventário..."
+              placeholder="Descreva o objetivo e escopo deste plano de inventÃ¡rio..."
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               rows={3}
@@ -294,7 +296,7 @@ const NovoPlanoInventarioPage = () => {
         </CardContent>
       </Card>
 
-      {/* Seleção de lojas */}
+      {/* SeleÃ§Ã£o de lojas */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium">Lojas Participantes</CardTitle>
@@ -351,7 +353,7 @@ const NovoPlanoInventarioPage = () => {
         <CardContent>
           {linhas.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              Nenhuma regra adicionada. Clique em "Adicionar Regra" para definir lojas, departamentos, frequência e
+              Nenhuma regra adicionada. Clique em "Adicionar Regra" para definir lojas, departamentos, frequÃªncia e
               quantidade de itens a contar.
             </div>
           ) : (
@@ -361,7 +363,7 @@ const NovoPlanoInventarioPage = () => {
                   <tr className="border-b border-border bg-muted/30">
                     <th className="text-left p-3 font-medium text-muted-foreground">Loja</th>
                     <th className="text-left p-3 font-medium text-muted-foreground">Departamento</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">Frequência</th>
+                    <th className="text-left p-3 font-medium text-muted-foreground">FrequÃªncia</th>
                     <th className="text-right p-3 font-medium text-muted-foreground w-36">Qtd Itens a Contar</th>
                     <th className="text-center p-3 font-medium text-muted-foreground w-16" />
                   </tr>
@@ -391,7 +393,7 @@ const NovoPlanoInventarioPage = () => {
                           options={(Object.keys(FREQUENCIA_LABELS) as FrequenciaInventario[]).map((f) => ({ id: f, label: FREQUENCIA_LABELS[f] }))}
                           onChange={(ids) => updateLinha(linha.id, "frequencias", ids)}
                           placeholder="Selecione..."
-                          allLabel="Todas as frequências"
+                          allLabel="Todas as frequÃªncias"
                         />
                       </td>
                       <td className="p-2">
@@ -424,7 +426,7 @@ const NovoPlanoInventarioPage = () => {
         </CardContent>
       </Card>
 
-      {/* Ações */}
+      {/* AÃ§Ãµes */}
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={() => navigate(-1)}>
           Cancelar
@@ -438,3 +440,4 @@ const NovoPlanoInventarioPage = () => {
 };
 
 export default NovoPlanoInventarioPage;
+

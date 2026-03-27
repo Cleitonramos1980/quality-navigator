@@ -16,9 +16,11 @@ import { canCreateOS } from "@/lib/workflowOs";
 import { evaluateSlaFromDueDate } from "@/lib/sla";
 import SLABadge from "@/components/common/SLABadge";
 import { useUxMetrics } from "@/hooks/useUxMetrics";
+import { useToast } from "@/components/ui/use-toast";
 
 const OSListPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [osList, setOsList] = useState<OrdemServico[]>([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
@@ -27,8 +29,13 @@ const OSListPage = () => {
   const { trackAction } = useUxMetrics("ASSISTENCIA_OS_LISTA");
 
   useEffect(() => {
-    listarOS().then(setOsList);
-  }, []);
+    listarOS()
+      .then(setOsList)
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar ordens de serviço.";
+        toast({ title: "Erro ao carregar OS", description: message, variant: "destructive" });
+      });
+  }, [toast]);
 
   const filtered = osList.filter((os) => {
     if (filterStatus !== "ALL" && os.status !== filterStatus) return false;
@@ -149,4 +156,3 @@ const OSListPage = () => {
 };
 
 export default OSListPage;
-

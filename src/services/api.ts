@@ -5,11 +5,33 @@ function normalizeBaseUrl(value: string): string {
   return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
 }
 
+function getBrowserHostname(): string | null {
+  if (typeof window === "undefined") return null;
+  const host = window.location.hostname?.trim();
+  return host && host.length > 0 ? host : null;
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
 const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-const defaultBaseUrl = import.meta.env.DEV ? "http://localhost:3333/api" : "/api";
+const browserHost = getBrowserHostname();
+const useLanDefault = import.meta.env.DEV && !!browserHost && !isLoopbackHost(browserHost);
+const defaultBaseUrl = useLanDefault
+  ? "/api"
+  : import.meta.env.DEV
+    ? "http://localhost:3333/api"
+    : "/api";
 const initialBaseUrl = normalizeBaseUrl(configuredBaseUrl || defaultBaseUrl);
+const includeLocalhostFallback = import.meta.env.DEV && (!browserHost || isLoopbackHost(browserHost));
+const inferredDevLanApiBase =
+  import.meta.env.DEV && browserHost && !isLoopbackHost(browserHost)
+    ? `http://${browserHost}:3333/api`
+    : null;
 const fallbackBaseUrls = [
-  ...(import.meta.env.DEV ? ["http://localhost:3333/api"] : []),
+  ...(inferredDevLanApiBase ? [inferredDevLanApiBase] : []),
+  ...(includeLocalhostFallback ? ["http://localhost:3333/api"] : []),
   "/api",
 ].map(normalizeBaseUrl);
 
@@ -37,6 +59,8 @@ type RequestOptions = RequestInit & {
   timeoutMs?: number;
   retry?: number;
 };
+
+type MutationOptions = Pick<RequestOptions, "timeoutMs" | "retry">;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -131,7 +155,8 @@ async function request<T>(path: string, init?: RequestOptions): Promise<T> {
 
         const isTimeout = error instanceof DOMException && error.name === "AbortError";
         if (isTimeout) {
-          throw new ApiError("Tempo limite de requisicao excedido.", 408, requestId, error);
+          lastError = new ApiError("Tempo limite de requisicao excedido.", 408, requestId, error);
+          continue;
         }
       } finally {
         clearTimeout(timeoutHandle);
@@ -153,17 +178,19 @@ export async function apiGet<T>(path: string): Promise<T> {
   return request<T>(path);
 }
 
-export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+export async function apiPost<T>(path: string, body: unknown, options?: MutationOptions): Promise<T> {
   return request<T>(path, {
     method: "POST",
     body: JSON.stringify(body),
+    ...options,
   });
 }
 
-export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+export async function apiPut<T>(path: string, body: unknown, options?: MutationOptions): Promise<T> {
   return request<T>(path, {
     method: "PUT",
     body: JSON.stringify(body),
+    ...options,
   });
 }
 

@@ -19,6 +19,8 @@ import { getNCs } from "@/services/nc";
 import { getCurrentPapel, PAPEL_LABELS } from "@/lib/workflowOs";
 import { useUxMetrics } from "@/hooks/useUxMetrics";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/hooks/use-toast";
+import { getSesmtMasterDashboard } from "@/services/sesmt";
 
 const ExecutiveSummaryPanel = lazy(() => import("@/components/dashboard/ExecutiveSummaryPanel"));
 
@@ -60,13 +62,41 @@ const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardQualidadeData>(emptyData);
   const [opData, setOpData] = useState<DashboardOperacionalData>(defaultOp);
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
+  const [sesmtSummary, setSesmtSummary] = useState({
+    scoreGeral: 0,
+    acoesCriticasAbertas: 0,
+    inspecoesAtrasadas: 0,
+    documentosVencendo: 0,
+  });
   const [activeView, setActiveView] = useState("operacional");
   const papel = getCurrentPapel();
   const { trackAction } = useUxMetrics("DASHBOARD_PRINCIPAL");
 
   useEffect(() => {
-    getDashboardQualidade().then(setDashboardData).catch(() => undefined);
-    getDashboardOperacional().then(setOpData).catch(() => undefined);
+    getDashboardQualidade()
+      .then(setDashboardData)
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar indicadores de qualidade.";
+        toast({ title: "Erro no dashboard de qualidade", description: message, variant: "destructive" });
+      });
+
+    getDashboardOperacional()
+      .then(setOpData)
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar indicadores operacionais.";
+        toast({ title: "Erro no dashboard operacional", description: message, variant: "destructive" });
+      });
+
+    getSesmtMasterDashboard()
+      .then((result) => setSesmtSummary({
+        scoreGeral: result.scoreGeral,
+        acoesCriticasAbertas: result.acoesCriticasAbertas,
+        inspecoesAtrasadas: result.inspecoesAtrasadas,
+        documentosVencendo: result.documentosVencendo,
+      }))
+      .catch(() => {
+        // SESMT/SST may be restricted by profile; keep dashboard resilient.
+      });
   }, []);
 
   useEffect(() => {
@@ -144,7 +174,7 @@ const Dashboard = () => {
           </div>
 
           {/* Painel operacional detalhado */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Portaria & Visitantes */}
             <Link to="/portaria/presenca" className="glass-card rounded-lg p-5 hover:shadow-md transition-shadow block">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
@@ -184,6 +214,18 @@ const Dashboard = () => {
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Em risco</span><span className="font-semibold text-destructive">{opData.nfsEmRisco}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Sem confirmação</span><span className="font-semibold text-warning">{opData.nfsSemConfirmacao}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Valor em risco</span><span className="font-semibold text-destructive">R$ {(opData.valorEmRisco / 1000).toFixed(0)}k</span></div>
+              </div>
+            </Link>
+
+            <Link to="/sesmt/visao-executiva/painel-mestre" className="glass-card rounded-lg p-5 hover:shadow-md transition-shadow block">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
+                <Shield className="h-4 w-4 text-primary" /> SESMT / SST
+              </h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Score geral</span><span className="font-semibold">{sesmtSummary.scoreGeral}%</span></div>
+                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Acoes criticas</span><span className="font-semibold text-destructive">{sesmtSummary.acoesCriticasAbertas}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Inspecoes atrasadas</span><span className="font-semibold">{sesmtSummary.inspecoesAtrasadas}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Documentos vencendo</span><span className="font-semibold">{sesmtSummary.documentosVencendo}</span></div>
               </div>
             </Link>
           </div>

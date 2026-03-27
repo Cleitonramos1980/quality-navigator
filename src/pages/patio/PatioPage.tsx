@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { Truck, Clock, AlertTriangle, ArrowRight, Layers } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
@@ -7,17 +7,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getDocas, getFilaPatio, getTransportadoras } from "@/services/operacional";
 import type { Doca, FilaPatio as FilaPatioType, Transportadora } from "@/types/operacional";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 
 const PatioPage = () => {
+  const { toast } = useToast();
   const [tab, setTab] = useState("visao");
   const [docas, setDocas] = useState<Doca[]>([]);
   const [filaPatio, setFilaPatio] = useState<FilaPatioType[]>([]);
   const [transportadoras, setTransportadoras] = useState<Transportadora[]>([]);
 
   useEffect(() => {
-    getDocas().then(setDocas);
-    getFilaPatio().then(setFilaPatio);
-    getTransportadoras().then(setTransportadoras);
+    getDocas().then(setDocas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getFilaPatio().then(setFilaPatio).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getTransportadoras().then(setTransportadoras).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const kpis = useMemo(() => ({
@@ -31,8 +33,8 @@ const PatioPage = () => {
   const yardStages = [
     { label: "Fila Externa", count: filaPatio.filter((f) => f.status === "FILA_EXTERNA").length, color: "bg-info/15 text-info" },
     { label: "Fila Interna", count: filaPatio.filter((f) => f.status === "FILA_INTERNA").length, color: "bg-info/15 text-info" },
-    { label: "Balança", count: filaPatio.filter((f) => f.status === "AGUARDANDO_BALANCA").length, color: "bg-warning/15 text-warning" },
-    { label: "Pátio", count: filaPatio.filter((f) => f.status === "NO_PATIO").length, color: "bg-primary/15 text-primary" },
+    { label: "BalanÃ§a", count: filaPatio.filter((f) => f.status === "AGUARDANDO_BALANCA").length, color: "bg-warning/15 text-warning" },
+    { label: "PÃ¡tio", count: filaPatio.filter((f) => f.status === "NO_PATIO").length, color: "bg-primary/15 text-primary" },
     { label: "Aguardando Doca", count: filaPatio.filter((f) => f.status === "AGUARDANDO_DOCA").length, color: "bg-warning/15 text-warning" },
     { label: "Em Doca", count: docas.filter((d) => d.status === "OCUPADA").length, color: "bg-success/15 text-success" },
   ];
@@ -40,20 +42,20 @@ const PatioPage = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Pátio e Docas</h1>
-        <p className="text-sm text-muted-foreground mt-1">Visão do pátio, filas, docas, permanência e chamadas operacionais</p>
+        <h1 className="text-2xl font-bold text-foreground">PÃ¡tio e Docas</h1>
+        <p className="text-sm text-muted-foreground mt-1">VisÃ£o do pÃ¡tio, filas, docas, permanÃªncia e chamadas operacionais</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <KPICard title="Docas Ocupadas" value={`${kpis.docasOcupadas}/${docas.length}`} icon={<Layers className="w-5 h-5" />} />
         <KPICard title="Docas Livres" value={kpis.docasLivres} icon={<Layers className="w-5 h-5" />} />
         <KPICard title="Na Fila" value={kpis.filaTotal} icon={<Truck className="w-5 h-5" />} />
-        <KPICard title="Tempo Médio Fila" value={`${kpis.tempoMedioFila} min`} icon={<Clock className="w-5 h-5" />} />
-        <KPICard title="Manutenção" value={kpis.docasManutencao} icon={<AlertTriangle className="w-5 h-5" />} />
+        <KPICard title="Tempo MÃ©dio Fila" value={`${kpis.tempoMedioFila} min`} icon={<Clock className="w-5 h-5" />} />
+        <KPICard title="ManutenÃ§Ã£o" value={kpis.docasManutencao} icon={<AlertTriangle className="w-5 h-5" />} />
       </div>
 
       <div className="glass-card rounded-lg p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Fluxo do Pátio</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-4">Fluxo do PÃ¡tio</h3>
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
           {yardStages.map((stage, idx) => (
             <div key={stage.label} className="flex items-center gap-2">
@@ -71,7 +73,7 @@ const PatioPage = () => {
         <TabsList>
           <TabsTrigger value="visao">Docas</TabsTrigger>
           <TabsTrigger value="fila">Fila</TabsTrigger>
-          <TabsTrigger value="permanencia">Permanência</TabsTrigger>
+          <TabsTrigger value="permanencia">PermanÃªncia</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -88,7 +90,7 @@ const PatioPage = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ordem</TableHead><TableHead>Placa</TableHead><TableHead>Tipo</TableHead><TableHead>Transportadora</TableHead><TableHead>Operação</TableHead><TableHead>Chegada</TableHead><TableHead>Aguardando</TableHead><TableHead>Prioridade</TableHead><TableHead>Status</TableHead>
+                <TableHead>Ordem</TableHead><TableHead>Placa</TableHead><TableHead>Tipo</TableHead><TableHead>Transportadora</TableHead><TableHead>OperaÃ§Ã£o</TableHead><TableHead>Chegada</TableHead><TableHead>Aguardando</TableHead><TableHead>Prioridade</TableHead><TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -112,11 +114,11 @@ const PatioPage = () => {
 
       {tab === "permanencia" && (
         <div className="glass-card rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Permanência por Transportadora</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-4">PermanÃªncia por Transportadora</h3>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Transportadora</TableHead><TableHead>Operações</TableHead><TableHead>Atraso Médio</TableHead><TableHead>SLA Score</TableHead><TableHead>Status</TableHead>
+                <TableHead>Transportadora</TableHead><TableHead>OperaÃ§Ãµes</TableHead><TableHead>Atraso MÃ©dio</TableHead><TableHead>SLA Score</TableHead><TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -138,3 +140,4 @@ const PatioPage = () => {
 };
 
 export default PatioPage;
+

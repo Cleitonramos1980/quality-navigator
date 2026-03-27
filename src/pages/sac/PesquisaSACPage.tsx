@@ -12,8 +12,10 @@ import { getCAPAs } from "@/services/capa";
 import { SAC_STATUS_LABELS, SAC_STATUS_COLORS, type SACAtendimento } from "@/types/sac";
 import { Search, Plus, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 const PesquisaSACPage = () => {
+  const { toast } = useToast();
   const [clienteSearch, setClienteSearch] = useState("");
   const [pedidoSearch, setPedidoSearch] = useState("");
   const [nfSearch, setNfSearch] = useState("");
@@ -29,15 +31,69 @@ const PesquisaSACPage = () => {
   const [avaliacoes, setAvaliacoes] = useState<any[]>([]);
 
   useEffect(() => {
-    buscarClientesERP({}).then(setClientes);
-    buscarPedidosERP().then(setPedidos);
-    buscarNFVendaERP().then(setNfs);
-    getAtendimentos().then(setAtendimentos);
-    getGarantias().then(setGarantias);
-    getNCs().then(setNcs);
-    getCAPAs().then(setCapas);
-    getAvaliacoes().then(setAvaliacoes);
-  }, []);
+    let cancelled = false;
+    void (async () => {
+      const [
+        clientesRes,
+        pedidosRes,
+        nfsRes,
+        atendimentosRes,
+        garantiasRes,
+        ncsRes,
+        capasRes,
+        avaliacoesRes,
+      ] = await Promise.allSettled([
+        buscarClientesERP({}),
+        buscarPedidosERP(),
+        buscarNFVendaERP(),
+        getAtendimentos(),
+        getGarantias(),
+        getNCs(),
+        getCAPAs(),
+        getAvaliacoes(),
+      ]);
+
+      if (cancelled) return;
+
+      const falhas: string[] = [];
+
+      if (clientesRes.status === "fulfilled") setClientes(clientesRes.value);
+      else falhas.push("Clientes ERP");
+
+      if (pedidosRes.status === "fulfilled") setPedidos(pedidosRes.value);
+      else falhas.push("Pedidos ERP");
+
+      if (nfsRes.status === "fulfilled") setNfs(nfsRes.value);
+      else falhas.push("NFs ERP");
+
+      if (atendimentosRes.status === "fulfilled") setAtendimentos(atendimentosRes.value);
+      else falhas.push("Atendimentos SAC");
+
+      if (garantiasRes.status === "fulfilled") setGarantias(garantiasRes.value);
+      else falhas.push("Garantias");
+
+      if (ncsRes.status === "fulfilled") setNcs(ncsRes.value);
+      else falhas.push("Não conformidades");
+
+      if (capasRes.status === "fulfilled") setCapas(capasRes.value);
+      else falhas.push("CAPA");
+
+      if (avaliacoesRes.status === "fulfilled") setAvaliacoes(avaliacoesRes.value);
+      else falhas.push("Avaliações");
+
+      if (falhas.length > 0) {
+        toast({
+          title: "Carga parcial de dados",
+          description: `Falha ao carregar: ${falhas.join(", ")}.`,
+          variant: "destructive",
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [toast]);
 
   const filteredClientes = clientes.filter((c) => !clienteSearch || c.nome?.toLowerCase().includes(clienteSearch.toLowerCase()) || c.cgcent?.includes(clienteSearch) || c.codcli?.includes(clienteSearch));
   const filteredPedidos = pedidos.filter((p) => !pedidoSearch || p.numped?.toLowerCase().includes(pedidoSearch.toLowerCase()) || p.codcli?.includes(pedidoSearch));
@@ -53,5 +109,4 @@ const PesquisaSACPage = () => {
 };
 
 export default PesquisaSACPage;
-
 

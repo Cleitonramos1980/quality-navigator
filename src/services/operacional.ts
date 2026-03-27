@@ -11,7 +11,7 @@ import type {
   Acesso, Visitante, VeiculoVisitante, VeiculoFrota, DeslocamentoFrota,
   Transportadora, MotoristaTerceiro, VeiculoTerceiro, OperacaoTerceiro,
   AgendamentoDoca, Doca, FilaPatio, AlertaOperacional, ExcecaoOperacional,
-  NFTransito, ExcecaoFiscal, EventoTimeline,
+  NFTransito, ExcecaoFiscal, EventoTimeline, SolicitacaoAcesso, TipoAcesso, SolicitacaoAcessoPreenchimento,
 } from "@/types/operacional";
 import {
   mockAcessos, mockVisitantes, mockVeiculosVisitantes, mockFrota, mockDeslocamentos,
@@ -48,6 +48,67 @@ export async function liberarEntrada(id: string): Promise<Acesso> {
 // Backend: PUT /operacional/acessos/:id/saida
 export async function registrarSaida(id: string): Promise<Acesso> {
   try { return await apiPut<Acesso>(`/operacional/acessos/${id}/saida`, {}); } catch { return mockAcessos[0]; }
+}
+
+export interface CriarSolicitacaoAcessoPayload {
+  tipoAcesso: TipoAcesso;
+  responsavelInterno: string;
+  setorDestino: string;
+  unidadePlanta: string;
+  validadeHoras: number;
+  observacaoInterna?: string;
+  solicitadoPor: string;
+  horarioPrevisto?: string;
+}
+
+export interface CriarSolicitacaoAcessoResponse {
+  solicitacao: SolicitacaoAcesso;
+  acesso: Acesso;
+  visitante: Visitante;
+}
+
+export async function getSolicitacoesAcesso(): Promise<SolicitacaoAcesso[]> {
+  return apiGet<SolicitacaoAcesso[]>("/operacional/solicitacoes-acesso");
+}
+
+export async function getSolicitacaoAcessoById(id: string): Promise<SolicitacaoAcesso> {
+  return apiGet<SolicitacaoAcesso>(`/operacional/solicitacoes-acesso/${id}`);
+}
+
+export async function criarSolicitacaoAcesso(payload: CriarSolicitacaoAcessoPayload): Promise<CriarSolicitacaoAcessoResponse> {
+  return apiPost<CriarSolicitacaoAcessoResponse>("/operacional/solicitacoes-acesso", payload);
+}
+
+export async function marcarSolicitacaoAcessoComoEnviada(id: string): Promise<SolicitacaoAcesso> {
+  return apiPut<SolicitacaoAcesso>(`/operacional/solicitacoes-acesso/${id}/enviar`, {});
+}
+
+export interface SolicitacaoAcessoPublica {
+  id: string;
+  codigo: string;
+  token: string;
+  status: string;
+  tipoAcesso: TipoAcesso;
+  unidadePlanta: string;
+  setorDestino: string;
+  responsavelInterno: string;
+  expiraEm: string;
+  visitantePreenchido: boolean;
+}
+
+export async function getSolicitacaoAcessoPublicaByToken(token: string): Promise<SolicitacaoAcessoPublica> {
+  return apiGet<SolicitacaoAcessoPublica>(`/operacional/solicitacoes-acesso/public/${token}`);
+}
+
+export async function preencherSolicitacaoAcessoPublica(
+  token: string,
+  payload: SolicitacaoAcessoPreenchimento,
+): Promise<{ status: string; solicitacao: SolicitacaoAcesso; acesso: Acesso; visitante: Visitante }> {
+  return apiPost<{ status: string; solicitacao: SolicitacaoAcesso; acesso: Acesso; visitante: Visitante }>(
+    `/operacional/solicitacoes-acesso/public/${token}/preencher`,
+    payload,
+    { timeoutMs: 120_000 },
+  );
 }
 
 // ══════════════════════════════════════════════

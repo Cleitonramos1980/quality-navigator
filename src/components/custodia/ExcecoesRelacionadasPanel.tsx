@@ -4,6 +4,7 @@ import { ShieldAlert, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getExcecoesTorre } from "@/services/torreControle";
+import { toast } from "@/hooks/use-toast";
 import type { ExcecaoTorre } from "@/types/torreControle";
 import { EXCECAO_STATUS_LABELS, EXCECAO_STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS } from "@/types/torreControle";
 
@@ -16,11 +17,20 @@ export default function ExcecoesRelacionadasPanel({ origemId, origemTipo }: Prop
   const [excecoes, setExcecoes] = useState<ExcecaoTorre[]>([]);
 
   useEffect(() => {
-    getExcecoesTorre().then(all => {
-      const related = all.filter(e => e.origemId === origemId);
-      setExcecoes(related);
-    });
-  }, [origemId]);
+    getExcecoesTorre()
+      .then((all) => {
+        const related = all.filter((e) => e.origemId === origemId);
+        setExcecoes(related);
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar excecoes relacionadas.";
+        toast({
+          title: `Erro ao carregar excecoes de ${origemTipo.toLowerCase()}`,
+          description: message,
+          variant: "destructive",
+        });
+      });
+  }, [origemId, origemTipo]);
 
   if (excecoes.length === 0) return null;
 

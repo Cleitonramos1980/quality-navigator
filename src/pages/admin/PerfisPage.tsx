@@ -6,8 +6,9 @@ import SectionCard from "@/components/forms/SectionCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ASSIST_PERMISSION_LABELS, ASSIST_PERMISSION_GROUPS, PERFIL_ASSIST_PERMISSIONS, PerfilNome } from "@/lib/rbac";
 import { getPerfis } from "@/services/admin";
+import { toast } from "@/hooks/use-toast";
 
-const modulos = ["dashboard", "sac", "qualidade", "assistencia", "admin"];
+const modulos = ["dashboard", "sac", "qualidade", "sesmt", "assistencia", "admin"];
 
 const PerfisPage = () => {
   const navigate = useNavigate();
@@ -15,7 +16,12 @@ const PerfisPage = () => {
   const [perfis, setPerfis] = useState<PerfilNome[]>([]);
 
   useEffect(() => {
-    getPerfis().then((p) => setPerfis(p as PerfilNome[]));
+    getPerfis()
+      .then((p) => setPerfis(p as PerfilNome[]))
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar perfis.";
+        toast({ title: "Erro ao carregar perfis", description: message, variant: "destructive" });
+      });
   }, []);
 
   return (
@@ -24,5 +30,3 @@ const PerfisPage = () => {
 };
 
 export default PerfisPage;
-
-

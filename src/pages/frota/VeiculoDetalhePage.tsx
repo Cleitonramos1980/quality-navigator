@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+﻿import { useParams, useNavigate } from "react-router-dom";
 import { useMemo, useState, useEffect } from "react";
 import { ArrowLeft, Truck, MapPin, Clock, AlertTriangle, Wrench, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,20 +7,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getVeiculosFrota, getDeslocamentos, getDocas, getMovimentacoesFrota } from "@/services/operacional";
 import type { VeiculoFrota, DeslocamentoFrota, Doca } from "@/types/operacional";
 import type { MovimentacaoFrota } from "@/services/operacional";
+import { useToast } from "@/components/ui/use-toast";
 
 const VeiculoDetalhePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [allFrota, setAllFrota] = useState<VeiculoFrota[]>([]);
   const [allDeslocamentos, setAllDeslocamentos] = useState<DeslocamentoFrota[]>([]);
   const [allDocas, setAllDocas] = useState<Doca[]>([]);
   const [allMovimentacoes, setAllMovimentacoes] = useState<MovimentacaoFrota[]>([]);
 
   useEffect(() => {
-    getVeiculosFrota().then(setAllFrota);
-    getDeslocamentos().then(setAllDeslocamentos);
-    getDocas().then(setAllDocas);
-    getMovimentacoesFrota().then(setAllMovimentacoes);
+    getVeiculosFrota().then(setAllFrota).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getDeslocamentos().then(setAllDeslocamentos).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getDocas().then(setAllDocas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getMovimentacoesFrota().then(setAllMovimentacoes).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const veiculo = useMemo(() => allFrota.find((v) => v.id === id), [id, allFrota]);
@@ -36,7 +38,7 @@ const VeiculoDetalhePage = () => {
     return (
       <div className="space-y-4 animate-fade-in">
         <Button variant="ghost" onClick={() => navigate("/frota")}><ArrowLeft className="h-4 w-4 mr-2" />Voltar</Button>
-        <p className="text-muted-foreground">Veículo não encontrado.</p>
+        <p className="text-muted-foreground">VeÃ­culo nÃ£o encontrado.</p>
       </div>
     );
   }
@@ -46,8 +48,8 @@ const VeiculoDetalhePage = () => {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/frota")}><ArrowLeft className="h-4 w-4" /></Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{veiculo.placa} — {veiculo.modelo}</h1>
-          <p className="text-sm text-muted-foreground">{veiculo.tipo} • {veiculo.setor} • {veiculo.ano}</p>
+          <h1 className="text-2xl font-bold text-foreground">{veiculo.placa} â€” {veiculo.modelo}</h1>
+          <p className="text-sm text-muted-foreground">{veiculo.tipo} â€¢ {veiculo.setor} â€¢ {veiculo.ano}</p>
         </div>
       </div>
 
@@ -66,7 +68,7 @@ const VeiculoDetalhePage = () => {
           <p className="font-medium text-foreground text-sm">{veiculo.quilometragem.toLocaleString("pt-BR")} km</p>
         </div>
         <div className="glass-card rounded-lg p-4">
-          <p className="text-xs text-muted-foreground mb-1">Localização</p>
+          <p className="text-xs text-muted-foreground mb-1">LocalizaÃ§Ã£o</p>
           <p className="font-medium text-foreground text-sm flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5 text-primary" />
             {docaAtual ? docaAtual.nome : veiculo.status === "EM_DESLOCAMENTO" ? "Em rota" : "Garagem"}
@@ -74,7 +76,7 @@ const VeiculoDetalhePage = () => {
         </div>
         <div className="glass-card rounded-lg p-4">
           <p className="text-xs text-muted-foreground mb-1">Doca Vinculada</p>
-          <p className="font-medium text-foreground text-sm">{docaAtual ? docaAtual.nome : "—"}</p>
+          <p className="font-medium text-foreground text-sm">{docaAtual ? docaAtual.nome : "â€”"}</p>
         </div>
       </div>
 
@@ -92,10 +94,10 @@ const VeiculoDetalhePage = () => {
         </div>
       )}
 
-      {/* Timeline de Movimentações */}
+      {/* Timeline de MovimentaÃ§Ãµes */}
       <div className="glass-card rounded-lg p-5">
         <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Clock className="h-4 w-4" /> Histórico de Movimentações
+          <Clock className="h-4 w-4" /> HistÃ³rico de MovimentaÃ§Ãµes
         </h3>
         <div className="relative border-l-2 border-border ml-3 pl-6 space-y-6">
           {movimentacoes.map((mov) => (
@@ -112,7 +114,7 @@ const VeiculoDetalhePage = () => {
               </div>
             </div>
           ))}
-          {movimentacoes.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma movimentação registrada.</p>}
+          {movimentacoes.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma movimentaÃ§Ã£o registrada.</p>}
         </div>
       </div>
 
@@ -127,8 +129,8 @@ const VeiculoDetalhePage = () => {
               <TableRow>
                 <TableHead>Origem</TableHead>
                 <TableHead>Destino</TableHead>
-                <TableHead>Saída</TableHead>
-                <TableHead>Previsão</TableHead>
+                <TableHead>SaÃ­da</TableHead>
+                <TableHead>PrevisÃ£o</TableHead>
                 <TableHead>Chegada</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -140,7 +142,7 @@ const VeiculoDetalhePage = () => {
                   <TableCell>{d.destino}</TableCell>
                   <TableCell className="text-xs">{new Date(d.horarioSaida).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
                   <TableCell className="text-xs">{new Date(d.horarioPrevistoChegada).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</TableCell>
-                  <TableCell className="text-xs">{d.horarioRealChegada ? new Date(d.horarioRealChegada).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}</TableCell>
+                  <TableCell className="text-xs">{d.horarioRealChegada ? new Date(d.horarioRealChegada).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "â€”"}</TableCell>
                   <TableCell><StatusSemaphore status={d.status} /></TableCell>
                 </TableRow>
               ))}
@@ -153,3 +155,4 @@ const VeiculoDetalhePage = () => {
 };
 
 export default VeiculoDetalhePage;
+

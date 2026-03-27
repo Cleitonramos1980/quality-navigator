@@ -28,6 +28,15 @@ const prefetchMap: Record<string, Prefetcher> = {
   "/administracao/parametros": () => import("@/pages/admin/ParametrosPage"),
   "/qualidade/core-tools": () => import("@/pages/qualidade/CoreToolsFornecedoresPage"),
   "/qualidade/iso-readiness": () => import("@/pages/qualidade/IsoReadinessPage"),
+  "/sesmt/visao-executiva/painel-mestre": () => import("@/pages/sesmt/SesmtExecutivePage"),
+  "/sesmt/visao-executiva/indice-maturidade": () => import("@/pages/sesmt/SesmtExecutivePage"),
+  "/sesmt/visao-executiva/painel-preditivo": () => import("@/pages/sesmt/SesmtExecutivePage"),
+  "/sesmt/visao-executiva/indicadores": () => import("@/pages/sesmt/SesmtExecutivePage"),
+  "/sesmt/visao-executiva/gerencial-ocupacional": () => import("@/pages/sesmt/SesmtExecutivePage"),
+  "/sesmt/operacao/epi": () => import("@/pages/sesmt/SesmtModulePage"),
+  "/sesmt/operacao/epc": () => import("@/pages/sesmt/SesmtModulePage"),
+  "/sesmt/riscos-e-controles/atividades-por-nr": () => import("@/pages/sesmt/SesmtModulePage"),
+  "/sesmt/governanca-e-conformidade/documentos-controlados": () => import("@/pages/sesmt/SesmtModulePage"),
 };
 
 const prefetched = new Set<string>();

@@ -5,14 +5,21 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAuditorias } from "@/services/auditorias";
 import type { AudExec } from "@/types/sgq";
+import { useToast } from "@/components/ui/use-toast";
 
 const AuditoriasPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [auditorias, setAuditorias] = useState<AudExec[]>([]);
 
   useEffect(() => {
-    getAuditorias().then(setAuditorias);
-  }, []);
+    getAuditorias()
+      .then(setAuditorias)
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Falha ao carregar auditorias.";
+        toast({ title: "Erro ao carregar auditorias", description: message, variant: "destructive" });
+      });
+  }, [toast]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -48,5 +55,4 @@ const AuditoriasPage = () => {
 };
 
 export default AuditoriasPage;
-
 

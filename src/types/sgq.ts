@@ -2,7 +2,30 @@
 
 export type Planta = "MAO" | "BEL" | "AGR";
 
-export type UserRole = "ADMIN" | "SAC" | "QUALIDADE" | "AUDITOR" | "ASSISTENCIA" | "TECNICO" | "ALMOX" | "DIRETORIA" | "VALIDACAO";
+export type UserRole =
+  | "ADMIN"
+  | "SAC"
+  | "QUALIDADE"
+  | "AUDITOR"
+  | "ASSISTENCIA"
+  | "TECNICO"
+  | "ALMOX"
+  | "DIRETORIA"
+  | "VALIDACAO"
+  | "CORPORATIVO_SST"
+  | "SESMT"
+  | "TECNICO_SEGURANCA"
+  | "ENFERMAGEM_TRABALHO"
+  | "MEDICO_TRABALHO"
+  | "RH"
+  | "GESTOR_UNIDADE"
+  | "LEITOR_RESTRITO"
+  | "GESTOR_CONTRATOS"
+  | "TERCEIRO_CONSULTA_LIMITADA"
+  | "LIDER_OPERACIONAL"
+  | "RH_OCUPACIONAL"
+  | "COMITE_SST"
+  | "DIRETOR_EXECUTIVO_SST";
 export type Perfil = UserRole;
 
 export type GarantiaStatus = "ABERTO" | "EM_ANALISE" | "APROVADO" | "NEGADO" | "EM_TROCA" | "ENCERRADO";
@@ -333,7 +356,6 @@ export interface IsoReadinessResumo {
   riscoAlto: number;
   percentualAtendimento: number;
 }
-
 
 
 

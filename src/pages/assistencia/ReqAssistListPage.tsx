@@ -11,22 +11,46 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listarReqAssistencia, listarOS } from "@/services/assistencia";
 import { REQ_ASSIST_STATUS_LABELS, REQ_ASSIST_STATUS_COLORS } from "@/types/assistencia";
 import type { RequisicaoAssistencia, OrdemServico } from "@/types/assistencia";
+import { useToast } from "@/components/ui/use-toast";
 
 const ReqAssistListPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [reqs, setReqs] = useState<RequisicaoAssistencia[]>([]);
   const [osMap, setOsMap] = useState<Record<string, OrdemServico>>({});
   const [search, setSearch] = useState("");
   const [filterPlanta, setFilterPlanta] = useState("ALL");
 
   useEffect(() => {
-    listarReqAssistencia().then(setReqs);
-    listarOS().then((list) => {
-      const map: Record<string, OrdemServico> = {};
-      list.forEach((os) => { map[os.id] = os; });
-      setOsMap(map);
-    });
-  }, []);
+    let cancelled = false;
+    void (async () => {
+      const [reqRes, osRes] = await Promise.allSettled([listarReqAssistencia(), listarOS()]);
+
+      if (cancelled) return;
+
+      if (reqRes.status === "fulfilled") {
+        setReqs(reqRes.value);
+      } else {
+        const message = reqRes.reason instanceof Error ? reqRes.reason.message : "Falha ao carregar requisições.";
+        toast({ title: "Erro ao carregar requisições", description: message, variant: "destructive" });
+      }
+
+      if (osRes.status === "fulfilled") {
+        const map: Record<string, OrdemServico> = {};
+        osRes.value.forEach((os) => {
+          map[os.id] = os;
+        });
+        setOsMap(map);
+      } else {
+        const message = osRes.reason instanceof Error ? osRes.reason.message : "Falha ao carregar OS relacionadas.";
+        toast({ title: "Erro ao carregar OS", description: message, variant: "destructive" });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [toast]);
 
   const pendentes = reqs.filter((r) => !["ATENDIDA", "NEGADA"].includes(r.status));
   const concluidas = reqs.filter((r) => ["ATENDIDA", "NEGADA"].includes(r.status));
@@ -136,5 +160,4 @@ const ReqAssistListPage = () => {
 };
 
 export default ReqAssistListPage;
-
 

@@ -7,6 +7,7 @@ import TraceabilityCard from "@/components/operacional/TraceabilityCard";
 import AgendamentoActionMenu from "@/components/agendamento/AgendamentoActionMenu";
 import ExcecoesRelacionadasPanel from "@/components/custodia/ExcecoesRelacionadasPanel";
 import { getAgendamentosSlots, getAgendamentoKPIs } from "@/services/agendamento";
+import { toast } from "@/hooks/use-toast";
 import type { AgendamentoDockSlot } from "@/types/agendamento";
 import { AGENDAMENTO_STATUS_LABELS, AGENDAMENTO_STATUS_COLORS, PRIORIDADE_COLORS } from "@/types/agendamento";
 
@@ -16,10 +17,16 @@ const AgendamentoDetalhePage = () => {
 
   const reload = useCallback(() => {
     if (id) {
-      getAgendamentosSlots().then(slots => {
-        const found = slots.find(s => s.id === id);
-        setData(found || null);
-      });
+      getAgendamentosSlots()
+        .then((slots) => {
+          const found = slots.find((s) => s.id === id);
+          setData(found || null);
+        })
+        .catch((error) => {
+          setData(null);
+          const message = error instanceof Error ? error.message : "Falha ao carregar agendamento.";
+          toast({ title: "Erro ao carregar agendamento", description: message, variant: "destructive" });
+        });
     }
   }, [id]);
 

@@ -21,6 +21,7 @@ import { inventarioRoutes } from "./routes/inventario.js";
 import { operacionalRoutes } from "./routes/operacional.js";
 import { torreAgendaCustodiaRoutes } from "./routes/torreAgendaCustodia.js";
 import { inspecoesRoutes } from "./routes/inspecoes.js";
+import { sesmtRoutes } from "./routes/sesmt.js";
 import {
   initPersistentCollections,
   persistAllCollections,
@@ -32,9 +33,12 @@ import { persistCollection } from "./repositories/persistentCollectionStore.js";
 import { seedInventarioData, seedOperacionalData } from "./repositories/seedData.js";
 import { seedPhasesData } from "./repositories/seedPhases.js";
 import { seedInspecoesData } from "./repositories/seedInspecoesData.js";
-import { modelos as inspecoesModelos, tiposNc as inspecoesTiposNc, padroesMola as inspecoesPadroesMola } from "./routes/inspecoes.js";
+import { seedSesmtData } from "./repositories/seedSesmtData.js";
+import { ensureInspecoesTables } from "./repositories/inspecoes/initTables.js";
+import { isOracleEnabled } from "./db/oracle.js";
 
 const app = Fastify({
+  bodyLimit: 6 * 1024 * 1024,
   logger: {
     level: env.LOG_LEVEL,
   },
@@ -63,8 +67,11 @@ app.addHook("preHandler", async (request, reply) => {
     "/api/sac/avaliacoes/public",
     "/api/sac/avaliacoes/public/responder",
   ]);
+  const publicPathPrefixes = [
+    "/api/operacional/solicitacoes-acesso/public/",
+  ];
 
-  if (publicPaths.has(path)) return;
+  if (publicPaths.has(path) || publicPathPrefixes.some((prefix) => path.startsWith(prefix))) return;
 
   const authHeader = request.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
@@ -144,21 +151,31 @@ await inventarioRoutes(app);
 await operacionalRoutes(app);
 await torreAgendaCustodiaRoutes(app);
 await inspecoesRoutes(app);
+await sesmtRoutes(app);
 
 async function start() {
   await initOraclePool();
   await initPersistentCollections();
+  await ensureInspecoesTables();
 
   // Seed operational and inventory data if empty
   seedInventarioData();
   seedOperacionalData();
   seedPhasesData();
-  seedInspecoesData({ modelos: inspecoesModelos, tiposNc: inspecoesTiposNc, padroesMola: inspecoesPadroesMola });
+  // Inspeções: when Oracle is enabled, data comes from real INS_* tables (imported via planilha script).
+  // Only seed in-memory fallback when Oracle is NOT available (local dev).
+  if (!isOracleEnabled()) {
+    seedInspecoesData();
+  }
+  seedSesmtData();
 
   const seedUsers = [
     { nome: "Cleiton Ramos", email: "cleiton.ramos@hotmail.com", perfil: "ADMIN" },
     { nome: "Teste", email: "teste@admin.com", perfil: "ADMIN" },
-  ];
+    { nome: "Ana SESMT", email: "ana.sesmt@admin.com", perfil: "SESMT" },
+    { nome: "Bruno Medico", email: "bruno.medico@admin.com", perfil: "MEDICO_TRABALHO" },
+    { nome: "Carla Diretoria SST", email: "carla.sst@admin.com", perfil: "DIRETOR_EXECUTIVO_SST" },
+  ] as const;
   for (const su of seedUsers) {
     const exists = db.usuarios.some(
       (u) => u.email.toLowerCase() === su.email.toLowerCase(),
@@ -188,3 +205,4 @@ process.on("SIGINT", async () => {
   await closeOraclePool();
   process.exit(0);
 });
+

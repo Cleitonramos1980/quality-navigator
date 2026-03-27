@@ -45,7 +45,9 @@ const NovaPreAutorizacaoPage = () => {
   };
 
   const generatedToken = crypto.randomUUID().slice(0, 12);
-  const mockLink = `${window.location.origin}/visitante/cadastro/${generatedToken}`;
+  const publicAppUrl = (import.meta.env.VITE_PUBLIC_APP_URL as string | undefined)?.trim();
+  const baseUrl = (publicAppUrl || window.location.origin).replace(/\/+$/, "");
+  const mockLink = `${baseUrl}/visitante/cadastro/${generatedToken}`;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl mx-auto">

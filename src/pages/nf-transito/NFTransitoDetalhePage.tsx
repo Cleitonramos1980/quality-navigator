@@ -9,6 +9,7 @@ import RelatedActionsPanel from "@/components/operacional/RelatedActionsPanel";
 import RiskScoreCard from "@/components/operacional/RiskScoreCard";
 import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import { getNFTransitoById } from "@/services/operacional";
+import { toast } from "@/hooks/use-toast";
 import type { NFTransito, EventoTimeline } from "@/types/operacional";
 
 const NFTransitoDetalhePage = () => {
@@ -16,7 +17,17 @@ const NFTransitoDetalhePage = () => {
   const [nf, setNf] = useState<NFTransito | null>(null);
 
   useEffect(() => {
-    if (id) getNFTransitoById(id).then((data) => setNf(data || null));
+    if (!id) {
+      setNf(null);
+      return;
+    }
+    getNFTransitoById(id)
+      .then((data) => setNf(data || null))
+      .catch((error) => {
+        setNf(null);
+        const message = error instanceof Error ? error.message : "Falha ao carregar NF em transito.";
+        toast({ title: "Erro ao carregar NF", description: message, variant: "destructive" });
+      });
   }, [id]);
 
   if (!nf) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;

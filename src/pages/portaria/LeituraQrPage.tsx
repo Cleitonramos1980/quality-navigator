@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, QrCode, Search, CheckCircle, XCircle, AlertTriangle, Clock, ShieldCheck, User, Building2, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,13 @@ import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import { getAcessos, getVisitantes } from "@/services/operacional";
 import type { Acesso, Visitante } from "@/types/operacional";
 import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 type ResultadoStatus = "encontrado" | "expirado" | "utilizado" | "bloqueado" | null;
 
 const LeituraQrPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [codigoManual, setCodigoManual] = useState("");
   const [resultado, setResultado] = useState<any>(null);
   const [resultadoStatus, setResultadoStatus] = useState<ResultadoStatus>(null);
@@ -21,8 +23,8 @@ const LeituraQrPage = () => {
   const [allVisitantes, setAllVisitantes] = useState<Visitante[]>([]);
 
   useEffect(() => {
-    getAcessos().then(setAllAcessos);
-    getVisitantes().then(setAllVisitantes);
+    getAcessos().then(setAllAcessos).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getVisitantes().then(setAllVisitantes).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const buscarPorCodigo = () => {
@@ -63,7 +65,7 @@ const LeituraQrPage = () => {
     } else {
       setResultado(null);
       setResultadoStatus(null);
-      toast({ title: "Não encontrado", description: `Nenhum registro para o código "${q}".`, variant: "destructive" });
+      toast({ title: "NÃ£o encontrado", description: `Nenhum registro para o cÃ³digo "${q}".`, variant: "destructive" });
     }
   };
 
@@ -101,14 +103,14 @@ const LeituraQrPage = () => {
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Leitura de QR Code</h1>
-          <p className="text-sm text-muted-foreground">Escaneie ou digite o código para identificar o visitante</p>
+          <p className="text-sm text-muted-foreground">Escaneie ou digite o cÃ³digo para identificar o visitante</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <QrCode className="h-5 w-5 text-primary" /> Área de Leitura
+            <QrCode className="h-5 w-5 text-primary" /> Ãrea de Leitura
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -124,12 +126,12 @@ const LeituraQrPage = () => {
                     <div className="absolute inset-0 border-2 border-primary rounded-lg animate-ping opacity-30" />
                   </div>
                   <p className="text-sm font-medium text-primary">Escaneando...</p>
-                  <p className="text-xs text-muted-foreground">Posicione o QR Code na área de captura</p>
+                  <p className="text-xs text-muted-foreground">Posicione o QR Code na Ã¡rea de captura</p>
                 </>
               ) : (
                 <>
                   <QrCode className="h-16 w-16 text-muted-foreground mx-auto" />
-                  <p className="text-sm text-muted-foreground">Câmera de leitura QR</p>
+                  <p className="text-sm text-muted-foreground">CÃ¢mera de leitura QR</p>
                   <p className="text-xs text-primary cursor-pointer hover:underline">Clique para simular leitura</p>
                 </>
               )}
@@ -140,7 +142,7 @@ const LeituraQrPage = () => {
             <Input
               value={codigoManual}
               onChange={(e) => setCodigoManual(e.target.value)}
-              placeholder="Ou digite o código manualmente..."
+              placeholder="Ou digite o cÃ³digo manualmente..."
               onKeyDown={(e) => e.key === "Enter" && buscarPorCodigo()}
             />
             <Button onClick={buscarPorCodigo} className="gap-1.5">
@@ -155,7 +157,7 @@ const LeituraQrPage = () => {
         <Card className="border-success/30">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-success" /> Identificação Confirmada — {resultado.tipo}
+              <ShieldCheck className="h-5 w-5 text-success" /> IdentificaÃ§Ã£o Confirmada â€” {resultado.tipo}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -188,7 +190,7 @@ const LeituraQrPage = () => {
               <div className="h-12 w-12 rounded-full bg-warning/10 flex items-center justify-center"><Clock className="h-6 w-6 text-warning" /></div>
               <div>
                 <h3 className="font-semibold text-foreground">QR Code Expirado</h3>
-                <p className="text-sm text-muted-foreground">A pré-autorização de <strong>{resultado.dados.nome}</strong> expirou.</p>
+                <p className="text-sm text-muted-foreground">A prÃ©-autorizaÃ§Ã£o de <strong>{resultado.dados.nome}</strong> expirou.</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -198,15 +200,15 @@ const LeituraQrPage = () => {
         </Card>
       )}
 
-      {/* Resultado: Já utilizado */}
+      {/* Resultado: JÃ¡ utilizado */}
       {resultado && resultadoStatus === "utilizado" && (
         <Card className="border-primary/30">
           <CardContent className="pt-6 space-y-3">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center"><CheckCircle className="h-6 w-6 text-primary" /></div>
               <div>
-                <h3 className="font-semibold text-foreground">Acesso Já Utilizado</h3>
-                <p className="text-sm text-muted-foreground">O registro de <strong>{resultado.dados.nome}</strong> já foi encerrado.</p>
+                <h3 className="font-semibold text-foreground">Acesso JÃ¡ Utilizado</h3>
+                <p className="text-sm text-muted-foreground">O registro de <strong>{resultado.dados.nome}</strong> jÃ¡ foi encerrado.</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -238,3 +240,4 @@ const LeituraQrPage = () => {
 };
 
 export default LeituraQrPage;
+

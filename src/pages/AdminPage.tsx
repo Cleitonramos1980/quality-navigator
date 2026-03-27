@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { toast } from "@/hooks/use-toast";
 
 const METRIC_TYPE_LABEL: Record<UxMetricEventType, string> = {
   PAGE_VIEW: "Page View",
@@ -27,11 +28,51 @@ const AdminPage = () => {
   const [uxTypeFilter, setUxTypeFilter] = useState<"ALL" | UxMetricEventType>("ALL");
   const [uxScreenFilter, setUxScreenFilter] = useState("");
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    return error instanceof Error ? error.message : fallback;
+  };
+
   useEffect(() => {
-    getUsuarios().then((u) => setCountUsuarios(u.length));
-    getPerfis().then((p) => setCountPerfis(p.length));
-    getAuditLog().then((l) => setCountLog(l.length));
-    getParametros().then((p) => setCountParams(p.length));
+    getUsuarios()
+      .then((u) => setCountUsuarios(u.length))
+      .catch((error) => {
+        toast({
+          title: "Erro ao carregar usuarios",
+          description: getErrorMessage(error, "Falha ao buscar usuarios."),
+          variant: "destructive",
+        });
+      });
+
+    getPerfis()
+      .then((p) => setCountPerfis(p.length))
+      .catch((error) => {
+        toast({
+          title: "Erro ao carregar perfis",
+          description: getErrorMessage(error, "Falha ao buscar perfis."),
+          variant: "destructive",
+        });
+      });
+
+    getAuditLog()
+      .then((l) => setCountLog(l.length))
+      .catch((error) => {
+        toast({
+          title: "Erro ao carregar log de auditoria",
+          description: getErrorMessage(error, "Falha ao buscar log de auditoria."),
+          variant: "destructive",
+        });
+      });
+
+    getParametros()
+      .then((p) => setCountParams(p.length))
+      .catch((error) => {
+        toast({
+          title: "Erro ao carregar parametros",
+          description: getErrorMessage(error, "Falha ao buscar parametros."),
+          variant: "destructive",
+        });
+      });
+
     void loadUxMetrics();
   }, []);
 
@@ -40,6 +81,12 @@ const AdminPage = () => {
     try {
       const data = await listUxMetrics(150);
       setUxMetrics(data);
+    } catch (error) {
+      toast({
+        title: "Erro ao carregar metricas UX",
+        description: getErrorMessage(error, "Falha ao buscar metricas UX."),
+        variant: "destructive",
+      });
     } finally {
       setUxLoading(false);
     }

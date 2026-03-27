@@ -18,8 +18,7 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: { message: "Usuario nao encontrado ou inativo." } });
     }
 
-    const validPasswords = new Set([env.AUTH_STATIC_PASSWORD, "123"]);
-    if (!validPasswords.has(body.password)) {
+    if (body.password !== env.AUTH_STATIC_PASSWORD) {
       return reply.status(401).send({ error: { message: "Credenciais invalidas." } });
     }
 

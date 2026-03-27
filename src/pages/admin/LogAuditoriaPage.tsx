@@ -9,18 +9,42 @@ import { OS_STATUS_LABELS } from "@/types/assistencia";
 import type { OSTransitionLog } from "@/types/assistencia";
 import { Badge } from "@/components/ui/badge";
 import { getAuditLog, type AuditLogEntry } from "@/services/admin";
+import { useToast } from "@/components/ui/use-toast";
 
 const LogAuditoriaPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [transitionLogs, setTransitionLogs] = useState<OSTransitionLog[]>([]);
   const [transSearch, setTransSearch] = useState("");
 
   useEffect(() => {
-    getAuditLog().then(setAuditLog);
-    listAll().then(setTransitionLogs);
-  }, []);
+    let cancelled = false;
+    void (async () => {
+      const [auditRes, transRes] = await Promise.allSettled([getAuditLog(), listAll()]);
+
+      if (cancelled) return;
+
+      if (auditRes.status === "fulfilled") {
+        setAuditLog(auditRes.value);
+      } else {
+        const message = auditRes.reason instanceof Error ? auditRes.reason.message : "Falha ao carregar log geral.";
+        toast({ title: "Erro no log de auditoria", description: message, variant: "destructive" });
+      }
+
+      if (transRes.status === "fulfilled") {
+        setTransitionLogs(transRes.value);
+      } else {
+        const message = transRes.reason instanceof Error ? transRes.reason.message : "Falha ao carregar transições de OS.";
+        toast({ title: "Erro nas transições de OS", description: message, variant: "destructive" });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [toast]);
 
   const filtered = auditLog.filter((l) => l.usuario.toLowerCase().includes(search.toLowerCase()) || l.entidade.toLowerCase().includes(search.toLowerCase()) || l.acao.toLowerCase().includes(search.toLowerCase()));
   const filteredTrans = transitionLogs.filter((l) => l.usuario.toLowerCase().includes(transSearch.toLowerCase()) || l.osId.toLowerCase().includes(transSearch.toLowerCase()) || l.planta.toLowerCase().includes(transSearch.toLowerCase()) || (l.motivo || "").toLowerCase().includes(transSearch.toLowerCase()));
@@ -31,5 +55,4 @@ const LogAuditoriaPage = () => {
 };
 
 export default LogAuditoriaPage;
-
 

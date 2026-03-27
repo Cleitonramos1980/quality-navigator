@@ -132,12 +132,12 @@ export const mockTiposNC: TipoNCInspecao[] = [
 ];
 
 export const mockPadroesMola: PadraoMola[] = [
-  { id: "PM-001", alturaTipo: "D28-15cm", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: 2.0, minimo: 1.95, maximo: 2.05, unidade: "mm", ativo: true },
-  { id: "PM-002", alturaTipo: "D28-15cm", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: 15.0, minimo: 14.5, maximo: 15.5, unidade: "cm", ativo: true },
-  { id: "PM-003", alturaTipo: "D28-15cm", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: 120, minimo: 110, maximo: 130, unidade: "N", ativo: true },
-  { id: "PM-004", alturaTipo: "D33-18cm", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: 2.2, minimo: 2.15, maximo: 2.25, unidade: "mm", ativo: true },
-  { id: "PM-005", alturaTipo: "D33-18cm", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: 18.0, minimo: 17.5, maximo: 18.5, unidade: "cm", ativo: true },
-  { id: "PM-006", alturaTipo: "D33-18cm", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: 150, minimo: 140, maximo: 160, unidade: "N", ativo: true },
+  { id: "PM-001", alturaTipo: "D28-15cm", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: "2.0 ± 0.05", minimo: 1.95, maximo: 2.05, unidade: "mm", ativo: true },
+  { id: "PM-002", alturaTipo: "D28-15cm", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: "15.0 ± 0.5", minimo: 14.5, maximo: 15.5, unidade: "cm", ativo: true },
+  { id: "PM-003", alturaTipo: "D28-15cm", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: "120 ± 10", minimo: 110, maximo: 130, unidade: "N", ativo: true },
+  { id: "PM-004", alturaTipo: "D33-18cm", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: "2.2 ± 0.05", minimo: 2.15, maximo: 2.25, unidade: "mm", ativo: true },
+  { id: "PM-005", alturaTipo: "D33-18cm", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: "18.0 ± 0.5", minimo: 17.5, maximo: 18.5, unidade: "cm", ativo: true },
+  { id: "PM-006", alturaTipo: "D33-18cm", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: "150 ± 10", minimo: 140, maximo: 160, unidade: "N", ativo: true },
 ];
 
 export const mockInspecoesMola: InspecaoMola[] = [
@@ -151,9 +151,9 @@ export const mockInspecoesMola: InspecaoMola[] = [
     dataHora: "2025-03-18T09:00:00Z",
     resultado: "APROVADO",
     medicoes: [
-      { id: "M-001", padraoId: "PM-001", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: 2.0, minimo: 1.95, maximo: 2.05, unidade: "mm", valorMedido: 2.01, conforme: true },
-      { id: "M-002", padraoId: "PM-002", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: 15.0, minimo: 14.5, maximo: 15.5, unidade: "cm", valorMedido: 15.2, conforme: true },
-      { id: "M-003", padraoId: "PM-003", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: 120, minimo: 110, maximo: 130, unidade: "N", valorMedido: 122, conforme: true },
+      { id: "M-001", padraoId: "PM-001", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: "2.0 ± 0.05", minimo: 1.95, maximo: 2.05, unidade: "mm", valorMedido: 2.01, conforme: true },
+      { id: "M-002", padraoId: "PM-002", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: "15.0 ± 0.5", minimo: 14.5, maximo: 15.5, unidade: "cm", valorMedido: 15.2, conforme: true },
+      { id: "M-003", padraoId: "PM-003", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: "120 ± 10", minimo: 110, maximo: 130, unidade: "N", valorMedido: 122, conforme: true },
     ],
   },
   {
@@ -167,9 +167,9 @@ export const mockInspecoesMola: InspecaoMola[] = [
     resultado: "REPROVADO",
     observacaoGeral: "Altura da mola abaixo do mínimo em todas as amostras",
     medicoes: [
-      { id: "M-004", padraoId: "PM-004", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: 2.2, minimo: 2.15, maximo: 2.25, unidade: "mm", valorMedido: 2.18, conforme: true },
-      { id: "M-005", padraoId: "PM-005", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: 18.0, minimo: 17.5, maximo: 18.5, unidade: "cm", valorMedido: 17.2, conforme: false },
-      { id: "M-006", padraoId: "PM-006", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: 150, minimo: 140, maximo: 160, unidade: "N", valorMedido: 145, conforme: true },
+      { id: "M-004", padraoId: "PM-004", item: "Diâmetro arame", descricao: "Diâmetro do arame da mola", padrao: "2.2 ± 0.05", minimo: 2.15, maximo: 2.25, unidade: "mm", valorMedido: 2.18, conforme: true },
+      { id: "M-005", padraoId: "PM-005", item: "Altura mola", descricao: "Altura da mola ensacada", padrao: "18.0 ± 0.5", minimo: 17.5, maximo: 18.5, unidade: "cm", valorMedido: 17.2, conforme: false },
+      { id: "M-006", padraoId: "PM-006", item: "Força compressão", descricao: "Força para comprimir 40%", padrao: "150 ± 10", minimo: 140, maximo: 160, unidade: "N", valorMedido: 145, conforme: true },
     ],
   },
 ];

@@ -18,6 +18,7 @@ export interface ModeloInspecao {
 
 export interface ModeloInspecaoItem {
   id: string;
+  codigoItem?: string;
   descricao: string;
   ordem: number;
   obrigatorio: boolean;
@@ -31,6 +32,7 @@ export interface ExecucaoInspecao {
   modeloId: string;
   modeloNome: string;
   setor: string;
+  executorUsuarioId?: string;
   executor: string;
   dataHora: string;
   status: InspecaoStatus;
@@ -46,12 +48,21 @@ export interface ExecucaoInspecao {
 export interface ExecucaoInspecaoItem {
   id: string;
   itemModeloId: string;
+  codigoItem?: string;
+  item?: string;
+  timestampResposta?: string;
+  usuario?: string;
+  nome?: string;
+  setor?: string;
   descricao: string;
   ordem: number;
   resultado: InspecaoItemStatus;
+  status?: InspecaoItemStatus;
   tipoNcId?: string;
   tipoNcNome?: string;
   observacao?: string;
+  observacaoItem?: string;
+  fotoUrl?: string;
   evidenciaNomeArquivo?: string;
   evidenciaUrl?: string;
   /** Multiple evidence files per item (up to 3) */
@@ -73,7 +84,7 @@ export interface PadraoMola {
   alturaTipo: string;
   item: string;
   descricao: string;
-  padrao: number;
+  padrao: string;
   minimo: number;
   maximo: number;
   unidade: string;
@@ -100,7 +111,7 @@ export interface MedicaoMola {
   padraoId: string;
   item: string;
   descricao: string;
-  padrao: number;
+  padrao: string;
   minimo: number;
   maximo: number;
   unidade: string;

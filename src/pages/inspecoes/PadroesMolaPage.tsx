@@ -42,7 +42,7 @@ const PadroesMolaPage = () => {
     if (isNaN(numPadrao) || isNaN(numMin) || isNaN(numMax)) { toast({ title: "Valores inválidos", variant: "destructive" }); return; }
 
     try {
-      const payload = { alturaTipo: form.alturaTipo, item: form.item, descricao: form.descricao, padrao: numPadrao, minimo: numMin, maximo: numMax, unidade: form.unidade, ativo: true };
+      const payload = { alturaTipo: form.alturaTipo, item: form.item, descricao: form.descricao, padrao: form.padrao, minimo: numMin, maximo: numMax, unidade: form.unidade, ativo: true };
       if (editId) {
         await updatePadraoMola(editId, payload);
         toast({ title: "Padrão atualizado" });

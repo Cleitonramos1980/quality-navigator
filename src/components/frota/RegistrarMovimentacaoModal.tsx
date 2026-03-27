@@ -39,7 +39,11 @@ const RegistrarMovimentacaoModal = ({ veiculo, open, onClose }: Props) => {
     setLoadingDocas(true);
     getDocas()
       .then((all) => setDocasLivres(all.filter((d) => d.status === "LIVRE")))
-      .catch(() => setDocasLivres([]))
+      .catch((error) => {
+        setDocasLivres([]);
+        const message = error instanceof Error ? error.message : "Falha ao carregar docas livres.";
+        toast.error(message);
+      })
       .finally(() => setLoadingDocas(false));
   }, [open, needsDoca]);
 

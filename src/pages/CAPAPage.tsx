@@ -6,14 +6,16 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCAPAs } from "@/services/capa";
 import type { CAPA } from "@/types/sgq";
+import { useToast } from "@/components/ui/use-toast";
 
 const CAPAPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [capas, setCapas] = useState<CAPA[]>([]);
 
   useEffect(() => {
-    getCAPAs().then(setCapas);
+    getCAPAs().then(setCapas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const filtered = capas.filter(
@@ -63,5 +65,6 @@ const CAPAPage = () => {
 };
 
 export default CAPAPage;
+
 
 

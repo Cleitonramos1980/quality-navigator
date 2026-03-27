@@ -10,19 +10,21 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { useToast } from "@/components/ui/use-toast";
 
 const InventarioDashboardPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [periodo, setPeriodo] = useState("hoje");
   const [contagens, setContagens] = useState<Contagem[]>([]);
   const [lojas, setLojas] = useState<LojaInventario[]>([]);
 
   useEffect(() => {
-    getContagens().then(setContagens);
-    getLojas().then(setLojas);
+    getContagens().then(setContagens).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getLojas().then(setLojas).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
-  const hoje = "2026-03-12";
+  const hoje = new Date().toISOString().slice(0, 10);
   const contagensHoje = contagens.filter((c) => c.data === hoje);
   const previstas = contagensHoje.length;
   const concluidas = contagensHoje.filter((c) => c.status === "CONCLUIDO" || c.status === "VALIDADO").length;
@@ -31,13 +33,14 @@ const InventarioDashboardPage = () => {
   const naoFeitas = contagensHoje.filter((c) => c.status === "NAO_FEITO").length;
   const validadas = contagensHoje.filter((c) => c.status === "VALIDADO").length;
   const aderencia = previstas > 0 ? Math.round((concluidas / previstas) * 100) : 0;
+  const contagemParaValidacao = contagens.find((c) => c.status === "CONCLUIDO" || c.status === "VALIDADO");
 
   const statusData = [
     { name: "Validado", value: validadas, fill: "hsl(var(--primary))" },
-    { name: "Concluído", value: concluidas - validadas, fill: "hsl(var(--success))" },
+    { name: "ConcluÃ­do", value: concluidas - validadas, fill: "hsl(var(--success))" },
     { name: "Em Andamento", value: emAndamento, fill: "hsl(var(--warning))" },
-    { name: "Não Iniciado", value: naoIniciadas, fill: "hsl(var(--muted-foreground))" },
-    { name: "Não Feito", value: naoFeitas, fill: "hsl(var(--destructive))" },
+    { name: "NÃ£o Iniciado", value: naoIniciadas, fill: "hsl(var(--muted-foreground))" },
+    { name: "NÃ£o Feito", value: naoFeitas, fill: "hsl(var(--destructive))" },
   ].filter((d) => d.value > 0);
 
   const lojaRanking = lojas.slice(0, 6).map((l) => {
@@ -50,8 +53,8 @@ const InventarioDashboardPage = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard de Inventário</h1>
-          <p className="text-sm text-muted-foreground">Acompanhamento de aderência e qualidade das contagens</p>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard de InventÃ¡rio</h1>
+          <p className="text-sm text-muted-foreground">Acompanhamento de aderÃªncia e qualidade das contagens</p>
         </div>
         <div className="flex items-center gap-3">
           <Button size="sm" onClick={() => navigate("/qualidade/inventario/novo-plano")}>
@@ -63,7 +66,7 @@ const InventarioDashboardPage = () => {
               <SelectItem value="hoje">Hoje</SelectItem>
               <SelectItem value="semana">Semana</SelectItem>
               <SelectItem value="quinzena">Quinzena</SelectItem>
-              <SelectItem value="mes">Mês</SelectItem>
+              <SelectItem value="mes">MÃªs</SelectItem>
             </SelectContent>
           </Select>
           <ExportActionsBar />
@@ -72,12 +75,17 @@ const InventarioDashboardPage = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <KPICard title="Previstas Hoje" value={previstas} icon={<Store className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/agenda")} />
-        <KPICard title="Concluídas" value={concluidas} icon={<CheckCircle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
+        <KPICard title="ConcluÃ­das" value={concluidas} icon={<CheckCircle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
         <KPICard title="Em Andamento" value={emAndamento} icon={<Clock className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
-        <KPICard title="Não Iniciadas" value={naoIniciadas} icon={<AlertTriangle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
-        <KPICard title="Não Feitas" value={naoFeitas} icon={<XCircle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
-        <KPICard title="Validadas" value={validadas} icon={<ShieldCheck className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/validacao")} />
-        <KPICard title="Aderência" value={`${aderencia}%`} icon={<TrendingUp className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/relatorios")} />
+        <KPICard title="NÃ£o Iniciadas" value={naoIniciadas} icon={<AlertTriangle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
+        <KPICard title="NÃ£o Feitas" value={naoFeitas} icon={<XCircle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
+        <KPICard
+          title="Validadas"
+          value={validadas}
+          icon={<ShieldCheck className="h-4 w-4" />}
+          onClick={() => navigate(contagemParaValidacao ? `/qualidade/inventario/validacao/${contagemParaValidacao.id}` : "/qualidade/inventario/contagens")}
+        />
+        <KPICard title="AderÃªncia" value={`${aderencia}%`} icon={<TrendingUp className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/relatorios")} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -104,7 +112,7 @@ const InventarioDashboardPage = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Aderência por Loja</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium">AderÃªncia por Loja</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={lojaRanking} layout="vertical">
@@ -122,7 +130,7 @@ const InventarioDashboardPage = () => {
       {/* Premium: Critical Items & Operational Panels */}
       <div className="grid lg:grid-cols-3 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><RefreshCw className="h-4 w-4 text-warning" />Em Recontagem / 3ª Contagem</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><RefreshCw className="h-4 w-4 text-warning" />Em Recontagem / 3Âª Contagem</CardTitle></CardHeader>
           <CardContent>
             {(() => {
               const recontagens = contagens.filter((c) => c.status === "RECONTAGEM");
@@ -134,7 +142,7 @@ const InventarioDashboardPage = () => {
                     <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
                       <div>
                         <span className="text-sm font-mono">{c.numero}</span>
-                        <p className="text-xs text-muted-foreground">{c.lojaNome} — {c.departamentoNome}</p>
+                        <p className="text-xs text-muted-foreground">{c.lojaNome} â€” {c.departamentoNome}</p>
                       </div>
                       <InventoryStatusPill status={c.status} />
                     </div>
@@ -146,7 +154,7 @@ const InventarioDashboardPage = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" />Aguardando Validação</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" />Aguardando ValidaÃ§Ã£o</CardTitle></CardHeader>
           <CardContent>
             {(() => {
               const aguardando = contagens.filter((c) => c.status === "CONCLUIDO");
@@ -160,7 +168,7 @@ const InventarioDashboardPage = () => {
                         <span className="text-sm font-mono">{c.numero}</span>
                         <p className="text-xs text-muted-foreground">{c.lojaNome}</p>
                       </div>
-                      <span className="text-sm font-medium">{c.acuracidade > 0 ? `${c.acuracidade}%` : "—"}</span>
+                      <span className="text-sm font-medium">{c.acuracidade > 0 ? `${c.acuracidade}%` : "â€”"}</span>
                     </div>
                   ))}
                 </div>
@@ -170,12 +178,12 @@ const InventarioDashboardPage = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><Target className="h-4 w-4 text-destructive" />Itens com Maior Divergência</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><Target className="h-4 w-4 text-destructive" />Itens com Maior DivergÃªncia</CardTitle></CardHeader>
           <CardContent>
             {(() => {
               const comDivergencia = contagens.filter((c) => c.itensDivergentes > 0).sort((a, b) => b.itensDivergentes - a.itensDivergentes).slice(0, 5);
               return comDivergencia.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Sem divergências relevantes</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Sem divergÃªncias relevantes</p>
               ) : (
                 <div className="space-y-2">
                   {comDivergencia.map((c) => (
@@ -204,7 +212,7 @@ const InventarioDashboardPage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left">
-                  <th className="pb-2 font-medium text-muted-foreground">Número</th>
+                  <th className="pb-2 font-medium text-muted-foreground">NÃºmero</th>
                   <th className="pb-2 font-medium text-muted-foreground">Loja</th>
                   <th className="pb-2 font-medium text-muted-foreground">Depto</th>
                   <th className="pb-2 font-medium text-muted-foreground">Supervisor</th>
@@ -219,7 +227,7 @@ const InventarioDashboardPage = () => {
                     <td className="py-2.5">{c.lojaNome}</td>
                     <td className="py-2.5">{c.departamentoNome}</td>
                     <td className="py-2.5">{c.supervisor}</td>
-                    <td className="py-2.5 font-medium">{c.acuracidade > 0 ? `${c.acuracidade}%` : "—"}</td>
+                    <td className="py-2.5 font-medium">{c.acuracidade > 0 ? `${c.acuracidade}%` : "â€”"}</td>
                     <td className="py-2.5"><InventoryStatusPill status={c.status} /></td>
                   </tr>
                 ))}
@@ -233,3 +241,4 @@ const InventarioDashboardPage = () => {
 };
 
 export default InventarioDashboardPage;
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Camera, Search, CheckCircle, XCircle, AlertTriangle, Shield, Truck, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,13 @@ import StatusSemaphore from "@/components/operacional/StatusSemaphore";
 import { getAcessos, getVeiculosVisitantes, getVeiculosFrota, getVeiculosTerceiros } from "@/services/operacional";
 import type { Acesso, VeiculoVisitante, VeiculoFrota, VeiculoTerceiro } from "@/types/operacional";
 import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 type DecisaoGate = "ALLOWLIST" | "BLOCKLIST" | "DESCONHECIDO" | null;
 
 const LeituraPlacaPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [placa, setPlaca] = useState("");
   const [resultado, setResultado] = useState<any>(null);
   const [decisao, setDecisao] = useState<DecisaoGate>(null);
@@ -23,10 +25,10 @@ const LeituraPlacaPage = () => {
   const [allVeiculosTerceiros, setAllVeiculosTerceiros] = useState<VeiculoTerceiro[]>([]);
 
   useEffect(() => {
-    getAcessos().then(setAllAcessos);
-    getVeiculosVisitantes().then(setAllVeiculosVisitantes);
-    getVeiculosFrota().then(setAllFrota);
-    getVeiculosTerceiros().then(setAllVeiculosTerceiros);
+    getAcessos().then(setAllAcessos).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getVeiculosVisitantes().then(setAllVeiculosVisitantes).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getVeiculosFrota().then(setAllFrota).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getVeiculosTerceiros().then(setAllVeiculosTerceiros).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const buscarPlaca = () => {
@@ -39,14 +41,14 @@ const LeituraPlacaPage = () => {
     const veiculoTerceiro = allVeiculosTerceiros.find((v) => v.placa.toUpperCase() === q);
 
     if (veiculoFrota) {
-      setResultado({ tipo: "FROTA", dados: { nome: veiculoFrota.motoristaResponsavel, empresa: `Setor: ${veiculoFrota.setor}`, placa: veiculoFrota.placa, status: veiculoFrota.status, tipoVeiculo: `${veiculoFrota.tipo} — ${veiculoFrota.modelo}`, id: veiculoFrota.id } });
+      setResultado({ tipo: "FROTA", dados: { nome: veiculoFrota.motoristaResponsavel, empresa: `Setor: ${veiculoFrota.setor}`, placa: veiculoFrota.placa, status: veiculoFrota.status, tipoVeiculo: `${veiculoFrota.tipo} â€” ${veiculoFrota.modelo}`, id: veiculoFrota.id } });
       setDecisao("ALLOWLIST");
     } else if (acesso) {
       const blocked = ["RECUSADO", "EXPIRADO"].includes(acesso.status);
       setResultado({ tipo: "ACESSO", dados: { nome: acesso.nome, empresa: acesso.empresa, documento: acesso.documento, placa: acesso.placa, status: acesso.status, tipoVeiculo: acesso.tipoVeiculo, id: acesso.id } });
       setDecisao(blocked ? "BLOCKLIST" : "ALLOWLIST");
     } else if (veiculoVisitante) {
-      setResultado({ tipo: "VISITANTE", dados: { nome: veiculoVisitante.visitanteNome, empresa: veiculoVisitante.empresaOrigem, placa: veiculoVisitante.placa, status: veiculoVisitante.status, tipoVeiculo: `${veiculoVisitante.tipo} — ${veiculoVisitante.modelo}`, id: veiculoVisitante.id } });
+      setResultado({ tipo: "VISITANTE", dados: { nome: veiculoVisitante.visitanteNome, empresa: veiculoVisitante.empresaOrigem, placa: veiculoVisitante.placa, status: veiculoVisitante.status, tipoVeiculo: `${veiculoVisitante.tipo} â€” ${veiculoVisitante.modelo}`, id: veiculoVisitante.id } });
       setDecisao("ALLOWLIST");
     } else if (veiculoTerceiro) {
       setResultado({ tipo: "TERCEIRO", dados: { nome: veiculoTerceiro.motoristaNome, empresa: veiculoTerceiro.transportadoraNome, placa: veiculoTerceiro.placa, status: veiculoTerceiro.statusOperacao, tipoVeiculo: veiculoTerceiro.tipo, id: veiculoTerceiro.id } });
@@ -58,7 +60,7 @@ const LeituraPlacaPage = () => {
   };
 
   const handleLiberar = () => {
-    toast({ title: "Entrada liberada", description: `Veículo ${resultado?.dados?.placa} liberado.` });
+    toast({ title: "Entrada liberada", description: `VeÃ­culo ${resultado?.dados?.placa} liberado.` });
     novaLeitura();
   };
 
@@ -91,8 +93,8 @@ const LeituraPlacaPage = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Gate Assistido — Leitura de Placa</h1>
-          <p className="text-sm text-muted-foreground">Reconhecimento ALPR com decisão operacional automática</p>
+          <h1 className="text-2xl font-bold text-foreground">Gate Assistido â€” Leitura de Placa</h1>
+          <p className="text-sm text-muted-foreground">Reconhecimento ALPR com decisÃ£o operacional automÃ¡tica</p>
         </div>
       </div>
 
@@ -121,7 +123,7 @@ const LeituraPlacaPage = () => {
             ) : (
               <div className="text-center space-y-2">
                 <Camera className="h-16 w-16 text-muted-foreground mx-auto" />
-                <p className="text-sm text-muted-foreground">Câmera de reconhecimento de placa (LPR/ALPR)</p>
+                <p className="text-sm text-muted-foreground">CÃ¢mera de reconhecimento de placa (LPR/ALPR)</p>
                 <p className="text-xs text-primary cursor-pointer hover:underline">Clique para simular captura</p>
               </div>
             )}
@@ -154,7 +156,7 @@ const LeituraPlacaPage = () => {
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center"><CheckCircle className="h-5 w-5 text-success" /></div>
               <div>
-                <CardTitle className="text-base">Veículo Autorizado — {resultado.tipo}</CardTitle>
+                <CardTitle className="text-base">VeÃ­culo Autorizado â€” {resultado.tipo}</CardTitle>
                 <p className="text-xs text-success font-medium">Placa presente na allowlist</p>
               </div>
             </div>
@@ -162,8 +164,8 @@ const LeituraPlacaPage = () => {
           <CardContent className="space-y-3">
             <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
               <div><dt className="text-muted-foreground">Placa</dt><dd className="font-mono font-bold text-foreground text-lg">{resultado.dados.placa}</dd></div>
-              <div><dt className="text-muted-foreground">Tipo</dt><dd className="text-foreground">{resultado.dados.tipoVeiculo || "—"}</dd></div>
-              <div><dt className="text-muted-foreground">Condutor/Responsável</dt><dd className="font-medium text-foreground">{resultado.dados.nome}</dd></div>
+              <div><dt className="text-muted-foreground">Tipo</dt><dd className="text-foreground">{resultado.dados.tipoVeiculo || "â€”"}</dd></div>
+              <div><dt className="text-muted-foreground">Condutor/ResponsÃ¡vel</dt><dd className="font-medium text-foreground">{resultado.dados.nome}</dd></div>
               <div><dt className="text-muted-foreground">Empresa/Setor</dt><dd className="text-foreground">{resultado.dados.empresa}</dd></div>
               <div><dt className="text-muted-foreground">Status</dt><dd><StatusSemaphore status={resultado.dados.status} /></dd></div>
             </dl>
@@ -184,8 +186,8 @@ const LeituraPlacaPage = () => {
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center"><Ban className="h-6 w-6 text-destructive" /></div>
               <div>
-                <h3 className="font-semibold text-destructive">Veículo Bloqueado</h3>
-                <p className="text-sm text-muted-foreground">A placa <strong className="font-mono">{resultado.dados.placa}</strong> está na blocklist. Acesso negado.</p>
+                <h3 className="font-semibold text-destructive">VeÃ­culo Bloqueado</h3>
+                <p className="text-sm text-muted-foreground">A placa <strong className="font-mono">{resultado.dados.placa}</strong> estÃ¡ na blocklist. Acesso negado.</p>
               </div>
             </div>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -207,16 +209,16 @@ const LeituraPlacaPage = () => {
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-warning/10 flex items-center justify-center"><AlertTriangle className="h-6 w-6 text-warning" /></div>
               <div>
-                <h3 className="font-semibold text-warning">Placa Não Cadastrada</h3>
-                <p className="text-sm text-muted-foreground">A placa <strong className="font-mono">{resultado.dados.placa}</strong> não foi encontrada nos registros.</p>
+                <h3 className="font-semibold text-warning">Placa NÃ£o Cadastrada</h3>
+                <p className="text-sm text-muted-foreground">A placa <strong className="font-mono">{resultado.dados.placa}</strong> nÃ£o foi encontrada nos registros.</p>
               </div>
             </div>
             <div className="rounded-lg border border-border bg-muted/20 p-3">
-              <p className="text-xs text-muted-foreground">Ações recomendadas:</p>
+              <p className="text-xs text-muted-foreground">AÃ§Ãµes recomendadas:</p>
               <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                <li>• Verificar se há erro de digitação na placa</li>
-                <li>• Confirmar se o veículo possui autorização válida</li>
-                <li>• Registrar um novo acesso manual se necessário</li>
+                <li>â€¢ Verificar se hÃ¡ erro de digitaÃ§Ã£o na placa</li>
+                <li>â€¢ Confirmar se o veÃ­culo possui autorizaÃ§Ã£o vÃ¡lida</li>
+                <li>â€¢ Registrar um novo acesso manual se necessÃ¡rio</li>
               </ul>
             </div>
             <div className="flex gap-2">
@@ -227,13 +229,14 @@ const LeituraPlacaPage = () => {
         </Card>
       )}
 
-      {/* Histórico rápido */}
+      {/* HistÃ³rico rÃ¡pido */}
       <div className="glass-card rounded-lg p-4">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Últimas Leituras</h3>
-        <p className="text-xs text-muted-foreground">O histórico de leituras estará disponível após integração com o dispositivo ALPR.</p>
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Ãšltimas Leituras</h3>
+        <p className="text-xs text-muted-foreground">O histÃ³rico de leituras estarÃ¡ disponÃ­vel apÃ³s integraÃ§Ã£o com o dispositivo ALPR.</p>
       </div>
     </div>
   );
 };
 
 export default LeituraPlacaPage;
+

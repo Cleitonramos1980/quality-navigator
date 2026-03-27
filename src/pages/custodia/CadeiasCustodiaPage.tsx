@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Shield, FileText, AlertTriangle, Clock, Eye, TrendingUp, CheckCircle2,
@@ -14,6 +14,7 @@ import { getCustodias, getCustodiaKPIs } from "@/services/custodia";
 import type { CustodiaNF, CustodiaKPIs } from "@/types/custodiaDigital";
 import { CUSTODIA_STATUS_LABELS, CUSTODIA_STATUS_COLORS } from "@/types/custodiaDigital";
 import AgingChart, { type AgingBucket } from "@/components/dashboard/AgingChart";
+import { useToast } from "@/components/ui/use-toast";
 
 const EVIDENCE_ICONS: Record<string, typeof Camera> = {
   COMPROVANTE_SAIDA: FileText,
@@ -25,14 +26,15 @@ const EVIDENCE_ICONS: Record<string, typeof Camera> = {
 };
 
 const CadeiasCustodiaPage = () => {
+  const { toast } = useToast();
   const [custodias, setCustodias] = useState<CustodiaNF[]>([]);
   const [kpis, setKpis] = useState<CustodiaKPIs | null>(null);
   const [tab, setTab] = useState("dashboard");
   const [busca, setBusca] = useState("");
 
   useEffect(() => {
-    getCustodias().then(setCustodias);
-    getCustodiaKPIs().then(setKpis);
+    getCustodias().then(setCustodias).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
+    getCustodiaKPIs().then(setKpis).catch((error) => { const message = error instanceof Error ? error.message : "Falha ao carregar dados."; toast({ title: "Erro ao carregar dados", description: message, variant: "destructive" }); });
   }, []);
 
   const filtered = useMemo(() => {
@@ -63,20 +65,20 @@ const CadeiasCustodiaPage = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Shield className="h-6 w-6 text-primary" /> Cadeia de Custódia Digital
+          <Shield className="h-6 w-6 text-primary" /> Cadeia de CustÃ³dia Digital
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Rastreabilidade ponta a ponta — da emissão à prova de entrega
+          Rastreabilidade ponta a ponta â€” da emissÃ£o Ã  prova de entrega
         </p>
       </div>
 
       {/* KPIs */}
       {kpis && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <KPICard title="Em Trânsito" value={kpis.nfsEmTransito} icon={<Truck className="w-5 h-5" />} />
-          <KPICard title="Em Risco" value={kpis.nfsEmRisco} icon={<AlertTriangle className="w-5 h-5" />} subtitle="requerem ação" onClick={() => setTab("risco")} />
-          <KPICard title="Sem Confirmação" value={kpis.nfsSemConfirmacao} icon={<Clock className="w-5 h-5" />} subtitle="aguardando" />
-          <KPICard title="Lead Time" value={`${kpis.leadTimeMedio}d`} icon={<TrendingUp className="w-5 h-5" />} subtitle="média" />
+          <KPICard title="Em TrÃ¢nsito" value={kpis.nfsEmTransito} icon={<Truck className="w-5 h-5" />} />
+          <KPICard title="Em Risco" value={kpis.nfsEmRisco} icon={<AlertTriangle className="w-5 h-5" />} subtitle="requerem aÃ§Ã£o" onClick={() => setTab("risco")} />
+          <KPICard title="Sem ConfirmaÃ§Ã£o" value={kpis.nfsSemConfirmacao} icon={<Clock className="w-5 h-5" />} subtitle="aguardando" />
+          <KPICard title="Lead Time" value={`${kpis.leadTimeMedio}d`} icon={<TrendingUp className="w-5 h-5" />} subtitle="mÃ©dia" />
           <KPICard title="SLA Rota" value={`${kpis.slaRota}%`} icon={<CheckCircle2 className="w-5 h-5" />} subtitle="cumprimento" />
         </div>
       )}
@@ -130,8 +132,8 @@ const CadeiasCustodiaPage = () => {
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-[10px] text-muted-foreground">
                     <span>{c.eventos.length} etapas registradas</span>
-                    <span>{c.evidencias.length} evidências</span>
-                    <span>{c.diasEmTransito}d em trânsito</span>
+                    <span>{c.evidencias.length} evidÃªncias</span>
+                    <span>{c.diasEmTransito}d em trÃ¢nsito</span>
                     {c.scoreRisco > 0 && (
                       <span className={c.scoreRisco > 50 ? "text-destructive font-bold" : "text-warning"}>
                         Risco: {c.scoreRisco}
@@ -146,18 +148,18 @@ const CadeiasCustodiaPage = () => {
           <div className="space-y-4">
             {kpis && (
               <div className="glass-card rounded-lg p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-4">Indicadores de Custódia</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-4">Indicadores de CustÃ³dia</h3>
                 <div className="grid grid-cols-2 gap-4 text-center">
-                  <div><p className="text-2xl font-bold text-foreground">{kpis.leadTimeMedio}d</p><p className="text-xs text-muted-foreground">Lead time médio</p></div>
+                  <div><p className="text-2xl font-bold text-foreground">{kpis.leadTimeMedio}d</p><p className="text-xs text-muted-foreground">Lead time mÃ©dio</p></div>
                   <div><p className={`text-2xl font-bold ${kpis.slaRota >= 80 ? "text-success" : kpis.slaRota >= 60 ? "text-warning" : "text-destructive"}`}>{kpis.slaRota}%</p><p className="text-xs text-muted-foreground">SLA da rota</p></div>
-                  <div><p className="text-2xl font-bold text-warning">{kpis.nfsComDivergencia}</p><p className="text-xs text-muted-foreground">Com divergência</p></div>
+                  <div><p className="text-2xl font-bold text-warning">{kpis.nfsComDivergencia}</p><p className="text-xs text-muted-foreground">Com divergÃªncia</p></div>
                   <div><p className="text-2xl font-bold text-destructive">{kpis.nfsAtrasadas}</p><p className="text-xs text-muted-foreground">Atrasadas</p></div>
                 </div>
               </div>
             )}
 
             <div className="glass-card rounded-lg p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-4">Evidências Recentes</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-4">EvidÃªncias Recentes</h3>
               <div className="space-y-2">
                 {custodias.flatMap(c => c.evidencias.map(e => ({ ...e, nfNumero: c.nfNumero })))
                   .sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())
@@ -169,7 +171,7 @@ const CadeiasCustodiaPage = () => {
                         <Icon className="h-4 w-4 text-primary shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-foreground">{ev.descricao}</p>
-                          <p className="text-[10px] text-muted-foreground">{ev.nfNumero} · {ev.responsavel}</p>
+                          <p className="text-[10px] text-muted-foreground">{ev.nfNumero} Â· {ev.responsavel}</p>
                         </div>
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                           {new Date(ev.dataHora).toLocaleDateString("pt-BR")}
@@ -188,7 +190,7 @@ const CadeiasCustodiaPage = () => {
         <div className="glass-card rounded-lg p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-foreground">
-              {tab === "risco" ? "NFs em Risco" : "Cadeia de Custódia — Documentos"}
+              {tab === "risco" ? "NFs em Risco" : "Cadeia de CustÃ³dia â€” Documentos"}
             </h3>
             <Input placeholder="Buscar NF ou cliente..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-xs" />
           </div>
@@ -199,13 +201,13 @@ const CadeiasCustodiaPage = () => {
                 <TableHead>Cliente</TableHead>
                 <TableHead>Destino</TableHead>
                 <TableHead>Valor</TableHead>
-                <TableHead>Veículo</TableHead>
+                <TableHead>VeÃ­culo</TableHead>
                 <TableHead>Etapas</TableHead>
-                <TableHead>Evidências</TableHead>
+                <TableHead>EvidÃªncias</TableHead>
                 <TableHead>Dias</TableHead>
                 <TableHead>Risco</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead>AÃ§Ãµes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -218,7 +220,7 @@ const CadeiasCustodiaPage = () => {
                   <TableCell className="text-xs">{c.cliente}</TableCell>
                   <TableCell className="text-xs">{c.destino}</TableCell>
                   <TableCell className="text-xs">R$ {c.valor.toLocaleString("pt-BR")}</TableCell>
-                  <TableCell className="font-mono text-xs">{c.veiculoPlaca || "—"}</TableCell>
+                  <TableCell className="font-mono text-xs">{c.veiculoPlaca || "â€”"}</TableCell>
                   <TableCell className="text-xs text-center">{c.eventos.length}</TableCell>
                   <TableCell className="text-xs text-center">{c.evidencias.length}</TableCell>
                   <TableCell className={`font-medium text-xs ${c.diasEmTransito > 5 ? "text-destructive" : "text-foreground"}`}>{c.diasEmTransito}d</TableCell>
@@ -247,7 +249,7 @@ const CadeiasCustodiaPage = () => {
       {/* Aging */}
       {tab === "aging" && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <AgingChart data={agingData} title="Aging — Dias em Custódia" />
+          <AgingChart data={agingData} title="Aging â€” Dias em CustÃ³dia" />
           <div className="glass-card rounded-lg p-5">
             <h3 className="text-sm font-semibold text-foreground mb-4">NFs com Maior Envelhecimento</h3>
             <div className="space-y-3">
@@ -257,8 +259,8 @@ const CadeiasCustodiaPage = () => {
                     {c.diasEmTransito}d
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground">{c.nfNumero} — {c.cliente}</p>
-                    <p className="text-[10px] text-muted-foreground">{c.transportadoraNome} · {c.destino}</p>
+                    <p className="text-xs font-medium text-foreground">{c.nfNumero} â€” {c.cliente}</p>
+                    <p className="text-[10px] text-muted-foreground">{c.transportadoraNome} Â· {c.destino}</p>
                   </div>
                   <Badge className={`text-[10px] ${CUSTODIA_STATUS_COLORS[c.status]}`}>
                     {CUSTODIA_STATUS_LABELS[c.status]}
@@ -274,3 +276,4 @@ const CadeiasCustodiaPage = () => {
 };
 
 export default CadeiasCustodiaPage;
+
