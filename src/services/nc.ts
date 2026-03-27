@@ -1,8 +1,13 @@
 ﻿import { apiGet, apiPost, apiPut } from "@/services/api";
+import { mockNCs } from "@/data/mockData";
 import type { NCRegistro } from "@/types/sgq";
 
 export async function getNCs(): Promise<NCRegistro[]> {
-  return apiGet<NCRegistro[]>("/nc");
+  try {
+    return await apiGet<NCRegistro[]>("/nc");
+  } catch {
+    return mockNCs;
+  }
 }
 
 export async function createNC(data: Omit<NCRegistro, "id">): Promise<NCRegistro> {
