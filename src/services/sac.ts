@@ -1,4 +1,5 @@
 ﻿import { ApiError, apiGet, apiPost, apiPostFormData, apiPut } from "@/services/api";
+import { mockAtendimentos, sacDashboardData } from "@/data/mockSACData";
 import type { SACAtendimento, SACAvaliacao, SACAvaliacaoDashboard } from "@/types/sac";
 
 export interface SACDashboardData {
@@ -33,6 +34,37 @@ export interface SACHistoricoCliente {
   avaliacoes: SACAvaliacao[];
 }
 
+const mockSACAvaliacaoDashboard: SACAvaliacaoDashboard = {
+  totalPesquisasEnviadas: 24,
+  totalPesquisasRespondidas: 18,
+  taxaResposta: 75,
+  notaMedia: 4.4,
+  percentualNotasAltas: 78,
+  percentualNotasBaixas: 11,
+  pesquisasNaoRespondidas: 6,
+  evolucaoNotaPorPeriodo: [
+    { periodo: "Out", notaMedia: 4.1 },
+    { periodo: "Nov", notaMedia: 4.2 },
+    { periodo: "Dez", notaMedia: 4.3 },
+    { periodo: "Jan", notaMedia: 4.4 },
+    { periodo: "Fev", notaMedia: 4.5 },
+    { periodo: "Mar", notaMedia: 4.4 },
+  ],
+  avaliacoesPorPlanta: sacDashboardData.porPlanta,
+  avaliacoesPorAtendente: [
+    { name: "Ana SAC", value: 7 },
+    { name: "Carlos SAC", value: 6 },
+    { name: "Maria SAC", value: 5 },
+  ],
+  distribuicaoNota: [
+    { name: "5", value: 9 },
+    { name: "4", value: 5 },
+    { name: "3", value: 2 },
+    { name: "2", value: 1 },
+    { name: "1", value: 1 },
+  ],
+};
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -59,15 +91,32 @@ function normalizeAtendimentoPayload(data: Partial<SACAtendimento>): Partial<SAC
 }
 
 export async function getSACDashboard(): Promise<SACDashboardData> {
-  return apiGet<SACDashboardData>("/sac/dashboard");
+  try {
+    return await apiGet<SACDashboardData>("/sac/dashboard");
+  } catch {
+    return {
+      porStatus: sacDashboardData.porStatus.map(({ name, value }) => ({ name, value })),
+      porTipo: sacDashboardData.porTipo,
+      porPlanta: sacDashboardData.porPlanta,
+      porDia: sacDashboardData.porDia.map(({ dia, count }) => ({ date: dia, value: count })),
+    };
+  }
 }
 
 export async function getSACAvaliacaoDashboard(): Promise<SACAvaliacaoDashboard> {
-  return apiGet<SACAvaliacaoDashboard>("/sac/dashboard/avaliacoes");
+  try {
+    return await apiGet<SACAvaliacaoDashboard>("/sac/dashboard/avaliacoes");
+  } catch {
+    return mockSACAvaliacaoDashboard;
+  }
 }
 
 export async function getAtendimentos(): Promise<SACAtendimento[]> {
-  return apiGet<SACAtendimento[]>("/sac/atendimentos");
+  try {
+    return await apiGet<SACAtendimento[]>("/sac/atendimentos");
+  } catch {
+    return mockAtendimentos;
+  }
 }
 
 export async function getAtendimentoById(id: string): Promise<SACAtendimento | undefined> {
