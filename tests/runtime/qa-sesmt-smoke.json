@@ -1,0 +1,356 @@
+{
+  "generatedAt": "2026-03-27T17:25:09.967Z",
+  "total": 35,
+  "results": [
+    {
+      "route": "/sesmt/visao-executiva/painel-mestre",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2195,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/visao-executiva/indice-maturidade",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 1421,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/visao-executiva/painel-preditivo",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 1621,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/visao-executiva/indicadores",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 1456,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/visao-executiva/gerencial-ocupacional",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 1469,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/riscos-e-controles/atividades-por-nr",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2074,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/riscos-e-controles/riscos-barreiras-e-controles",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2143,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/riscos-e-controles/efetividade-dos-controles",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2179,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/riscos-e-controles/plano-de-acao-x-risco",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2124,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/riscos-e-controles/laudos-e-vinculos",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2049,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/operacao/epi",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2018,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/operacao/epc",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 1993,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/operacao/inspecoes-e-visitas",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2132,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/operacao/procedimentos-apr-pt-os",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2138,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/operacao/comunicacao-de-sst",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2131,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/operacao/participacao-do-trabalhador",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2113,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/operacao/cipa",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2045,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/pessoas-e-saude/treinamentos-e-integracao",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2078,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/pessoas-e-saude/saude-ocupacional",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2034,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/pessoas-e-saude/exames",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2024,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/pessoas-e-saude/ambulatorio-prontuario",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2098,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/pessoas-e-saude/medicamentos-vacinas",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2085,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/pessoas-e-saude/ergonomia-nr-17",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2034,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/estrutura-e-ambiente/sinalizacao-nr-26",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2149,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/estrutura-e-ambiente/emergencia-e-incendio",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2119,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/estrutura-e-ambiente/residuos",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2003,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/estrutura-e-ambiente/obras-promat",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2018,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/governanca-e-conformidade/documentos-controlados",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2030,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/governanca-e-conformidade/biblioteca-tecnica",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2015,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/governanca-e-conformidade/notificacoes-e-respostas",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2065,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/governanca-e-conformidade/terceiros-e-contratados",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2061,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/governanca-e-conformidade/requisitos-legais",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2037,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/governanca-e-conformidade/sesmt-legal-dimensionamento",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2091,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/governanca-e-conformidade/custos-sesmt",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2042,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "route": "/sesmt/governanca-e-conformidade/cadastros-auxiliares",
+      "h1": "Torre de Controle",
+      "hasFallback": false,
+      "bodyLength": 2054,
+      "consoleErrorCount": 0,
+      "pageErrorCount": 0,
+      "consoleErrors": [],
+      "pageErrors": []
+    }
+  ]
+}

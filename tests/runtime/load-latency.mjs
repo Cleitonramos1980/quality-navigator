@@ -4,6 +4,9 @@ const BASE_URL = process.env.RUNTIME_BASE_URL || "http://127.0.0.1:3333";
 const DURATION_SECONDS = Number(process.env.LOAD_DURATION_SECONDS || 20);
 const CONCURRENCY = Number(process.env.LOAD_CONCURRENCY || 15);
 const REQUEST_TIMEOUT_MS = Number(process.env.LOAD_TIMEOUT_MS || 15000);
+const AUTH_TOKEN = (process.env.RUNTIME_AUTH_TOKEN || "").trim();
+const AUTH_EMAIL = (process.env.RUNTIME_AUTH_EMAIL || "").trim();
+const AUTH_PASSWORD = (process.env.RUNTIME_AUTH_PASSWORD || "").trim();
 
 const scenarios = [
   {
@@ -76,7 +79,38 @@ function percentile(sorted, p) {
   return Number(sorted[index].toFixed(2));
 }
 
-async function oneRequest(scenario) {
+async function resolveAuthToken() {
+  if (AUTH_TOKEN) return AUTH_TOKEN;
+  if (!AUTH_EMAIL || !AUTH_PASSWORD) {
+    throw new Error("Defina RUNTIME_AUTH_TOKEN ou (RUNTIME_AUTH_EMAIL + RUNTIME_AUTH_PASSWORD).");
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: AUTH_EMAIL, password: AUTH_PASSWORD }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha no login para runtime script: ${response.status} ${await response.text()}`);
+  }
+
+  const body = await response.json();
+  if (!body?.token || typeof body.token !== "string") {
+    throw new Error("Resposta de login sem token valido.");
+  }
+  return body.token;
+}
+
+function buildHeaders(payload, authToken) {
+  const headers = {
+    ...(payload ? { "Content-Type": "application/json" } : {}),
+    Authorization: `Bearer ${authToken}`,
+  };
+  return headers;
+}
+
+async function oneRequest(scenario, authToken) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   const started = performance.now();
@@ -84,7 +118,7 @@ async function oneRequest(scenario) {
     const payload = typeof scenario.body === "function" ? scenario.body() : scenario.body;
     const response = await fetch(`${BASE_URL}${scenario.path}`, {
       method: scenario.method,
-      headers: payload ? { "Content-Type": "application/json" } : undefined,
+      headers: buildHeaders(payload, authToken),
       body: payload ? JSON.stringify(payload) : undefined,
       signal: controller.signal,
     });
@@ -98,7 +132,7 @@ async function oneRequest(scenario) {
   }
 }
 
-async function runScenario(scenario) {
+async function runScenario(scenario, authToken) {
   const endAt = Date.now() + DURATION_SECONDS * 1000;
   const latencies = [];
   let success = 0;
@@ -107,7 +141,7 @@ async function runScenario(scenario) {
 
   async function worker() {
     while (Date.now() < endAt) {
-      const result = await oneRequest(scenario);
+      const result = await oneRequest(scenario, authToken);
       latencies.push(result.latencyMs);
       const statusKey = String(result.status);
       statusCount.set(statusKey, (statusCount.get(statusKey) || 0) + 1);
@@ -144,12 +178,13 @@ async function runScenario(scenario) {
 }
 
 async function main() {
+  const token = await resolveAuthToken();
   const startedAt = new Date().toISOString();
   const results = [];
   for (const scenario of scenarios) {
     // eslint-disable-next-line no-console
     console.log(`[load] running ${scenario.name}...`);
-    results.push(await runScenario(scenario));
+    results.push(await runScenario(scenario, token));
   }
   const endedAt = new Date().toISOString();
   const output = { startedAt, endedAt, baseUrl: BASE_URL, results };

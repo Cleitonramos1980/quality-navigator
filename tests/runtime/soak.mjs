@@ -7,6 +7,9 @@ const CONCURRENCY = Number(process.env.SOAK_CONCURRENCY || 4);
 const REQUEST_TIMEOUT_MS = Number(process.env.SOAK_TIMEOUT_MS || 15000);
 const PAUSE_MS = Number(process.env.SOAK_PAUSE_MS || 150);
 const PROGRESS_FILE = process.env.SOAK_PROGRESS_FILE || "tests/runtime/soak-progress.json";
+const AUTH_TOKEN = (process.env.RUNTIME_AUTH_TOKEN || "").trim();
+const AUTH_EMAIL = (process.env.RUNTIME_AUTH_EMAIL || "").trim();
+const AUTH_PASSWORD = (process.env.RUNTIME_AUTH_PASSWORD || "").trim();
 
 const scenarios = [
   {
@@ -93,7 +96,38 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function hitScenario(scenario) {
+async function resolveAuthToken() {
+  if (AUTH_TOKEN) return AUTH_TOKEN;
+  if (!AUTH_EMAIL || !AUTH_PASSWORD) {
+    throw new Error("Defina RUNTIME_AUTH_TOKEN ou (RUNTIME_AUTH_EMAIL + RUNTIME_AUTH_PASSWORD).");
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: AUTH_EMAIL, password: AUTH_PASSWORD }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha no login para runtime script: ${response.status} ${await response.text()}`);
+  }
+
+  const body = await response.json();
+  if (!body?.token || typeof body.token !== "string") {
+    throw new Error("Resposta de login sem token valido.");
+  }
+  return body.token;
+}
+
+function buildHeaders(payload, authToken) {
+  const headers = {
+    ...(payload ? { "Content-Type": "application/json" } : {}),
+    Authorization: `Bearer ${authToken}`,
+  };
+  return headers;
+}
+
+async function hitScenario(scenario, authToken) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   const started = performance.now();
@@ -101,7 +135,7 @@ async function hitScenario(scenario) {
     const payload = typeof scenario.body === "function" ? scenario.body() : scenario.body;
     const response = await fetch(`${BASE_URL}${scenario.path}`, {
       method: scenario.method,
-      headers: payload ? { "Content-Type": "application/json" } : undefined,
+      headers: buildHeaders(payload, authToken),
       body: payload ? JSON.stringify(payload) : undefined,
       signal: controller.signal,
     });
@@ -166,18 +200,19 @@ function persistProgress() {
   fs.writeFileSync(PROGRESS_FILE, JSON.stringify(snap, null, 2), "utf-8");
 }
 
-async function worker() {
+async function worker(authToken) {
   while (Date.now() < endAtMs) {
     const scenario = sampleScenario();
-    await hitScenario(scenario);
+    await hitScenario(scenario, authToken);
     if (PAUSE_MS > 0) await delay(PAUSE_MS);
   }
 }
 
 async function main() {
+  const token = await resolveAuthToken();
   persistProgress();
   const progressTimer = setInterval(persistProgress, 60_000);
-  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker(token)));
   clearInterval(progressTimer);
   persistProgress();
   // eslint-disable-next-line no-console

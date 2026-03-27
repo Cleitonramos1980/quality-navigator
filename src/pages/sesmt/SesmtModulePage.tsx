@@ -1,6 +1,17 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Save, UploadCloud } from "lucide-react";
+import {
+  CheckCircle2,
+  Copy,
+  Download,
+  Eye,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Save,
+  Star,
+  UploadCloud,
+} from "lucide-react";
 import SectionCard from "@/components/forms/SectionCard";
 import FormField from "@/components/forms/FormField";
 import AttachmentUploader from "@/components/upload/AttachmentUploader";
@@ -14,6 +25,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { getSesmtFilterPresets, getSesmtFormSchema } from "@/lib/sesmtFormSchemas";
 import { getSesmtNodeByModuleKey } from "@/lib/sesmtMenu";
@@ -58,6 +78,15 @@ const emptyForm = {
 
 type SesmtSpecificFormValues = Record<string, string>;
 type SesmtFilterPreset = ReturnType<typeof getSesmtFilterPresets>[number];
+type QuickFilterKey = "TODOS" | "VENCIDOS" | "VENCE_HOJE" | "CRITICOS" | "SEM_RESPONSAVEL" | "SEM_EVIDENCIA" | "MEUS_REGISTROS";
+type VencimentoFilterKey = "ALL" | "VENCIDOS" | "HOJE" | "PROXIMOS";
+type SesmtComment = {
+  id: string;
+  texto: string;
+  usuario: string;
+  data: string;
+  parentId?: string;
+};
 
 function ensureRecordCollections(record: SesmtRecord): SesmtRecord {
   return {
@@ -125,6 +154,14 @@ const QUERY_KEYS = {
   status: "status",
   criticidade: "crit",
   unidade: "unit",
+  tipo: "type",
+  setor: "sector",
+  responsavel: "resp",
+  nr: "nr",
+  periodStart: "ps",
+  periodEnd: "pe",
+  vencimento: "due",
+  quickFilter: "quick",
   sortBy: "sortBy",
   sortDir: "sortDir",
   preset: "preset",
@@ -167,6 +204,14 @@ const SesmtModulePage = () => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [criticidadeFilter, setCriticidadeFilter] = useState("ALL");
   const [unitFilter, setUnitFilter] = useState("ALL");
+  const [tipoFilter, setTipoFilter] = useState("ALL");
+  const [setorFilter, setSetorFilter] = useState("");
+  const [responsavelFilter, setResponsavelFilter] = useState("");
+  const [nrFilter, setNrFilter] = useState("");
+  const [periodStartFilter, setPeriodStartFilter] = useState("");
+  const [periodEndFilter, setPeriodEndFilter] = useState("");
+  const [vencimentoFilter, setVencimentoFilter] = useState<VencimentoFilterKey>("ALL");
+  const [quickFilter, setQuickFilter] = useState<QuickFilterKey>("TODOS");
   const [specificFilters, setSpecificFilters] = useState<SesmtSpecificFormValues>(buildEmptySpecificForm(moduleKey));
   const [sortBy, setSortBy] = useState("updatedAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -178,6 +223,10 @@ const SesmtModulePage = () => {
   const [specificForm, setSpecificForm] = useState<SesmtSpecificFormValues>(buildEmptySpecificForm(moduleKey));
   const [evidenceText, setEvidenceText] = useState("");
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [detailTab, setDetailTab] = useState("historico");
+  const [commentDraft, setCommentDraft] = useState("");
+  const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
+  const [commentsByRecord, setCommentsByRecord] = useState<Record<string, SesmtComment[]>>({});
   const { toast } = useToast();
   const queryHydratedModuleRef = useRef<string | null>(null);
   const skipNextPageResetRef = useRef(false);
@@ -185,7 +234,6 @@ const SesmtModulePage = () => {
   const moduleNode = useMemo(() => getSesmtNodeByModuleKey(moduleKey), [moduleKey]);
   const moduleSchema = useMemo(() => getSesmtFormSchema(moduleKey), [moduleKey]);
   const filterPresets = useMemo(() => getSesmtFilterPresets(moduleKey), [moduleKey]);
-  const previewFields = useMemo(() => moduleSchema.slice(0, 3), [moduleSchema]);
   const sortOptions = useMemo(() => {
     const base = [
       { value: "updatedAt", label: "Ultima atualizacao" },
@@ -212,6 +260,126 @@ const SesmtModulePage = () => {
     () => Math.max(1, Math.ceil(totalRecords / PAGE_SIZE)),
     [totalRecords],
   );
+  const currentUserName = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      const raw = window.localStorage.getItem("sgq.authSession");
+      if (!raw) return "";
+      const parsed = JSON.parse(raw) as { nome?: string; email?: string };
+      return (parsed?.nome || parsed?.email || "").trim();
+    } catch {
+      return "";
+    }
+  }, []);
+  const tipoField = useMemo(
+    () => moduleSchema.find((field) => /tipo/i.test(field.label) || /tipo/i.test(field.key)),
+    [moduleSchema],
+  );
+  const getRecordTypeLabel = (record: SesmtRecord) => {
+    if (tipoField) {
+      const value = record.dadosEspecificos?.[tipoField.key];
+      if (value != null && String(value).trim().length > 0) {
+        return String(value);
+      }
+    }
+    return moduleNode?.label || "Registro";
+  };
+  const tipoOptions = useMemo(() => {
+    const set = new Set<string>();
+    records.forEach((record) => set.add(getRecordTypeLabel(record)));
+    return Array.from(set.values()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [records, tipoField, moduleNode?.label]);
+  const filteredRecords = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const nextSevenDays = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+    const normalizedCurrentUser = currentUserName.toLowerCase();
+
+    const matchesQuickFilter = (record: SesmtRecord) => {
+      switch (quickFilter) {
+        case "VENCIDOS":
+          return Boolean(record.vencimentoAt && record.vencimentoAt < today && record.status !== "CONCLUIDO");
+        case "VENCE_HOJE":
+          return Boolean(record.vencimentoAt && record.vencimentoAt === today && record.status !== "CONCLUIDO");
+        case "CRITICOS":
+          return record.criticidade === "CRITICA";
+        case "SEM_RESPONSAVEL":
+          return !record.responsavel?.trim();
+        case "SEM_EVIDENCIA":
+          return !Array.isArray(record.evidencias) || record.evidencias.length === 0;
+        case "MEUS_REGISTROS":
+          if (!normalizedCurrentUser) return false;
+          return record.responsavel.toLowerCase().includes(normalizedCurrentUser)
+            || record.createdBy.toLowerCase().includes(normalizedCurrentUser)
+            || record.updatedBy.toLowerCase().includes(normalizedCurrentUser);
+        case "TODOS":
+        default:
+          return true;
+      }
+    };
+
+    return records.filter((record) => {
+      if (tipoFilter !== "ALL" && getRecordTypeLabel(record) !== tipoFilter) return false;
+      if (setorFilter.trim() && !(record.setor || "").toLowerCase().includes(setorFilter.trim().toLowerCase())) return false;
+      if (responsavelFilter.trim() && !(record.responsavel || "").toLowerCase().includes(responsavelFilter.trim().toLowerCase())) return false;
+      if (nrFilter.trim() && !(record.nr || "").toLowerCase().includes(nrFilter.trim().toLowerCase())) return false;
+      if (periodStartFilter && record.createdAt.slice(0, 10) < periodStartFilter) return false;
+      if (periodEndFilter && record.createdAt.slice(0, 10) > periodEndFilter) return false;
+
+      if (vencimentoFilter === "VENCIDOS" && !(record.vencimentoAt && record.vencimentoAt < today && record.status !== "CONCLUIDO")) return false;
+      if (vencimentoFilter === "HOJE" && !(record.vencimentoAt && record.vencimentoAt === today && record.status !== "CONCLUIDO")) return false;
+      if (vencimentoFilter === "PROXIMOS" && !(record.vencimentoAt && record.vencimentoAt >= today && record.vencimentoAt <= nextSevenDays && record.status !== "CONCLUIDO")) return false;
+
+      return matchesQuickFilter(record);
+    });
+  }, [
+    records,
+    tipoFilter,
+    setorFilter,
+    responsavelFilter,
+    nrFilter,
+    periodStartFilter,
+    periodEndFilter,
+    vencimentoFilter,
+    quickFilter,
+    currentUserName,
+    tipoField,
+    moduleNode?.label,
+  ]);
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const kpiCards = useMemo(() => {
+    const abertos = filteredRecords.filter((record) => record.status === "ABERTO" || record.status === "EM_ANDAMENTO").length;
+    const vencidos = filteredRecords.filter((record) => Boolean(record.vencimentoAt && record.vencimentoAt < today && record.status !== "CONCLUIDO")).length;
+    const criticos = filteredRecords.filter((record) => record.criticidade === "CRITICA").length;
+    const semResponsavel = filteredRecords.filter((record) => !record.responsavel?.trim()).length;
+    const concluidosPeriodo = filteredRecords.filter((record) => {
+      if (record.status !== "CONCLUIDO") return false;
+      const updatedDate = record.updatedAt.slice(0, 10);
+      if (periodStartFilter && updatedDate < periodStartFilter) return false;
+      if (periodEndFilter && updatedDate > periodEndFilter) return false;
+      return true;
+    }).length;
+
+    return [
+      { label: "Total registros", value: totalRecords },
+      { label: "Abertos", value: abertos },
+      { label: "Vencidos", value: vencidos, tone: "text-red-600" },
+      { label: "Criticos", value: criticos, tone: "text-red-600" },
+      { label: "Sem responsavel", value: semResponsavel, tone: "text-amber-600" },
+      { label: "Concluidos no periodo", value: concluidosPeriodo, tone: "text-emerald-600" },
+    ];
+  }, [filteredRecords, totalRecords, periodStartFilter, periodEndFilter, today]);
+  const nrAplicaveis = useMemo(() => {
+    const set = new Set(
+      records
+        .map((record) => (record.nr || "").trim())
+        .filter(Boolean),
+    );
+    return set.size;
+  }, [records]);
+  const selectedComments = useMemo(() => {
+    if (!selected) return [];
+    return commentsByRecord[selected.id] || [];
+  }, [commentsByRecord, selected]);
 
   const load = async () => {
     if (!moduleKey || !favoriteHydrated || !moduleNode) return;
@@ -226,6 +394,10 @@ const SesmtModulePage = () => {
           status: statusFilter === "ALL" ? undefined : statusFilter,
           criticidade: criticidadeFilter === "ALL" ? undefined : criticidadeFilter,
           unidade: unitFilter === "ALL" ? undefined : unitFilter,
+          responsavel: responsavelFilter || undefined,
+          nr: nrFilter || undefined,
+          periodStart: periodStartFilter || undefined,
+          periodEnd: periodEndFilter || undefined,
           specificFilters: buildActiveSpecificFilters(specificFilters),
           sortBy,
           sortDir,
@@ -269,7 +441,23 @@ const SesmtModulePage = () => {
 
   useEffect(() => {
     void load();
-  }, [moduleKey, moduleNode, favoriteHydrated, page, search, statusFilter, criticidadeFilter, unitFilter, specificFilters, sortBy, sortDir]);
+  }, [
+    moduleKey,
+    moduleNode,
+    favoriteHydrated,
+    page,
+    search,
+    statusFilter,
+    criticidadeFilter,
+    unitFilter,
+    responsavelFilter,
+    nrFilter,
+    periodStartFilter,
+    periodEndFilter,
+    specificFilters,
+    sortBy,
+    sortDir,
+  ]);
 
   useEffect(() => {
     if (skipNextPageResetRef.current) {
@@ -277,7 +465,24 @@ const SesmtModulePage = () => {
       return;
     }
     setPage(1);
-  }, [moduleKey, search, statusFilter, criticidadeFilter, unitFilter, specificFilters, sortBy, sortDir]);
+  }, [
+    moduleKey,
+    search,
+    statusFilter,
+    criticidadeFilter,
+    unitFilter,
+    responsavelFilter,
+    nrFilter,
+    periodStartFilter,
+    periodEndFilter,
+    tipoFilter,
+    setorFilter,
+    vencimentoFilter,
+    quickFilter,
+    specificFilters,
+    sortBy,
+    sortDir,
+  ]);
 
   useEffect(() => {
     setRecords([]);
@@ -292,6 +497,17 @@ const SesmtModulePage = () => {
     setSpecificFilters(buildEmptySpecificForm(moduleKey));
     setSpecificForm(buildEmptySpecificForm(moduleKey));
     setUnitFilter("ALL");
+    setTipoFilter("ALL");
+    setSetorFilter("");
+    setResponsavelFilter("");
+    setNrFilter("");
+    setPeriodStartFilter("");
+    setPeriodEndFilter("");
+    setVencimentoFilter("ALL");
+    setQuickFilter("TODOS");
+    setDetailTab("historico");
+    setCommentDraft("");
+    setReplyToCommentId(null);
     setSortBy("updatedAt");
     setSortDir("desc");
     setActivePresetKey(null);
@@ -322,6 +538,27 @@ const SesmtModulePage = () => {
     setStatusFilter(searchParams.get(QUERY_KEYS.status) || "ALL");
     setCriticidadeFilter(searchParams.get(QUERY_KEYS.criticidade) || "ALL");
     setUnitFilter(searchParams.get(QUERY_KEYS.unidade) || "ALL");
+    setTipoFilter(searchParams.get(QUERY_KEYS.tipo) || "ALL");
+    setSetorFilter(searchParams.get(QUERY_KEYS.setor) || "");
+    setResponsavelFilter(searchParams.get(QUERY_KEYS.responsavel) || "");
+    setNrFilter(searchParams.get(QUERY_KEYS.nr) || "");
+    setPeriodStartFilter(searchParams.get(QUERY_KEYS.periodStart) || "");
+    setPeriodEndFilter(searchParams.get(QUERY_KEYS.periodEnd) || "");
+    const dueParam = searchParams.get(QUERY_KEYS.vencimento);
+    setVencimentoFilter(
+      dueParam === "VENCIDOS" || dueParam === "HOJE" || dueParam === "PROXIMOS" ? dueParam : "ALL",
+    );
+    const quickParam = searchParams.get(QUERY_KEYS.quickFilter);
+    setQuickFilter(
+      quickParam === "VENCIDOS"
+      || quickParam === "VENCE_HOJE"
+      || quickParam === "CRITICOS"
+      || quickParam === "SEM_RESPONSAVEL"
+      || quickParam === "SEM_EVIDENCIA"
+      || quickParam === "MEUS_REGISTROS"
+        ? quickParam
+        : "TODOS",
+    );
     setSortBy(searchParams.get(QUERY_KEYS.sortBy) || "updatedAt");
     setSortDir(searchParams.get(QUERY_KEYS.sortDir) === "asc" ? "asc" : "desc");
     setPage(parsePositiveInt(searchParams.get(QUERY_KEYS.page), 1));
@@ -402,6 +639,14 @@ const SesmtModulePage = () => {
     if (statusFilter !== "ALL") nextParams.set(QUERY_KEYS.status, statusFilter);
     if (criticidadeFilter !== "ALL") nextParams.set(QUERY_KEYS.criticidade, criticidadeFilter);
     if (unitFilter !== "ALL") nextParams.set(QUERY_KEYS.unidade, unitFilter);
+    if (tipoFilter !== "ALL") nextParams.set(QUERY_KEYS.tipo, tipoFilter);
+    if (setorFilter.trim()) nextParams.set(QUERY_KEYS.setor, setorFilter.trim());
+    if (responsavelFilter.trim()) nextParams.set(QUERY_KEYS.responsavel, responsavelFilter.trim());
+    if (nrFilter.trim()) nextParams.set(QUERY_KEYS.nr, nrFilter.trim());
+    if (periodStartFilter) nextParams.set(QUERY_KEYS.periodStart, periodStartFilter);
+    if (periodEndFilter) nextParams.set(QUERY_KEYS.periodEnd, periodEndFilter);
+    if (vencimentoFilter !== "ALL") nextParams.set(QUERY_KEYS.vencimento, vencimentoFilter);
+    if (quickFilter !== "TODOS") nextParams.set(QUERY_KEYS.quickFilter, quickFilter);
     if (sortBy !== "updatedAt") nextParams.set(QUERY_KEYS.sortBy, sortBy);
     if (sortDir !== "desc") nextParams.set(QUERY_KEYS.sortDir, sortDir);
     if (activePresetKey) nextParams.set(QUERY_KEYS.preset, activePresetKey);
@@ -426,6 +671,14 @@ const SesmtModulePage = () => {
     statusFilter,
     criticidadeFilter,
     unitFilter,
+    tipoFilter,
+    setorFilter,
+    responsavelFilter,
+    nrFilter,
+    periodStartFilter,
+    periodEndFilter,
+    vencimentoFilter,
+    quickFilter,
     sortBy,
     sortDir,
     specificFilters,
@@ -665,6 +918,147 @@ const SesmtModulePage = () => {
     }
   };
 
+  const handleNewRecord = () => {
+    setSelected(null);
+    setForm(emptyForm);
+    setSpecificForm(buildEmptySpecificForm(moduleKey));
+    setEvidenceText("");
+    setUploadFiles([]);
+    setDetailTab("historico");
+    setCommentDraft("");
+    setReplyToCommentId(null);
+  };
+
+  const handleExport = () => {
+    const rows = filteredRecords.map((record) => ({
+      tipo: getRecordTypeLabel(record),
+      codigo: record.id,
+      titulo: record.titulo,
+      unidade: record.unidade,
+      status: record.status,
+      criticidade: record.criticidade,
+      vencimento: record.vencimentoAt || "",
+      nr: record.nr || "",
+      responsavel: record.responsavel || "",
+      setor: record.setor || "",
+    }));
+
+    if (rows.length === 0) {
+      toast({ title: "Sem dados", description: "Nao ha registros para exportar com os filtros atuais." });
+      return;
+    }
+
+    const csvHeader = Object.keys(rows[0]);
+    const csvBody = rows
+      .map((row) => csvHeader.map((key) => `"${String(row[key as keyof typeof row] || "").replace(/"/g, "\"\"")}"`).join(","))
+      .join("\n");
+    const csv = `${csvHeader.join(",")}\n${csvBody}`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `sesmt-${moduleKey}-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleQuickFilter = (filter: QuickFilterKey) => {
+    setQuickFilter(filter);
+    if (filter === "CRITICOS") {
+      setCriticidadeFilter("CRITICA");
+    }
+    if (filter === "VENCIDOS") {
+      setVencimentoFilter("VENCIDOS");
+    }
+    if (filter === "VENCE_HOJE") {
+      setVencimentoFilter("HOJE");
+    }
+  };
+
+  const handleOpenRecordByTab = async (id: string, tab: string) => {
+    await openRecord(id);
+    setDetailTab(tab);
+  };
+
+  const handleDuplicateRecord = (record: SesmtRecord) => {
+    const normalized = ensureRecordCollections(record);
+    setSelected(null);
+    setForm({
+      titulo: `${normalized.titulo} (copia)`,
+      descricao: normalized.descricao || "",
+      unidade: normalized.unidade || "MAO",
+      status: "ABERTO",
+      responsavel: normalized.responsavel || "",
+      criticidade: normalized.criticidade || "MEDIA",
+      nr: normalized.nr || "",
+      setor: normalized.setor || "",
+      funcao: normalized.funcao || "",
+      vencimentoAt: normalized.vencimentoAt || "",
+      investimento: normalized.investimento ? String(normalized.investimento) : "",
+      custo: normalized.custo ? String(normalized.custo) : "",
+      riscoInerente: normalized.riscoInerente ? String(normalized.riscoInerente) : "",
+      riscoResidual: normalized.riscoResidual ? String(normalized.riscoResidual) : "",
+    });
+
+    const schema = getSesmtFormSchema(moduleKey);
+    const duplicatedSpecific: SesmtSpecificFormValues = {};
+    schema.forEach((field) => {
+      const value = normalized.dadosEspecificos?.[field.key];
+      duplicatedSpecific[field.key] = value == null ? "" : String(value);
+    });
+    setSpecificForm(duplicatedSpecific);
+    toast({ title: "Duplicado", description: "Registro carregado como copia para novo cadastro." });
+  };
+
+  const handleSetRecordStatus = async (record: SesmtRecord, status: SesmtRecord["status"]) => {
+    try {
+      const updated = await updateSesmtRecord(moduleKey, record.id, { status });
+      if (selected?.id === record.id) {
+        setSelected(ensureRecordCollections(updated));
+      }
+      toast({ title: "Status atualizado", description: `${record.id} alterado para ${status}.` });
+      await load();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao atualizar status.";
+      toast({ title: "Erro", description: message, variant: "destructive" });
+    }
+  };
+
+  const handleAddComment = () => {
+    if (!selected || !commentDraft.trim()) return;
+    const nextComment: SesmtComment = {
+      id: `COM-${Date.now()}`,
+      texto: commentDraft.trim(),
+      usuario: currentUserName || "Usuario",
+      data: new Date().toISOString(),
+      parentId: replyToCommentId || undefined,
+    };
+
+    setCommentsByRecord((prev) => ({
+      ...prev,
+      [selected.id]: [nextComment, ...(prev[selected.id] || [])],
+    }));
+    setCommentDraft("");
+    setReplyToCommentId(null);
+    toast({ title: "Comentario registrado", description: "Comentario incluido na trilha colaborativa." });
+  };
+
+  const getStatusTone = (status: string) => {
+    if (status === "CONCLUIDO") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    if (status === "EM_ANDAMENTO") return "bg-sky-100 text-sky-700 border-sky-200";
+    if (status === "ATRASADO") return "bg-red-100 text-red-700 border-red-200";
+    return "bg-slate-100 text-slate-700 border-slate-200";
+  };
+
+  const getCriticidadeTone = (criticidade: SesmtRecord["criticidade"]) => {
+    if (criticidade === "CRITICA") return "bg-red-100 text-red-700 border-red-200";
+    if (criticidade === "ALTA") return "bg-orange-100 text-orange-700 border-orange-200";
+    if (criticidade === "MEDIA") return "bg-amber-100 text-amber-700 border-amber-200";
+    return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  };
+
+  const isOverdue = (record: SesmtRecord) => Boolean(record.vencimentoAt && record.vencimentoAt < today && record.status !== "CONCLUIDO");
+
   if (!moduleNode) {
     return (
       <div className="space-y-4 animate-fade-in">
@@ -690,104 +1084,126 @@ const SesmtModulePage = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{moduleNode?.label || "SESMT / SST"}</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Listagem operacional com filtros, formulario, historico e evidencias do submodulo.
-        </p>
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{moduleNode?.label || "SESMT / SST"}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Gestao operacional com filtros, priorizacao e rastreabilidade das acoes.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Contexto da planta atual: <span className="font-medium text-foreground">{unitFilter === "ALL" ? "Corporativo" : unitFilter}</span>
+            {" • "}
+            Escopo: SESMT / SST
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" className="gap-2" onClick={handleNewRecord}>
+            <Plus className="w-4 h-4" />
+            Novo registro
+          </Button>
+          <Button type="button" variant="outline" className="gap-2" onClick={handleExport}>
+            <Download className="w-4 h-4" />
+            Exportar
+          </Button>
+          <Button type="button" variant="outline" className="gap-2" onClick={() => void load()}>
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={() => void persistFavoritePreset({
+              presetKey: activePresetKey,
+              status: statusFilter,
+              criticidade: criticidadeFilter,
+              unidade: unitFilter,
+              sortBy,
+              sortDir,
+              specificFilters,
+            })}
+          >
+            <Star className="w-4 h-4" />
+            Favoritar filtro
+          </Button>
+        </div>
       </div>
 
-      <SectionCard title="Filtros" description="Refine por unidade, criticidade, contexto do submodulo e ordenacao dedicada">
+      <SectionCard title="Filtros" description="Aplicar filtros obrigatorios, filtros rapidos e contexto operacional do submodulo">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <Input
-            placeholder="Buscar por titulo, responsavel ou setor"
-            value={search}
-            onChange={(event) => {
-              setActivePresetKey(null);
-              setSearch(event.target.value);
-            }}
-          />
-          <Select
-            value={unitFilter}
-            onValueChange={(value) => {
-              setActivePresetKey(null);
-              setUnitFilter(value);
-            }}
-          >
-            <SelectTrigger><SelectValue placeholder="Unidade" /></SelectTrigger>
+          <Select value={tipoFilter} onValueChange={(value) => setTipoFilter(value)}>
+            <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">Todas as unidades</SelectItem>
-              {UNIT_OPTIONS.map((unit) => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
+              <SelectItem value="ALL">Todos os tipos</SelectItem>
+              {tipoOptions.map((option) => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => {
-              setActivePresetKey(null);
-              setStatusFilter(value);
-            }}
-          >
+          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
             <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">Todos os status</SelectItem>
               {STATUS_OPTIONS.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select
-            value={criticidadeFilter}
-            onValueChange={(value) => {
-              setActivePresetKey(null);
-              setCriticidadeFilter(value);
-            }}
-          >
+          <Select value={unitFilter} onValueChange={(value) => setUnitFilter(value)}>
+            <SelectTrigger><SelectValue placeholder="Unidade" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todas as unidades</SelectItem>
+              {UNIT_OPTIONS.map((unit) => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input placeholder="Setor" value={setorFilter} onChange={(event) => setSetorFilter(event.target.value)} />
+          <Input placeholder="Responsavel" value={responsavelFilter} onChange={(event) => setResponsavelFilter(event.target.value)} />
+          <Input placeholder="NR" value={nrFilter} onChange={(event) => setNrFilter(event.target.value)} />
+          <Input type="date" value={periodStartFilter} onChange={(event) => setPeriodStartFilter(event.target.value)} />
+          <Input type="date" value={periodEndFilter} onChange={(event) => setPeriodEndFilter(event.target.value)} />
+          <Select value={vencimentoFilter} onValueChange={(value) => setVencimentoFilter(value as VencimentoFilterKey)}>
+            <SelectTrigger><SelectValue placeholder="Vencimento" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos os vencimentos</SelectItem>
+              <SelectItem value="VENCIDOS">Vencidos</SelectItem>
+              <SelectItem value="HOJE">Vencendo hoje</SelectItem>
+              <SelectItem value="PROXIMOS">Proximos 7 dias</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={criticidadeFilter} onValueChange={(value) => setCriticidadeFilter(value)}>
             <SelectTrigger><SelectValue placeholder="Criticidade" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">Todas as criticidades</SelectItem>
               {CRITICALITY_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Input disabled value={loading ? "Carregando..." : `${records.length} em pagina / ${totalRecords} total`} />
         </div>
 
-        <div className="mt-4 pt-4 border-t border-border grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Select
-            value={sortBy}
-            onValueChange={(value) => {
-              setActivePresetKey(null);
-              setSortBy(value);
-            }}
-          >
-            <SelectTrigger><SelectValue placeholder="Ordenar por" /></SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={sortDir}
-            onValueChange={(value) => {
-              setActivePresetKey(null);
-              setSortDir(value as "asc" | "desc");
-            }}
-          >
-            <SelectTrigger><SelectValue placeholder="Direcao" /></SelectTrigger>
-            <SelectContent>
-              {SORT_DIR_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-2">
+          <Button type="button" size="sm" variant={quickFilter === "TODOS" ? "default" : "outline"} onClick={() => handleQuickFilter("TODOS")}>Todos</Button>
+          <Button type="button" size="sm" variant={quickFilter === "VENCIDOS" ? "default" : "outline"} onClick={() => handleQuickFilter("VENCIDOS")}>Vencidos</Button>
+          <Button type="button" size="sm" variant={quickFilter === "VENCE_HOJE" ? "default" : "outline"} onClick={() => handleQuickFilter("VENCE_HOJE")}>Vencendo hoje</Button>
+          <Button type="button" size="sm" variant={quickFilter === "CRITICOS" ? "default" : "outline"} onClick={() => handleQuickFilter("CRITICOS")}>Criticos</Button>
+          <Button type="button" size="sm" variant={quickFilter === "SEM_RESPONSAVEL" ? "default" : "outline"} onClick={() => handleQuickFilter("SEM_RESPONSAVEL")}>Sem responsavel</Button>
+          <Button type="button" size="sm" variant={quickFilter === "SEM_EVIDENCIA" ? "default" : "outline"} onClick={() => handleQuickFilter("SEM_EVIDENCIA")}>Sem evidencia</Button>
+          <Button type="button" size="sm" variant={quickFilter === "MEUS_REGISTROS" ? "default" : "outline"} onClick={() => handleQuickFilter("MEUS_REGISTROS")}>Meus registros</Button>
           <Button
             type="button"
-            variant="outline"
+            size="sm"
+            variant="ghost"
+            className="ml-auto"
             onClick={() => {
-              setActivePresetKey(null);
+              setSearch("");
               setStatusFilter("ALL");
               setCriticidadeFilter("ALL");
               setUnitFilter("ALL");
-              setSearch("");
+              setTipoFilter("ALL");
+              setSetorFilter("");
+              setResponsavelFilter("");
+              setNrFilter("");
+              setPeriodStartFilter("");
+              setPeriodEndFilter("");
+              setVencimentoFilter("ALL");
+              setQuickFilter("TODOS");
               setSortBy("updatedAt");
               setSortDir("desc");
               setSpecificFilters(buildEmptySpecificForm(moduleKey));
@@ -797,27 +1213,33 @@ const SesmtModulePage = () => {
           </Button>
         </div>
 
+        <div className="mt-3 pt-3 border-t border-border grid gap-3 sm:grid-cols-3">
+          <Input
+            placeholder="Buscar por titulo, responsavel ou setor"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
+            <SelectTrigger><SelectValue placeholder="Ordenar por" /></SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sortDir} onValueChange={(value) => setSortDir(value as "asc" | "desc")}>
+            <SelectTrigger><SelectValue placeholder="Direcao" /></SelectTrigger>
+            <SelectContent>
+              {SORT_DIR_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {filterPresets.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <p className="text-xs text-muted-foreground">Presets do submodulo</p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => void persistFavoritePreset({
-                  presetKey: activePresetKey,
-                  status: statusFilter,
-                  criticidade: criticidadeFilter,
-                  unidade: unitFilter,
-                  sortBy,
-                  sortDir,
-                  specificFilters,
-                })}
-              >
-                Salvar favorito atual
-              </Button>
-            </div>
+          <div className="mt-3 pt-3 border-t border-border">
+            <p className="text-xs text-muted-foreground mb-2">Presets do submodulo</p>
             <div className="flex flex-wrap gap-2">
               {filterPresets.map((preset) => (
                 <Button
@@ -835,7 +1257,7 @@ const SesmtModulePage = () => {
         )}
 
         {moduleSchema.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-border">
+          <div className="mt-3 pt-3 border-t border-border">
             <div className="flex items-center justify-between gap-2 mb-2">
               <p className="text-xs text-muted-foreground">Filtros contextuais do submodulo</p>
               <Button
@@ -843,10 +1265,7 @@ const SesmtModulePage = () => {
                 variant="ghost"
                 size="sm"
                 disabled={!hasActiveSpecificFilters}
-                onClick={() => {
-                  setActivePresetKey(null);
-                  setSpecificFilters(buildEmptySpecificForm(moduleKey));
-                }}
+                onClick={() => setSpecificFilters(buildEmptySpecificForm(moduleKey))}
               >
                 Limpar contexto
               </Button>
@@ -891,63 +1310,148 @@ const SesmtModulePage = () => {
         )}
       </SectionCard>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard title="Registros" description="Clique para abrir detalhes e historico">
-          <div className="space-y-2 max-h-[500px] overflow-auto pr-1">
-            {records.map((record) => (
-              <button
-                key={record.id}
-                type="button"
-                onClick={() => void openRecord(record.id)}
-                className={`w-full text-left rounded-md border px-3 py-2 transition-colors ${selected?.id === record.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"}`}
-              >
-                <p className="text-sm font-semibold">{record.titulo}</p>
-                <p className="text-xs text-muted-foreground">{record.id} • {record.unidade} • {record.status} • {record.criticidade}</p>
-                <p className="text-xs text-muted-foreground">Resp: {record.responsavel} {record.nr ? `• ${record.nr}` : ""}</p>
-                {previewFields.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {previewFields.map((field) => {
-                      const value = record.dadosEspecificos?.[field.key];
-                      if (value == null || String(value).trim() === "") return null;
-                      return (
-                        <span key={field.key} className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                          {field.label}: {String(value)}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-              </button>
-            ))}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+        {kpiCards.map((card) => (
+          <div key={card.label} className="rounded-lg border border-border bg-card px-3 py-2">
+            <p className="text-xs text-muted-foreground">{card.label}</p>
+            <p className={`text-xl font-semibold ${card.tone || "text-foreground"}`}>{card.value}</p>
           </div>
-          <div className="mt-3 pt-3 border-t border-border flex items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground">
-              Pagina {Math.min(page, totalPages)} de {totalPages}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={loading || page <= 1}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-              >
-                Anterior
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={loading || page >= totalPages}
-                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-              >
-                Proxima
-              </Button>
-            </div>
-          </div>
-        </SectionCard>
+        ))}
+      </div>
 
-        <SectionCard title={selected ? `Editar ${selected.id}` : "Novo registro"} description="Campos operacionais principais do submodulo">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+        <div className="space-y-4">
+          <SectionCard title="Contexto de cadastros" description="Bases auxiliares para fluxo operacional por unidade">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 text-sm">
+              <div className="rounded-md border border-border px-3 py-2">
+                Unidades: {Array.isArray(lookupSummary?.unidades) ? lookupSummary.unidades.length : 0}
+              </div>
+              <div className="rounded-md border border-border px-3 py-2">
+                Setores: {Array.isArray(lookupSummary?.setores) ? lookupSummary.setores.length : 0}
+              </div>
+              <div className="rounded-md border border-border px-3 py-2">
+                Colaboradores: {Array.isArray(lookupSummary?.colaboradores) ? lookupSummary.colaboradores.length : 0}
+              </div>
+              <div className="rounded-md border border-border px-3 py-2">
+                Profissionais SESMT: {Array.isArray(lookupSummary?.profissionaisSesmt) ? lookupSummary.profissionaisSesmt.length : 0}
+              </div>
+              <div className="rounded-md border border-border px-3 py-2">
+                NR aplicaveis: {nrAplicaveis}
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Registros" description="Lista operacional com prioridade visual e acoes por linha">
+            <div className="overflow-x-auto rounded-md border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Codigo</TableHead>
+                    <TableHead>Unidade</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Criticidade</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>NR</TableHead>
+                    <TableHead>Responsavel</TableHead>
+                    <TableHead className="text-right">Acoes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredRecords.length === 0 && (
+                    <TableRow>
+                      <TableCell className="text-center text-muted-foreground" colSpan={9}>
+                        Nenhum registro encontrado com os filtros atuais.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {filteredRecords.map((record) => (
+                    <TableRow key={record.id} className={selected?.id === record.id ? "bg-primary/5" : undefined}>
+                      <TableCell className="whitespace-nowrap text-xs">{getRecordTypeLabel(record)}</TableCell>
+                      <TableCell className="whitespace-nowrap font-medium">{record.id}</TableCell>
+                      <TableCell>{record.unidade}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-medium ${getStatusTone(record.status)}`}>
+                          {record.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-medium ${getCriticidadeTone(record.criticidade)}`}>
+                          {record.criticidade}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={isOverdue(record) ? "font-semibold text-red-600" : "text-foreground"}>
+                          {record.vencimentoAt || "-"}
+                        </span>
+                      </TableCell>
+                      <TableCell>{record.nr || "-"}</TableCell>
+                      <TableCell>{record.responsavel || "-"}</TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-1">
+                          <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Editar" onClick={() => void openRecord(record.id)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Abrir detalhe" onClick={() => void handleOpenRecordByTab(record.id, "historico")}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Anexar evidencia" onClick={() => void handleOpenRecordByTab(record.id, "evidencias")}>
+                            <UploadCloud className="h-4 w-4" />
+                          </Button>
+                          <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Duplicar" onClick={() => handleDuplicateRecord(record)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-emerald-700"
+                            title="Concluir"
+                            disabled={record.status === "CONCLUIDO"}
+                            onClick={() => void handleSetRecordStatus(record, "CONCLUIDO")}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Exibindo {filteredRecords.length} de {totalRecords} registros
+                {" • "}
+                Pagina {Math.min(page, totalPages)} de {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={loading || page <= 1}
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                >
+                  Anterior
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={loading || page >= totalPages}
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                >
+                  Proxima
+                </Button>
+              </div>
+            </div>
+          </SectionCard>
+
+        </div>
+
+        <div className="xl:sticky xl:top-4 xl:h-fit">
+        <SectionCard title={selected ? `Detalhe do registro ${selected.id}` : "Novo registro"} description="Campos operacionais principais e contexto de cadastro do submodulo">
           <div className="grid gap-3 sm:grid-cols-2">
             <FormField label="Titulo" required><Input value={form.titulo} onChange={(event) => setField("titulo", event.target.value)} /></FormField>
             <FormField label="Responsavel" required><Input value={form.responsavel} onChange={(event) => setField("responsavel", event.target.value)} /></FormField>
@@ -1040,59 +1544,54 @@ const SesmtModulePage = () => {
             </div>
           )}
 
-          <FormField label="Descricao">
+          <FormField label="Observacoes">
             <Textarea value={form.descricao} onChange={(event) => setField("descricao", event.target.value)} rows={4} />
           </FormField>
 
           <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={handleNewRecord}>
+              Limpar
+            </Button>
             {!selected && (
               <Button onClick={() => void handleCreate()} className="gap-2">
                 <Save className="w-4 h-4" />
-                Criar Registro
+                Salvar registro
               </Button>
             )}
             {selected && (
               <Button onClick={() => void handleUpdate()} className="gap-2">
                 <Save className="w-4 h-4" />
-                Atualizar Registro
+                Atualizar registro
               </Button>
             )}
           </div>
         </SectionCard>
+        </div>
       </div>
 
-      {selected && (
-        <>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <SectionCard title="Evidencias" description="Inclua evidencias e acompanhe o historico">
-              <div className="space-y-2 mb-3">
-                <Textarea placeholder="Descreva a evidencia..." value={evidenceText} onChange={(event) => setEvidenceText(event.target.value)} rows={3} />
-                <Button onClick={() => void handleEvidence()}>Adicionar Evidencia</Button>
-              </div>
-              <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
-                {selectedEvidencias.map((evidence) => (
-                  <div key={evidence.id} className="rounded-md border border-border px-3 py-2">
-                    <p className="text-sm font-medium">{evidence.descricao}</p>
-                    <p className="text-xs text-muted-foreground">{evidence.tipo} • {evidence.responsavel} • {evidence.data}</p>
-                  </div>
-                ))}
-              </div>
-            </SectionCard>
+      <SectionCard
+        title="Detalhe avancado"
+        description={selected ? `${selected.id} • historico, evidencias, comentarios e acoes` : "Selecione um registro para abrir o detalhe avancado"}
+      >
+        {!selected && (
+          <p className="text-sm text-muted-foreground">
+            Clique em um registro da lista para visualizar historico, anexar evidencias e registrar comentarios.
+          </p>
+        )}
+        {selected && (
+          <Tabs value={detailTab} onValueChange={setDetailTab} className="space-y-3">
+            <TabsList className="flex w-full flex-wrap justify-start gap-1 bg-muted/40 p-1">
+              <TabsTrigger value="historico">Historico</TabsTrigger>
+              <TabsTrigger value="evidencias">Evidencias</TabsTrigger>
+              <TabsTrigger value="comentarios">Comentarios</TabsTrigger>
+              <TabsTrigger value="acoes">Acoes</TabsTrigger>
+            </TabsList>
 
-            <SectionCard title="Anexos e Historico" description="Upload de anexos com metadados e trilha de alteracoes">
-              <AttachmentUploader
-                maxFiles={8}
-                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.xls,.csv,.txt"
-                onFilesChange={(files) => setUploadFiles(files)}
-              />
-              <div className="flex justify-end mt-3">
-                <Button onClick={() => void handleUpload()} disabled={uploadFiles.length === 0} className="gap-2">
-                  <UploadCloud className="w-4 h-4" />
-                  Enviar Anexos
-                </Button>
-              </div>
-
-              <div className="space-y-2 mt-4 max-h-[240px] overflow-auto pr-1">
+            <TabsContent value="historico" className="space-y-2">
+              {selectedHistorico.length === 0 && (
+                <p className="text-sm text-muted-foreground">Sem historico registrado ate o momento.</p>
+              )}
+              <div className="max-h-[280px] space-y-2 overflow-auto pr-1">
                 {selectedHistorico.map((item) => (
                   <div key={item.id} className="rounded-md border border-border px-3 py-2">
                     <p className="text-sm font-medium">{item.acao}</p>
@@ -1101,38 +1600,127 @@ const SesmtModulePage = () => {
                   </div>
                 ))}
               </div>
-            </SectionCard>
-          </div>
+            </TabsContent>
 
-          {moduleSchema.length > 0 && (
-            <SectionCard title="Resumo de Campos Dedicados" description="Valores especificos persistidos neste registro">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {moduleSchema.map((field) => (
-                  <div key={field.key} className="rounded-md border border-border px-3 py-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{field.label}</p>
-                    <p className="text-sm font-medium mt-1">
-                      {selected.dadosEspecificos?.[field.key] == null || String(selected.dadosEspecificos?.[field.key]).trim() === ""
-                        ? "-"
-                        : String(selected.dadosEspecificos?.[field.key])}
-                    </p>
+            <TabsContent value="evidencias" className="space-y-3">
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Descreva a evidencia operacional"
+                  value={evidenceText}
+                  onChange={(event) => setEvidenceText(event.target.value)}
+                  rows={3}
+                />
+                <div className="flex justify-end">
+                  <Button type="button" onClick={() => void handleEvidence()} disabled={!evidenceText.trim()}>
+                    Adicionar evidencia
+                  </Button>
+                </div>
+              </div>
+              <AttachmentUploader
+                maxFiles={8}
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.xls,.csv,.txt"
+                onFilesChange={(files) => setUploadFiles(files)}
+              />
+              <div className="flex justify-end">
+                <Button type="button" onClick={() => void handleUpload()} disabled={uploadFiles.length === 0} className="gap-2">
+                  <UploadCloud className="h-4 w-4" />
+                  Enviar anexos
+                </Button>
+              </div>
+              <div className="max-h-[220px] space-y-2 overflow-auto pr-1">
+                {selectedEvidencias.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Sem evidencias registradas.</p>
+                )}
+                {selectedEvidencias.map((evidence) => (
+                  <div key={evidence.id} className="rounded-md border border-border px-3 py-2">
+                    <p className="text-sm font-medium">{evidence.descricao}</p>
+                    <p className="text-xs text-muted-foreground">{evidence.tipo} • {evidence.responsavel} • {evidence.data}</p>
                   </div>
                 ))}
               </div>
-            </SectionCard>
-          )}
-        </>
-      )}
+            </TabsContent>
 
-      {lookupSummary && (
-        <SectionCard title="Contexto de Cadastros" description="Dados auxiliares e escopo de unidade para o perfil logado">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
-            <div className="rounded-md border border-border px-3 py-2">Unidades: {Array.isArray(lookupSummary.unidades) ? lookupSummary.unidades.length : 0}</div>
-            <div className="rounded-md border border-border px-3 py-2">Setores: {Array.isArray(lookupSummary.setores) ? lookupSummary.setores.length : 0}</div>
-            <div className="rounded-md border border-border px-3 py-2">Colaboradores: {Array.isArray(lookupSummary.colaboradores) ? lookupSummary.colaboradores.length : 0}</div>
-            <div className="rounded-md border border-border px-3 py-2">Profissionais SESMT: {Array.isArray(lookupSummary.profissionaisSesmt) ? lookupSummary.profissionaisSesmt.length : 0}</div>
-          </div>
-        </SectionCard>
-      )}
+            <TabsContent value="comentarios" className="space-y-3">
+              <div className="space-y-2">
+                {replyToCommentId && (
+                  <p className="text-xs text-muted-foreground">
+                    Respondendo comentario {replyToCommentId}
+                    <Button type="button" variant="link" className="ml-1 h-auto p-0 text-xs" onClick={() => setReplyToCommentId(null)}>
+                      cancelar
+                    </Button>
+                  </p>
+                )}
+                <Textarea
+                  placeholder="Registrar comentario e mencoes"
+                  value={commentDraft}
+                  onChange={(event) => setCommentDraft(event.target.value)}
+                  rows={3}
+                />
+                <div className="flex justify-end">
+                  <Button type="button" onClick={handleAddComment} disabled={!commentDraft.trim()}>
+                    Registrar comentario
+                  </Button>
+                </div>
+              </div>
+              <div className="max-h-[220px] space-y-2 overflow-auto pr-1">
+                {selectedComments.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Sem comentarios colaborativos.</p>
+                )}
+                {selectedComments.map((comment) => (
+                  <div key={comment.id} className="rounded-md border border-border px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{comment.usuario}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(comment.data).toLocaleString("pt-BR")}</p>
+                    </div>
+                    {comment.parentId && <p className="text-xs text-muted-foreground">Resposta para {comment.parentId}</p>}
+                    <p className="text-sm">{comment.texto}</p>
+                    <div className="mt-2 flex justify-end">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setReplyToCommentId(comment.id)}>
+                        Responder
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="acoes" className="space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button type="button" variant="outline" className="justify-start gap-2" onClick={() => void handleSetRecordStatus(selected, "EM_ANDAMENTO")}>
+                  <RefreshCw className="h-4 w-4" />
+                  Marcar em andamento
+                </Button>
+                <Button type="button" variant="outline" className="justify-start gap-2" onClick={() => void handleSetRecordStatus(selected, "ABERTO")}>
+                  <RefreshCw className="h-4 w-4" />
+                  Reabrir registro
+                </Button>
+                <Button type="button" variant="outline" className="justify-start gap-2" onClick={() => handleDuplicateRecord(selected)}>
+                  <Copy className="h-4 w-4" />
+                  Duplicar registro
+                </Button>
+                <Button type="button" className="justify-start gap-2" onClick={() => void handleSetRecordStatus(selected, "CONCLUIDO")}>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Concluir registro
+                </Button>
+              </div>
+              {moduleSchema.length > 0 && (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {moduleSchema.map((field) => (
+                    <div key={field.key} className="rounded-md border border-border px-3 py-2">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">{field.label}</p>
+                      <p className="text-sm font-medium">
+                        {selected.dadosEspecificos?.[field.key] == null || String(selected.dadosEspecificos?.[field.key]).trim() === ""
+                          ? "-"
+                          : String(selected.dadosEspecificos?.[field.key])}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
+      </SectionCard>
     </div>
   );
 };
