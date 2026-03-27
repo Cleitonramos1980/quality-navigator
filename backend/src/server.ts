@@ -22,6 +22,7 @@ import { operacionalRoutes } from "./routes/operacional.js";
 import { torreAgendaCustodiaRoutes } from "./routes/torreAgendaCustodia.js";
 import { inspecoesRoutes } from "./routes/inspecoes.js";
 import { sesmtRoutes } from "./routes/sesmt.js";
+import { assistenciaTerceirizadaRoutes } from "./routes/assistenciaTerceirizada.js";
 import {
   initPersistentCollections,
   persistAllCollections,
@@ -152,6 +153,7 @@ await operacionalRoutes(app);
 await torreAgendaCustodiaRoutes(app);
 await inspecoesRoutes(app);
 await sesmtRoutes(app);
+await assistenciaTerceirizadaRoutes(app);
 
 async function start() {
   await initOraclePool();
