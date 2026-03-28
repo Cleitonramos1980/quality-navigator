@@ -329,6 +329,8 @@ export default function ChecklistPreInventarioPage() {
           <BlocoSection key={bloco.id} bloco={bloco} onItemClick={handleItemClick} />
         ))}
       </div>
+
+      <NovoChecklistModal open={novoChecklistOpen} onOpenChange={setNovoChecklistOpen} />
     </div>
   );
 }
