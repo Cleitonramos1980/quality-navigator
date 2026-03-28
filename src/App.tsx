@@ -122,6 +122,7 @@ const MolasHistoricoPage = lazy(() => import("@/pages/inspecoes/MolasHistoricoPa
 const PadroesMolaPage = lazy(() => import("@/pages/inspecoes/PadroesMolaPage"));
 const SesmtExecutivePage = lazy(() => import("@/pages/sesmt/SesmtExecutivePage"));
 const SesmtModulePage = lazy(() => import("@/pages/sesmt/SesmtModulePage"));
+const DossieColaboradorPage = lazy(() => import("@/pages/sesmt/DossieColaboradorPage"));
 
 const queryClient = new QueryClient();
 
