@@ -102,10 +102,10 @@ const allNavItems: NavItem[] = [
     path: "/qualidade/inventario", label: "Inventário", icon: PackageSearch, modulo: "inventario",
     children: [
       { path: "/qualidade/inventario", label: "Dashboard de Inventário" },
+      { path: "/qualidade/inventario/checklist-pre", label: "Checklist Pré-Inventário" },
       { path: "/qualidade/inventario/novo-plano", label: "Gerar Inventário" },
       { path: "/qualidade/inventario/digitacao", label: "Digitação de Inventário" },
       { path: "/qualidade/inventario/contagens", label: "Contagens" },
-      { path: "/qualidade/inventario/checklist-pre", label: "Checklist Pré-Inventário" },
     ],
   },
   {
