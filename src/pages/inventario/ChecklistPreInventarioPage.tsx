@@ -347,7 +347,6 @@ export default function ChecklistPreInventarioPage() {
         onOpenChange={setEditOpen}
         item={editItem}
         onSave={(itemId, data) => {
-          // Update mock data in-place for demo
           if (checklist) {
             for (const bloco of checklist.blocos) {
               const found = bloco.itens.find((i) => i.id === itemId);
@@ -355,6 +354,8 @@ export default function ChecklistPreInventarioPage() {
                 found.responsavel = data.responsavel;
                 found.data = data.data;
                 found.setor = data.setor;
+                found.status = data.status;
+                found.criticidade = data.criticidade;
                 break;
               }
             }
