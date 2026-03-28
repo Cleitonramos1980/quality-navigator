@@ -1064,6 +1064,10 @@ const SesmtModulePage = () => {
 
   const isOverdue = (record: SesmtRecord) => Boolean(record.vencimentoAt && record.vencimentoAt < today && record.status !== "CONCLUIDO");
 
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelTab, setPanelTab] = useState<"form" | "historico" | "evidencias" | "comentarios" | "acoes">("form");
+
   if (!moduleNode) {
     return (
       <div className="space-y-4 animate-fade-in">
@@ -1080,17 +1084,11 @@ const SesmtModulePage = () => {
       <div className="space-y-4 animate-fade-in">
         <h1 className="text-2xl font-bold text-foreground">{moduleNode.label}</h1>
         <SectionCard title="Acesso Negado" description="Seu perfil nao possui permissao para este submodulo SESMT/SST.">
-          <p className="text-sm text-muted-foreground">
-            Solicite liberacao ao administrador ou acesse outro submodulo permitido.
-          </p>
+          <p className="text-sm text-muted-foreground">Solicite liberacao ao administrador ou acesse outro submodulo permitido.</p>
         </SectionCard>
       </div>
     );
   }
-
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [panelTab, setPanelTab] = useState<"form" | "historico" | "evidencias" | "comentarios" | "acoes">("form");
 
   const openRecordInPanel = async (id: string, tab: "form" | "historico" | "evidencias" | "comentarios" | "acoes" = "form") => {
     await openRecord(id);
