@@ -164,6 +164,7 @@ export default function ChecklistPreInventarioPage() {
   const [setorFilter, setSetorFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string>(mockChecklists[0]?.id ?? "");
   const [quickFilter, setQuickFilter] = useState<string | null>(null);
+  const [novoChecklistOpen, setNovoChecklistOpen] = useState(false);
 
   const checklist = mockChecklists.find((c) => c.id === selectedId);
 
