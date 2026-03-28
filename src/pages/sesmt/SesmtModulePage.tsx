@@ -1065,7 +1065,7 @@ const SesmtModulePage = () => {
   const isOverdue = (record: SesmtRecord) => Boolean(record.vencimentoAt && record.vencimentoAt < today && record.status !== "CONCLUIDO");
 
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [bottomPanelOpen, setBottomPanelOpen] = useState(false);
   const [panelTab, setPanelTab] = useState<"form" | "historico" | "evidencias" | "comentarios" | "acoes">("form");
 
   if (!moduleNode) {
@@ -1093,13 +1093,13 @@ const SesmtModulePage = () => {
   const openRecordInPanel = async (id: string, tab: "form" | "historico" | "evidencias" | "comentarios" | "acoes" = "form") => {
     await openRecord(id);
     setPanelTab(tab);
-    setPanelOpen(true);
+    setBottomPanelOpen(true);
   };
 
   const openNewRecordPanel = () => {
     handleNewRecord();
     setPanelTab("form");
-    setPanelOpen(true);
+    setBottomPanelOpen(true);
   };
 
   return (
