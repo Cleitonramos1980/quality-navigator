@@ -383,7 +383,11 @@ function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<ty
           <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" />Acompanhamento por Bloco</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {blocoStats.map((b) => (
-              <div key={b.nome} className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0">
+              <div
+                key={b.nome}
+                className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0 cursor-pointer hover:bg-muted/30 rounded px-1 transition-colors"
+                onClick={() => navigate("/qualidade/inventario/checklist-pre")}
+              >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm truncate">{b.nome}</span>
