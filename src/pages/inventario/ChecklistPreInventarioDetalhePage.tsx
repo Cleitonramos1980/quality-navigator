@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { mockChecklists } from "@/data/mockChecklistPreInventario";
-import { STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS, SETORES_CHECKLIST } from "@/types/checklistPreInventario";
+import { STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS, SETORES_CHECKLIST, type ChecklistItemStatus, type ChecklistCriticidade } from "@/types/checklistPreInventario";
 import { toast } from "@/hooks/use-toast";
 
 const RESPONSAVEIS = [
