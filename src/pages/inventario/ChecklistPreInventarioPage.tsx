@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { mockChecklists } from "@/data/mockChecklistPreInventario";
+import NovoChecklistModal from "@/components/inventario/NovoChecklistModal";
 import {
   STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS,
   STATUS_GERAL_LABELS, type ChecklistItemStatus, type ChecklistCriticidade,
@@ -163,6 +164,7 @@ export default function ChecklistPreInventarioPage() {
   const [setorFilter, setSetorFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string>(mockChecklists[0]?.id ?? "");
   const [quickFilter, setQuickFilter] = useState<string | null>(null);
+  const [novoChecklistOpen, setNovoChecklistOpen] = useState(false);
 
   const checklist = mockChecklists.find((c) => c.id === selectedId);
 
@@ -229,7 +231,7 @@ export default function ChecklistPreInventarioPage() {
           <p className="text-sm text-muted-foreground">Controle preparatório para execução segura e organizada do inventário</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button size="sm" onClick={() => toast({ title: "Novo checklist", description: "Funcionalidade em construção." })}>
+          <Button size="sm" onClick={() => setNovoChecklistOpen(true)}>
             <Plus className="h-4 w-4 mr-1" />Novo Checklist
           </Button>
           <Button variant="outline" size="sm" onClick={() => toast({ title: "Imprimir", description: "Relatório enviado para impressão." })}>
@@ -327,6 +329,8 @@ export default function ChecklistPreInventarioPage() {
           <BlocoSection key={bloco.id} bloco={bloco} onItemClick={handleItemClick} />
         ))}
       </div>
+
+      <NovoChecklistModal open={novoChecklistOpen} onOpenChange={setNovoChecklistOpen} />
     </div>
   );
 }
