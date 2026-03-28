@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { CalendarIcon, User } from "lucide-react";
-import { SETORES_CHECKLIST } from "@/types/checklistPreInventario";
+import { SETORES_CHECKLIST, STATUS_LABELS, CRITICIDADE_LABELS, type ChecklistItemStatus, type ChecklistCriticidade } from "@/types/checklistPreInventario";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -22,14 +22,16 @@ const RESPONSAVEIS = [
 interface EditarItemChecklistModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item: { id: string; descricao: string; responsavel: string; data: string; setor: string } | null;
-  onSave: (itemId: string, data: { responsavel: string; data: string; setor: string }) => void;
+  item: { id: string; descricao: string; responsavel: string; data: string; setor: string; status: ChecklistItemStatus; criticidade: ChecklistCriticidade } | null;
+  onSave: (itemId: string, data: { responsavel: string; data: string; setor: string; status: ChecklistItemStatus; criticidade: ChecklistCriticidade }) => void;
 }
 
 export default function EditarItemChecklistModal({ open, onOpenChange, item, onSave }: EditarItemChecklistModalProps) {
   const [responsavel, setResponsavel] = useState("");
   const [date, setDate] = useState<Date | undefined>();
   const [setor, setSetor] = useState("");
+  const [status, setStatus] = useState<ChecklistItemStatus>("PENDENTE");
+  const [criticidade, setCriticidade] = useState<ChecklistCriticidade>("MEDIA");
   const [responsavelSearchOpen, setResponsavelSearchOpen] = useState(false);
 
   const [lastItemId, setLastItemId] = useState<string | null>(null);
@@ -37,6 +39,8 @@ export default function EditarItemChecklistModal({ open, onOpenChange, item, onS
     setResponsavel(item.responsavel);
     setDate(item.data ? new Date(item.data) : undefined);
     setSetor(item.setor);
+    setStatus(item.status);
+    setCriticidade(item.criticidade);
     setLastItemId(item.id);
   }
 
@@ -46,7 +50,7 @@ export default function EditarItemChecklistModal({ open, onOpenChange, item, onS
       toast({ title: "Erro", description: "Informe o responsável.", variant: "destructive" });
       return;
     }
-    onSave(item.id, { responsavel: responsavel.trim(), data: date ? format(date, "yyyy-MM-dd") : "", setor });
+    onSave(item.id, { responsavel: responsavel.trim(), data: date ? format(date, "yyyy-MM-dd") : "", setor, status, criticidade });
     onOpenChange(false);
     toast({ title: "Item atualizado", description: `"${item.descricao}" foi atualizado com sucesso.` });
   };

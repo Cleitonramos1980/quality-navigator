@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { mockChecklists } from "@/data/mockChecklistPreInventario";
-import { STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS, SETORES_CHECKLIST } from "@/types/checklistPreInventario";
+import { STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS, SETORES_CHECKLIST, type ChecklistItemStatus, type ChecklistCriticidade } from "@/types/checklistPreInventario";
 import { toast } from "@/hooks/use-toast";
 
 const RESPONSAVEIS = [
@@ -36,6 +36,8 @@ export default function ChecklistPreInventarioDetalhePage() {
   const [responsavel, setResponsavel] = useState("");
   const [date, setDate] = useState<Date | undefined>();
   const [setor, setSetor] = useState("");
+  const [status, setStatus] = useState<ChecklistItemStatus>("PENDENTE");
+  const [criticidade, setCriticidade] = useState<ChecklistCriticidade>("MEDIA");
   const [responsavelSearchOpen, setResponsavelSearchOpen] = useState(false);
 
   const openEdit = () => {
@@ -43,6 +45,8 @@ export default function ChecklistPreInventarioDetalhePage() {
     setResponsavel(item.responsavel);
     setDate(item.data ? new Date(item.data) : undefined);
     setSetor(item.setor);
+    setStatus(item.status);
+    setCriticidade(item.criticidade);
     setEditOpen(true);
   };
 
@@ -55,6 +59,8 @@ export default function ChecklistPreInventarioDetalhePage() {
     item.responsavel = responsavel.trim();
     item.data = date ? format(date, "yyyy-MM-dd") : "";
     item.setor = setor;
+    item.status = status;
+    item.criticidade = criticidade;
     setEditOpen(false);
     toast({ title: "Item atualizado", description: `"${item.descricao}" foi atualizado com sucesso.` });
   };
@@ -200,6 +206,32 @@ export default function ChecklistPreInventarioDetalhePage() {
                 <SelectContent>
                   {SETORES_CHECKLIST.map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status */}
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as ChecklistItemStatus)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(STATUS_LABELS) as ChecklistItemStatus[]).map((s) => (
+                    <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Criticidade */}
+            <div className="space-y-1.5">
+              <Label>Criticidade</Label>
+              <Select value={criticidade} onValueChange={(v) => setCriticidade(v as ChecklistCriticidade)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(CRITICIDADE_LABELS) as ChecklistCriticidade[]).map((c) => (
+                    <SelectItem key={c} value={c}>{CRITICIDADE_LABELS[c]}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
