@@ -1,15 +1,20 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   ClipboardCheck, ChevronDown, ChevronRight, Search, Printer, FileDown,
   Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Users, Building2,
-  Filter, FileWarning, Eye, Pencil, MoreHorizontal,
+  Filter, FileWarning, Eye, Pencil, MoreHorizontal, CalendarIcon, User,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Calendar } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
@@ -20,9 +25,15 @@ import EditarItemChecklistModal from "@/components/inventario/EditarItemChecklis
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS,
-  STATUS_GERAL_LABELS, type ChecklistItemStatus, type ChecklistCriticidade,
-  type ChecklistBloco,
+  STATUS_GERAL_LABELS, SETORES_CHECKLIST, type ChecklistItemStatus, type ChecklistCriticidade,
+  type ChecklistBloco, type ChecklistItem,
 } from "@/types/checklistPreInventario";
+
+const RESPONSAVEIS = [
+  "Carlos Lima", "Ana Souza", "Pedro Santos", "Joana Costa",
+  "Marcos Silva", "Fernanda Oliveira", "Rafael Almeida", "Juliana Pereira",
+  "Roberto Mendes", "Camila Rocha", "Lucas Ferreira", "Beatriz Nunes",
+];
 
 /* ─── KPI Card ──────────────────────────────────────────── */
 function KPI({ label, value, icon: Icon, variant = "default" }: { label: string; value: number; icon: any; variant?: string }) {
@@ -53,8 +64,120 @@ function CritPill({ crit }: { crit: ChecklistCriticidade }) {
   return <span className={cn("status-badge text-[11px]", CRITICIDADE_COLORS[crit])}>{CRITICIDADE_LABELS[crit]}</span>;
 }
 
+/* ─── Inline Editable Cells ─────────────────────────────── */
+function InlineStatusSelect({ value, onChange }: { value: ChecklistItemStatus; onChange: (v: ChecklistItemStatus) => void }) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as ChecklistItemStatus)}>
+      <SelectTrigger className="h-7 w-full border-0 bg-transparent p-0 shadow-none focus:ring-0 [&>svg]:hidden" onClick={(e) => e.stopPropagation()}>
+        <span className={cn("status-badge text-[11px]", STATUS_COLORS[value])}>{STATUS_LABELS[value]}</span>
+      </SelectTrigger>
+      <SelectContent onClick={(e) => e.stopPropagation()}>
+        {(Object.keys(STATUS_LABELS) as ChecklistItemStatus[]).map((s) => (
+          <SelectItem key={s} value={s}>
+            <span className={cn("status-badge text-[11px]", STATUS_COLORS[s])}>{STATUS_LABELS[s]}</span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function InlineCritSelect({ value, onChange }: { value: ChecklistCriticidade; onChange: (v: ChecklistCriticidade) => void }) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as ChecklistCriticidade)}>
+      <SelectTrigger className="h-7 w-full border-0 bg-transparent p-0 shadow-none focus:ring-0 [&>svg]:hidden" onClick={(e) => e.stopPropagation()}>
+        <span className={cn("status-badge text-[11px]", CRITICIDADE_COLORS[value])}>{CRITICIDADE_LABELS[value]}</span>
+      </SelectTrigger>
+      <SelectContent onClick={(e) => e.stopPropagation()}>
+        {(Object.keys(CRITICIDADE_LABELS) as ChecklistCriticidade[]).map((c) => (
+          <SelectItem key={c} value={c}>
+            <span className={cn("status-badge text-[11px]", CRITICIDADE_COLORS[c])}>{CRITICIDADE_LABELS[c]}</span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function InlineSetorSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="h-7 w-full border-0 bg-transparent p-0 shadow-none focus:ring-0 text-xs text-muted-foreground [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-40" onClick={(e) => e.stopPropagation()}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent onClick={(e) => e.stopPropagation()}>
+        {SETORES_CHECKLIST.map((s) => (
+          <SelectItem key={s} value={s}>{s}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function InlineResponsavelPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors text-left truncate max-w-[120px] flex items-center gap-1"
+          onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+        >
+          {value || <span className="text-muted-foreground/50 italic">Selecionar</span>}
+          <User className="h-3 w-3 opacity-40 shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[220px] p-0 pointer-events-auto" align="start" onClick={(e) => e.stopPropagation()}>
+        <Command>
+          <CommandInput placeholder="Pesquisar nome..." />
+          <CommandList>
+            <CommandEmpty>Nenhum encontrado.</CommandEmpty>
+            <CommandGroup>
+              {RESPONSAVEIS.map((r) => (
+                <CommandItem key={r} value={r} onSelect={(val) => { onChange(val); setOpen(false); }}>{r}</CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function InlineDatePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const date = value ? new Date(value) : undefined;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn("text-xs text-left flex items-center gap-1 transition-colors", value ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/50 italic")}
+          onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+        >
+          <CalendarIcon className="h-3 w-3 opacity-40 shrink-0" />
+          {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0 pointer-events-auto" align="start" onClick={(e) => e.stopPropagation()}>
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={(d) => { onChange(d ? format(d, "yyyy-MM-dd") : ""); setOpen(false); }}
+          initialFocus
+          className="p-3 pointer-events-auto"
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 /* ─── Bloco Accordion ──────────────────────────────────── */
-function BlocoSection({ bloco, onItemClick, onEditItem }: { bloco: ChecklistBloco; onItemClick: (itemId: string) => void; onEditItem: (item: any) => void }) {
+function BlocoSection({ bloco, onItemClick, onEditItem, onUpdateField }: {
+  bloco: ChecklistBloco;
+  onItemClick: (itemId: string) => void;
+  onEditItem: (item: any) => void;
+  onUpdateField: (itemId: string, field: string, value: any) => void;
+}) {
   const [open, setOpen] = useState(true);
   const total = bloco.itens.length;
   const concluidos = bloco.itens.filter((i) => i.status === "CONCLUIDO").length;
@@ -86,9 +209,9 @@ function BlocoSection({ bloco, onItemClick, onEditItem }: { bloco: ChecklistBloc
                 <th className="px-4 py-2 text-left font-medium text-muted-foreground">Item</th>
                 <th className="px-3 py-2 text-left font-medium text-muted-foreground w-28">Status</th>
                 <th className="px-3 py-2 text-left font-medium text-muted-foreground w-32">Responsável</th>
-                <th className="px-3 py-2 text-left font-medium text-muted-foreground w-24">Data</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground w-28">Data</th>
                 <th className="px-3 py-2 text-left font-medium text-muted-foreground w-28">Setor</th>
-                <th className="px-3 py-2 text-left font-medium text-muted-foreground w-20">Criticidade</th>
+                <th className="px-3 py-2 text-left font-medium text-muted-foreground w-24">Criticidade</th>
                 <th className="px-3 py-2 text-left font-medium text-muted-foreground w-32">Evidência</th>
                 <th className="px-3 py-2 text-center font-medium text-muted-foreground w-12">NC</th>
                 <th className="px-3 py-2 text-left font-medium text-muted-foreground w-10">Ações</th>
@@ -105,11 +228,21 @@ function BlocoSection({ bloco, onItemClick, onEditItem }: { bloco: ChecklistBloc
                   onClick={() => onItemClick(item.id)}
                 >
                   <td className="px-4 py-2 text-foreground">{item.descricao}</td>
-                  <td className="px-3 py-2"><StatusPill status={item.status} /></td>
-                  <td className="px-3 py-2 text-muted-foreground text-xs">{item.responsavel}</td>
-                  <td className="px-3 py-2 text-muted-foreground text-xs">{item.data}</td>
-                  <td className="px-3 py-2 text-muted-foreground text-xs">{item.setor}</td>
-                  <td className="px-3 py-2"><CritPill crit={item.criticidade} /></td>
+                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <InlineStatusSelect value={item.status} onChange={(v) => onUpdateField(item.id, "status", v)} />
+                  </td>
+                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <InlineResponsavelPicker value={item.responsavel} onChange={(v) => onUpdateField(item.id, "responsavel", v)} />
+                  </td>
+                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <InlineDatePicker value={item.data} onChange={(v) => onUpdateField(item.id, "data", v)} />
+                  </td>
+                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <InlineSetorSelect value={item.setor} onChange={(v) => onUpdateField(item.id, "setor", v)} />
+                  </td>
+                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <InlineCritSelect value={item.criticidade} onChange={(v) => onUpdateField(item.id, "criticidade", v)} />
+                  </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">
                     {item.evidencia ? (
                       <span className="flex items-center gap-1">
@@ -337,7 +470,14 @@ export default function ChecklistPreInventarioPage() {
       <div className="space-y-2">
         {filteredBlocos.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhum item encontrado com os filtros aplicados.</p>}
         {filteredBlocos.map((bloco) => (
-          <BlocoSection key={bloco.id} bloco={bloco} onItemClick={handleItemClick} onEditItem={(item) => { setEditItem(item); setEditOpen(true); }} />
+          <BlocoSection key={bloco.id} bloco={bloco} onItemClick={handleItemClick} onEditItem={(item) => { setEditItem(item); setEditOpen(true); }} onUpdateField={(itemId, field, value) => {
+            if (checklist) {
+              for (const b of checklist.blocos) {
+                const found = b.itens.find((i) => i.id === itemId);
+                if (found) { (found as any)[field] = value; break; }
+              }
+            }
+          }} />
         ))}
       </div>
 
