@@ -46,6 +46,7 @@ export const SESMT_MENU_GROUPS: SesmtMenuGroup[] = [
       { key: "ambulatorio-prontuario", label: "Ambulatorio / Prontuario", path: "/sesmt/pessoas-e-saude/ambulatorio-prontuario" },
       { key: "medicamentos-vacinas", label: "Medicamentos / Vacinas", path: "/sesmt/pessoas-e-saude/medicamentos-vacinas" },
       { key: "ergonomia-nr-17", label: "Ergonomia / NR-17", path: "/sesmt/pessoas-e-saude/ergonomia-nr-17" },
+      { key: "dossie-colaborador", label: "Dossiê do Colaborador", path: "/sesmt/pessoas-e-saude/dossie-colaborador" },
     ],
   },
   {
