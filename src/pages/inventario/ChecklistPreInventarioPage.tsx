@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ClipboardCheck, ChevronDown, ChevronRight, Search, Printer, FileDown,
   Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Users, Building2,
-  Filter, FileWarning, Eye,
+  Filter, FileWarning, Eye, Pencil, MoreHorizontal,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { mockChecklists } from "@/data/mockChecklistPreInventario";
 import NovoChecklistModal from "@/components/inventario/NovoChecklistModal";
+import EditarItemChecklistModal from "@/components/inventario/EditarItemChecklistModal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS,
   STATUS_GERAL_LABELS, type ChecklistItemStatus, type ChecklistCriticidade,
@@ -52,7 +54,7 @@ function CritPill({ crit }: { crit: ChecklistCriticidade }) {
 }
 
 /* ─── Bloco Accordion ──────────────────────────────────── */
-function BlocoSection({ bloco, onItemClick }: { bloco: ChecklistBloco; onItemClick: (itemId: string) => void }) {
+function BlocoSection({ bloco, onItemClick, onEditItem }: { bloco: ChecklistBloco; onItemClick: (itemId: string) => void; onEditItem: (item: any) => void }) {
   const [open, setOpen] = useState(true);
   const total = bloco.itens.length;
   const concluidos = bloco.itens.filter((i) => i.status === "CONCLUIDO").length;
@@ -136,14 +138,21 @@ function BlocoSection({ bloco, onItemClick }: { bloco: ChecklistBloco; onItemCli
                     )}
                   </td>
                   <td className="px-3 py-2 text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={(e) => { e.stopPropagation(); onItemClick(item.id); }}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => e.stopPropagation()}>
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEditItem(item)}>
+                          <Pencil className="h-3.5 w-3.5 mr-2" />Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onItemClick(item.id)}>
+                          <Eye className="h-3.5 w-3.5 mr-2" />Visualizar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               ))}
@@ -165,6 +174,8 @@ export default function ChecklistPreInventarioPage() {
   const [selectedId, setSelectedId] = useState<string>(mockChecklists[0]?.id ?? "");
   const [quickFilter, setQuickFilter] = useState<string | null>(null);
   const [novoChecklistOpen, setNovoChecklistOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const checklist = mockChecklists.find((c) => c.id === selectedId);
 
@@ -326,11 +337,30 @@ export default function ChecklistPreInventarioPage() {
       <div className="space-y-2">
         {filteredBlocos.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhum item encontrado com os filtros aplicados.</p>}
         {filteredBlocos.map((bloco) => (
-          <BlocoSection key={bloco.id} bloco={bloco} onItemClick={handleItemClick} />
+          <BlocoSection key={bloco.id} bloco={bloco} onItemClick={handleItemClick} onEditItem={(item) => { setEditItem(item); setEditOpen(true); }} />
         ))}
       </div>
 
       <NovoChecklistModal open={novoChecklistOpen} onOpenChange={setNovoChecklistOpen} />
+      <EditarItemChecklistModal
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        item={editItem}
+        onSave={(itemId, data) => {
+          // Update mock data in-place for demo
+          if (checklist) {
+            for (const bloco of checklist.blocos) {
+              const found = bloco.itens.find((i) => i.id === itemId);
+              if (found) {
+                found.responsavel = data.responsavel;
+                found.data = data.data;
+                found.setor = data.setor;
+                break;
+              }
+            }
+          }
+        }}
+      />
     </div>
   );
 }
