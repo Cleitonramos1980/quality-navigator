@@ -94,12 +94,12 @@ const InventarioDashboardPage = () => {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="cursor-pointer hover:ring-1 hover:ring-primary/30 transition-shadow" onClick={() => navigate("/qualidade/inventario/contagens")}>
           <CardHeader><CardTitle className="text-sm font-medium">Status das Contagens (Hoje)</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie data={statusData} dataKey="value" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2}>
+                <Pie data={statusData} dataKey="value" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2} style={{ cursor: "pointer" }} onClick={() => navigate("/qualidade/inventario/contagens")}>
                   {statusData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                 </Pie>
                 <Tooltip />
@@ -116,8 +116,8 @@ const InventarioDashboardPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">AderÃªncia por Loja</CardTitle></CardHeader>
+        <Card className="cursor-pointer hover:ring-1 hover:ring-primary/30 transition-shadow" onClick={() => navigate("/qualidade/inventario/contagens")}>
+          <CardHeader><CardTitle className="text-sm font-medium">Aderência por Loja</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={lojaRanking} layout="vertical">
@@ -125,7 +125,7 @@ const InventarioDashboardPage = () => {
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
                 <YAxis dataKey="nome" type="category" width={110} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="aderencia" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="aderencia" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} style={{ cursor: "pointer" }} onClick={() => navigate("/qualidade/inventario/contagens")} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -317,16 +317,16 @@ function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<ty
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <KPICard title="Total Itens" value={stats.total} icon={<ClipboardCheck className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/checklist-pre")} />
-        <KPICard title="Concluídos" value={stats.concluidos} icon={<CheckCircle className="h-4 w-4" />} />
-        <KPICard title="Em Andamento" value={stats.emAndamento} icon={<Clock className="h-4 w-4" />} />
-        <KPICard title="Pendentes" value={stats.pendentes} icon={<AlertTriangle className="h-4 w-4" />} />
-        <KPICard title="Críticos Abertos" value={stats.criticos} icon={<AlertTriangle className="h-4 w-4" />} />
-        <KPICard title="NCs Abertas" value={stats.ncs} icon={<FileWarning className="h-4 w-4" />} />
-        <KPICard title="Progresso" value={`${stats.pctGeral}%`} icon={<TrendingUp className="h-4 w-4" />} />
+        <KPICard title="Concluídos" value={stats.concluidos} icon={<CheckCircle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/checklist-pre")} />
+        <KPICard title="Em Andamento" value={stats.emAndamento} icon={<Clock className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/checklist-pre")} />
+        <KPICard title="Pendentes" value={stats.pendentes} icon={<AlertTriangle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/checklist-pre")} />
+        <KPICard title="Críticos Abertos" value={stats.criticos} icon={<AlertTriangle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/checklist-pre")} />
+        <KPICard title="NCs Abertas" value={stats.ncs} icon={<FileWarning className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/checklist-pre")} />
+        <KPICard title="Progresso" value={`${stats.pctGeral}%`} icon={<TrendingUp className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/checklist-pre")} />
       </div>
 
       {/* Progresso geral */}
-      <Card>
+      <Card className="cursor-pointer hover:ring-1 hover:ring-primary/30 transition-shadow" onClick={() => navigate("/qualidade/inventario/checklist-pre")}>
         <CardContent className="pt-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-foreground">Progresso Geral do Pré-Inventário</span>
@@ -339,12 +339,12 @@ function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<ty
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Status pie */}
-        <Card>
+        <Card className="cursor-pointer hover:ring-1 hover:ring-primary/30 transition-shadow" onClick={() => navigate("/qualidade/inventario/checklist-pre")}>
           <CardHeader><CardTitle className="text-sm font-medium">Distribuição por Status</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie data={statusPieData} dataKey="value" cx="50%" cy="50%" outerRadius={80} innerRadius={45} paddingAngle={2}>
+                <Pie data={statusPieData} dataKey="value" cx="50%" cy="50%" outerRadius={80} innerRadius={45} paddingAngle={2} style={{ cursor: "pointer" }} onClick={() => navigate("/qualidade/inventario/checklist-pre")}>
                   {statusPieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                 </Pie>
                 <Tooltip />
@@ -361,8 +361,7 @@ function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<ty
           </CardContent>
         </Card>
 
-        {/* Progresso por bloco */}
-        <Card>
+        <Card className="cursor-pointer hover:ring-1 hover:ring-primary/30 transition-shadow" onClick={() => navigate("/qualidade/inventario/checklist-pre")}>
           <CardHeader><CardTitle className="text-sm font-medium">Progresso por Bloco</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
@@ -371,7 +370,7 @@ function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<ty
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
                 <YAxis dataKey="nome" type="category" width={140} tick={{ fontSize: 10 }} />
                 <Tooltip formatter={(val: number) => `${val}%`} />
-                <Bar dataKey="concluido" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="concluido" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} style={{ cursor: "pointer" }} onClick={() => navigate("/qualidade/inventario/checklist-pre")} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -384,7 +383,11 @@ function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<ty
           <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" />Acompanhamento por Bloco</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {blocoStats.map((b) => (
-              <div key={b.nome} className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0">
+              <div
+                key={b.nome}
+                className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0 cursor-pointer hover:bg-muted/30 rounded px-1 transition-colors"
+                onClick={() => navigate("/qualidade/inventario/checklist-pre")}
+              >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm truncate">{b.nome}</span>
