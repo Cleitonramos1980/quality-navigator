@@ -37,6 +37,16 @@ export const STATUS_GERAL_LABELS: Record<ChecklistGeralStatus, string> = {
   CANCELADO: "Cancelado",
 };
 
+export const SETORES_CHECKLIST = [
+  "Espumação", "Aglomerado", "Laminação", "Bordado",
+  "Costura reta", "Montagem", "Fechamento", "Embalagem",
+  "Marcenaria", "Móveis", "Almoxarifado", "CD", "Lojas", "Avaria",
+] as const;
+
+export const EVIDENCIA_TIPOS = [
+  "Foto", "Print do sistema bloqueado", "Etiquetas aplicadas", "Relatório do sistema",
+] as const;
+
 export interface ChecklistItemHistorico {
   id: string;
   data: string;
@@ -54,6 +64,9 @@ export interface ChecklistItem {
   data: string;
   setor: string;
   criticidade: ChecklistCriticidade;
+  evidencia?: string;
+  nc?: boolean;
+  planoAcao?: string;
   observacao?: string;
   evidencias?: string[];
   historico: ChecklistItemHistorico[];
