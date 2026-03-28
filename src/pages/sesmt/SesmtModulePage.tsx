@@ -1088,515 +1088,380 @@ const SesmtModulePage = () => {
     );
   }
 
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelTab, setPanelTab] = useState<"form" | "historico" | "evidencias" | "comentarios" | "acoes">("form");
+
+  const openRecordInPanel = async (id: string, tab: "form" | "historico" | "evidencias" | "comentarios" | "acoes" = "form") => {
+    await openRecord(id);
+    setPanelTab(tab);
+    setPanelOpen(true);
+  };
+
+  const openNewRecordPanel = () => {
+    handleNewRecord();
+    setPanelTab("form");
+    setPanelOpen(true);
+  };
+
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+    <div className="space-y-3 animate-fade-in">
+      {/* Header compacto */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{moduleNode?.label || "SESMT / SST"}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Gestao operacional com filtros, priorizacao e rastreabilidade das acoes.
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Contexto da planta atual: <span className="font-medium text-foreground">{unitFilter === "ALL" ? "Corporativo" : unitFilter}</span>
-            {" • "}
-            Escopo: SESMT / SST
+          <h1 className="text-xl font-bold text-foreground">{moduleNode?.label || "SESMT / SST"}</h1>
+          <p className="text-xs text-muted-foreground">
+            Planta: <span className="font-medium text-foreground">{unitFilter === "ALL" ? "Corporativo" : unitFilter}</span>
+            {" • "}{totalRecords} registros
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" className="gap-2" onClick={handleNewRecord}>
-            <Plus className="w-4 h-4" />
-            Novo registro
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button type="button" size="sm" className="gap-1.5" onClick={openNewRecordPanel}>
+            <Plus className="w-3.5 h-3.5" /> Novo
           </Button>
-          <Button type="button" variant="outline" className="gap-2" onClick={handleExport}>
-            <Download className="w-4 h-4" />
-            Exportar
+          <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={handleExport}>
+            <Download className="w-3.5 h-3.5" /> Exportar
           </Button>
-          <Button type="button" variant="outline" className="gap-2" onClick={() => void load()}>
-            <RefreshCw className="w-4 h-4" />
-            Atualizar
+          <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => void load()}>
+            <RefreshCw className="w-3.5 h-3.5" />
           </Button>
           <Button
-            type="button"
-            variant="outline"
-            className="gap-2"
-            onClick={() => void persistFavoritePreset({
-              presetKey: activePresetKey,
-              status: statusFilter,
-              criticidade: criticidadeFilter,
-              unidade: unitFilter,
-              sortBy,
-              sortDir,
-              specificFilters,
-            })}
+            type="button" size="sm" variant="outline" className="gap-1.5"
+            onClick={() => void persistFavoritePreset({ presetKey: activePresetKey, status: statusFilter, criticidade: criticidadeFilter, unidade: unitFilter, sortBy, sortDir, specificFilters })}
           >
-            <Star className="w-4 h-4" />
-            Favoritar filtro
+            <Star className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
 
-      <SectionCard title="Filtros" description="Aplicar filtros obrigatorios, filtros rapidos e contexto operacional do submodulo">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <Select value={tipoFilter} onValueChange={(value) => setTipoFilter(value)}>
-            <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos os tipos</SelectItem>
-              {tipoOptions.map((option) => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
-            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos os status</SelectItem>
-              {STATUS_OPTIONS.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={unitFilter} onValueChange={(value) => setUnitFilter(value)}>
-            <SelectTrigger><SelectValue placeholder="Unidade" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todas as unidades</SelectItem>
-              {UNIT_OPTIONS.map((unit) => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Input placeholder="Setor" value={setorFilter} onChange={(event) => setSetorFilter(event.target.value)} />
-          <Input placeholder="Responsavel" value={responsavelFilter} onChange={(event) => setResponsavelFilter(event.target.value)} />
-          <Input placeholder="NR" value={nrFilter} onChange={(event) => setNrFilter(event.target.value)} />
-          <Input type="date" value={periodStartFilter} onChange={(event) => setPeriodStartFilter(event.target.value)} />
-          <Input type="date" value={periodEndFilter} onChange={(event) => setPeriodEndFilter(event.target.value)} />
-          <Select value={vencimentoFilter} onValueChange={(value) => setVencimentoFilter(value as VencimentoFilterKey)}>
-            <SelectTrigger><SelectValue placeholder="Vencimento" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos os vencimentos</SelectItem>
-              <SelectItem value="VENCIDOS">Vencidos</SelectItem>
-              <SelectItem value="HOJE">Vencendo hoje</SelectItem>
-              <SelectItem value="PROXIMOS">Proximos 7 dias</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={criticidadeFilter} onValueChange={(value) => setCriticidadeFilter(value)}>
-            <SelectTrigger><SelectValue placeholder="Criticidade" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todas as criticidades</SelectItem>
-              {CRITICALITY_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-2">
-          <Button type="button" size="sm" variant={quickFilter === "TODOS" ? "default" : "outline"} onClick={() => handleQuickFilter("TODOS")}>Todos</Button>
-          <Button type="button" size="sm" variant={quickFilter === "VENCIDOS" ? "default" : "outline"} onClick={() => handleQuickFilter("VENCIDOS")}>Vencidos</Button>
-          <Button type="button" size="sm" variant={quickFilter === "VENCE_HOJE" ? "default" : "outline"} onClick={() => handleQuickFilter("VENCE_HOJE")}>Vencendo hoje</Button>
-          <Button type="button" size="sm" variant={quickFilter === "CRITICOS" ? "default" : "outline"} onClick={() => handleQuickFilter("CRITICOS")}>Criticos</Button>
-          <Button type="button" size="sm" variant={quickFilter === "SEM_RESPONSAVEL" ? "default" : "outline"} onClick={() => handleQuickFilter("SEM_RESPONSAVEL")}>Sem responsavel</Button>
-          <Button type="button" size="sm" variant={quickFilter === "SEM_EVIDENCIA" ? "default" : "outline"} onClick={() => handleQuickFilter("SEM_EVIDENCIA")}>Sem evidencia</Button>
-          <Button type="button" size="sm" variant={quickFilter === "MEUS_REGISTROS" ? "default" : "outline"} onClick={() => handleQuickFilter("MEUS_REGISTROS")}>Meus registros</Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="ml-auto"
-            onClick={() => {
-              setSearch("");
-              setStatusFilter("ALL");
-              setCriticidadeFilter("ALL");
-              setUnitFilter("ALL");
-              setTipoFilter("ALL");
-              setSetorFilter("");
-              setResponsavelFilter("");
-              setNrFilter("");
-              setPeriodStartFilter("");
-              setPeriodEndFilter("");
-              setVencimentoFilter("ALL");
-              setQuickFilter("TODOS");
-              setSortBy("updatedAt");
-              setSortDir("desc");
-              setSpecificFilters(buildEmptySpecificForm(moduleKey));
-            }}
-          >
-            Limpar filtros
-          </Button>
-        </div>
-
-        <div className="mt-3 pt-3 border-t border-border grid gap-3 sm:grid-cols-3">
-          <Input
-            placeholder="Buscar por titulo, responsavel ou setor"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
-            <SelectTrigger><SelectValue placeholder="Ordenar por" /></SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={sortDir} onValueChange={(value) => setSortDir(value as "asc" | "desc")}>
-            <SelectTrigger><SelectValue placeholder="Direcao" /></SelectTrigger>
-            <SelectContent>
-              {SORT_DIR_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {filterPresets.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-2">Presets do submodulo</p>
-            <div className="flex flex-wrap gap-2">
-              {filterPresets.map((preset) => (
-                <Button
-                  key={preset.key}
-                  type="button"
-                  size="sm"
-                  variant={activePresetKey === preset.key ? "default" : "outline"}
-                  onClick={() => applyFilterPreset(preset)}
-                >
-                  {favoritePresetKey === preset.key ? `Favorito • ${preset.label}` : preset.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {moduleSchema.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-border">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <p className="text-xs text-muted-foreground">Filtros contextuais do submodulo</p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={!hasActiveSpecificFilters}
-                onClick={() => setSpecificFilters(buildEmptySpecificForm(moduleKey))}
-              >
-                Limpar contexto
-              </Button>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {moduleSchema.map((field) => (
-                <div key={field.key}>
-                  {field.type === "select" && (
-                    <Select
-                      value={specificFilters[field.key] || "ALL"}
-                      onValueChange={(value) => setSpecificFilterField(field.key, value === "ALL" ? "" : value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={`Filtrar ${field.label.toLowerCase()}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">Todos</SelectItem>
-                        {(field.options || []).map((option) => (
-                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {field.type === "date" && (
-                    <Input
-                      type="date"
-                      value={specificFilters[field.key] || ""}
-                      onChange={(event) => setSpecificFilterField(field.key, event.target.value)}
-                    />
-                  )}
-                  {(field.type === "text" || field.type === "number" || field.type === "textarea") && (
-                    <Input
-                      placeholder={`Filtrar ${field.label.toLowerCase()}`}
-                      value={specificFilters[field.key] || ""}
-                      onChange={(event) => setSpecificFilterField(field.key, event.target.value)}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </SectionCard>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      {/* KPIs compactos */}
+      <div className="grid gap-2 grid-cols-3 lg:grid-cols-6">
         {kpiCards.map((card) => (
-          <div key={card.label} className="rounded-lg border border-border bg-card px-3 py-2">
-            <p className="text-xs text-muted-foreground">{card.label}</p>
-            <p className={`text-xl font-semibold ${card.tone || "text-foreground"}`}>{card.value}</p>
+          <div key={card.label} className="rounded-lg border border-border bg-card px-2.5 py-1.5">
+            <p className="text-[10px] text-muted-foreground leading-tight">{card.label}</p>
+            <p className={`text-lg font-bold leading-tight ${card.tone || "text-foreground"}`}>{card.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
-        <div className="space-y-4">
-          <SectionCard title="Contexto de cadastros" description="Bases auxiliares para fluxo operacional por unidade">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 text-sm">
-              <div className="rounded-md border border-border px-3 py-2">
-                Unidades: {Array.isArray(lookupSummary?.unidades) ? lookupSummary.unidades.length : 0}
-              </div>
-              <div className="rounded-md border border-border px-3 py-2">
-                Setores: {Array.isArray(lookupSummary?.setores) ? lookupSummary.setores.length : 0}
-              </div>
-              <div className="rounded-md border border-border px-3 py-2">
-                Colaboradores: {Array.isArray(lookupSummary?.colaboradores) ? lookupSummary.colaboradores.length : 0}
-              </div>
-              <div className="rounded-md border border-border px-3 py-2">
-                Profissionais SESMT: {Array.isArray(lookupSummary?.profissionaisSesmt) ? lookupSummary.profissionaisSesmt.length : 0}
-              </div>
-              <div className="rounded-md border border-border px-3 py-2">
-                NR aplicaveis: {nrAplicaveis}
-              </div>
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Registros" description="Lista operacional com prioridade visual e acoes por linha">
-            <div className="overflow-x-auto rounded-md border border-border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Codigo</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Criticidade</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>NR</TableHead>
-                    <TableHead>Responsavel</TableHead>
-                    <TableHead className="text-right">Acoes</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRecords.length === 0 && (
-                    <TableRow>
-                      <TableCell className="text-center text-muted-foreground" colSpan={9}>
-                        Nenhum registro encontrado com os filtros atuais.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {filteredRecords.map((record) => (
-                    <TableRow key={record.id} className={selected?.id === record.id ? "bg-primary/5" : undefined}>
-                      <TableCell className="whitespace-nowrap text-xs">{getRecordTypeLabel(record)}</TableCell>
-                      <TableCell className="whitespace-nowrap font-medium">{record.id}</TableCell>
-                      <TableCell>{record.unidade}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-medium ${getStatusTone(record.status)}`}>
-                          {record.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-medium ${getCriticidadeTone(record.criticidade)}`}>
-                          {record.criticidade}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={isOverdue(record) ? "font-semibold text-red-600" : "text-foreground"}>
-                          {record.vencimentoAt || "-"}
-                        </span>
-                      </TableCell>
-                      <TableCell>{record.nr || "-"}</TableCell>
-                      <TableCell>{record.responsavel || "-"}</TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1">
-                          <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Editar" onClick={() => void openRecord(record.id)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Abrir detalhe" onClick={() => void handleOpenRecordByTab(record.id, "historico")}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Anexar evidencia" onClick={() => void handleOpenRecordByTab(record.id, "evidencias")}>
-                            <UploadCloud className="h-4 w-4" />
-                          </Button>
-                          <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Duplicar" onClick={() => handleDuplicateRecord(record)}>
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-emerald-700"
-                            title="Concluir"
-                            disabled={record.status === "CONCLUIDO"}
-                            onClick={() => void handleSetRecordStatus(record, "CONCLUIDO")}
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-              <p>
-                Exibindo {filteredRecords.length} de {totalRecords} registros
-                {" • "}
-                Pagina {Math.min(page, totalPages)} de {totalPages}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={loading || page <= 1}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={loading || page >= totalPages}
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                >
-                  Proxima
-                </Button>
-              </div>
-            </div>
-          </SectionCard>
-
+      {/* Filtros colapsáveis */}
+      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <div className="flex items-center gap-2">
+          <CollapsibleTrigger asChild>
+            <Button type="button" variant="outline" size="sm" className="gap-1.5">
+              {filtersOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              Filtros
+            </Button>
+          </CollapsibleTrigger>
+          {/* Quick filters inline */}
+          <div className="flex flex-wrap gap-1">
+            {(["TODOS", "VENCIDOS", "CRITICOS", "SEM_RESPONSAVEL", "MEUS_REGISTROS"] as QuickFilterKey[]).map((qf) => (
+              <Button key={qf} type="button" size="sm" variant={quickFilter === qf ? "default" : "ghost"} className="h-7 px-2 text-xs" onClick={() => handleQuickFilter(qf)}>
+                {qf === "TODOS" ? "Todos" : qf === "VENCIDOS" ? "Vencidos" : qf === "CRITICOS" ? "Críticos" : qf === "SEM_RESPONSAVEL" ? "S/ Resp." : "Meus"}
+              </Button>
+            ))}
+          </div>
+          <Input placeholder="Buscar..." className="h-7 max-w-[220px] text-xs" value={search} onChange={(event) => setSearch(event.target.value)} />
         </div>
 
-        <div className="xl:sticky xl:top-4 xl:h-fit">
-        <SectionCard title={selected ? `Detalhe do registro ${selected.id}` : "Novo registro"} description="Campos operacionais principais e contexto de cadastro do submodulo">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label="Titulo" required><Input value={form.titulo} onChange={(event) => setField("titulo", event.target.value)} /></FormField>
-            <FormField label="Responsavel" required><Input value={form.responsavel} onChange={(event) => setField("responsavel", event.target.value)} /></FormField>
-            <FormField label="Unidade">
-              <Select value={form.unidade} onValueChange={(value) => setField("unidade", value)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{UNIT_OPTIONS.map((unit) => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}</SelectContent>
+        <CollapsibleContent className="mt-2">
+          <div className="rounded-lg border border-border bg-card p-3 space-y-3">
+            <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+              <Select value={tipoFilter} onValueChange={(value) => setTipoFilter(value)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos os tipos</SelectItem>
+                  {tipoOptions.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                </SelectContent>
               </Select>
-            </FormField>
-            <FormField label="Status">
-              <Select value={form.status} onValueChange={(value) => setField("status", value)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUS_OPTIONS.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos os status</SelectItem>
+                  {STATUS_OPTIONS.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+                </SelectContent>
               </Select>
-            </FormField>
-            <FormField label="Criticidade">
-              <Select value={form.criticidade} onValueChange={(value) => setField("criticidade", value)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{CRITICALITY_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+              <Select value={unitFilter} onValueChange={(value) => setUnitFilter(value)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Unidade" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas</SelectItem>
+                  {UNIT_OPTIONS.map((unit) => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
+                </SelectContent>
               </Select>
-            </FormField>
-            <FormField label="NR"><Input value={form.nr} onChange={(event) => setField("nr", event.target.value)} /></FormField>
-            <FormField label="Setor"><Input value={form.setor} onChange={(event) => setField("setor", event.target.value)} /></FormField>
-            <FormField label="Funcao"><Input value={form.funcao} onChange={(event) => setField("funcao", event.target.value)} /></FormField>
-            <FormField label="Vencimento"><Input type="date" value={form.vencimentoAt} onChange={(event) => setField("vencimentoAt", event.target.value)} /></FormField>
-            <FormField label="Investimento (R$)"><Input value={form.investimento} onChange={(event) => setField("investimento", event.target.value)} /></FormField>
-            <FormField label="Custo (R$)"><Input value={form.custo} onChange={(event) => setField("custo", event.target.value)} /></FormField>
-            <FormField label="Risco Inerente"><Input value={form.riscoInerente} onChange={(event) => setField("riscoInerente", event.target.value)} /></FormField>
-            <FormField label="Risco Residual"><Input value={form.riscoResidual} onChange={(event) => setField("riscoResidual", event.target.value)} /></FormField>
-          </div>
+              <Select value={criticidadeFilter} onValueChange={(value) => setCriticidadeFilter(value)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Criticidade" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas</SelectItem>
+                  {CRITICALITY_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={vencimentoFilter} onValueChange={(value) => setVencimentoFilter(value as VencimentoFilterKey)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Vencimento" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos</SelectItem>
+                  <SelectItem value="VENCIDOS">Vencidos</SelectItem>
+                  <SelectItem value="HOJE">Hoje</SelectItem>
+                  <SelectItem value="PROXIMOS">7 dias</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input className="h-8 text-xs" placeholder="Setor" value={setorFilter} onChange={(event) => setSetorFilter(event.target.value)} />
+              <Input className="h-8 text-xs" placeholder="Responsável" value={responsavelFilter} onChange={(event) => setResponsavelFilter(event.target.value)} />
+              <Input className="h-8 text-xs" placeholder="NR" value={nrFilter} onChange={(event) => setNrFilter(event.target.value)} />
+              <Input className="h-8 text-xs" type="date" value={periodStartFilter} onChange={(event) => setPeriodStartFilter(event.target.value)} />
+              <Input className="h-8 text-xs" type="date" value={periodEndFilter} onChange={(event) => setPeriodEndFilter(event.target.value)} />
+            </div>
 
-          {moduleSchema.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-semibold text-foreground mb-2">Campos dedicados do submodulo</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {moduleSchema.map((field) => (
-                  <div key={field.key} className={field.type === "textarea" ? "sm:col-span-2" : ""}>
-                    <FormField label={field.label} required={field.required}>
-                      {field.type === "textarea" && (
-                        <Textarea
-                          rows={3}
-                          placeholder={field.placeholder}
-                          value={specificForm[field.key] || ""}
-                          onChange={(event) => setSpecificField(field.key, event.target.value)}
-                        />
-                      )}
+            <div className="flex items-center gap-2">
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
+                <SelectTrigger className="h-8 text-xs max-w-[200px]"><SelectValue placeholder="Ordenar" /></SelectTrigger>
+                <SelectContent>
+                  {sortOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={sortDir} onValueChange={(value) => setSortDir(value as "asc" | "desc")}>
+                <SelectTrigger className="h-8 text-xs max-w-[120px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SORT_DIR_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button type="button" size="sm" variant="ghost" className="h-7 text-xs ml-auto" onClick={() => {
+                setSearch(""); setStatusFilter("ALL"); setCriticidadeFilter("ALL"); setUnitFilter("ALL"); setTipoFilter("ALL");
+                setSetorFilter(""); setResponsavelFilter(""); setNrFilter(""); setPeriodStartFilter(""); setPeriodEndFilter("");
+                setVencimentoFilter("ALL"); setQuickFilter("TODOS"); setSortBy("updatedAt"); setSortDir("desc");
+                setSpecificFilters(buildEmptySpecificForm(moduleKey));
+              }}>Limpar filtros</Button>
+            </div>
+
+            {filterPresets.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border">
+                {filterPresets.map((preset) => (
+                  <Button key={preset.key} type="button" size="sm" variant={activePresetKey === preset.key ? "default" : "outline"} className="h-7 text-xs" onClick={() => applyFilterPreset(preset)}>
+                    {favoritePresetKey === preset.key ? `★ ${preset.label}` : preset.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            {moduleSchema.length > 0 && (
+              <div className="pt-2 border-t border-border">
+                <p className="text-[10px] text-muted-foreground mb-1.5">Filtros do submódulo</p>
+                <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
+                  {moduleSchema.map((field) => (
+                    <div key={field.key}>
                       {field.type === "select" && (
-                        <Select
-                          value={specificForm[field.key] || undefined}
-                          onValueChange={(value) => setSpecificField(field.key, value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={field.placeholder || "Selecione"} />
-                          </SelectTrigger>
+                        <Select value={specificFilters[field.key] || "ALL"} onValueChange={(value) => setSpecificFilterField(field.key, value === "ALL" ? "" : value)}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder={field.label} /></SelectTrigger>
                           <SelectContent>
-                            {(field.options || []).map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="ALL">Todos</SelectItem>
+                            {(field.options || []).map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       )}
-                      {field.type === "number" && (
-                        <Input
-                          inputMode="decimal"
-                          placeholder={field.placeholder}
-                          value={specificForm[field.key] || ""}
-                          onChange={(event) => setSpecificField(field.key, event.target.value)}
-                        />
+                      {field.type !== "select" && (
+                        <Input className="h-8 text-xs" type={field.type === "date" ? "date" : "text"} placeholder={field.label} value={specificFilters[field.key] || ""} onChange={(event) => setSpecificFilterField(field.key, event.target.value)} />
                       )}
-                      {field.type === "date" && (
-                        <Input
-                          type="date"
-                          value={specificForm[field.key] || ""}
-                          onChange={(event) => setSpecificField(field.key, event.target.value)}
-                        />
-                      )}
-                      {(field.type === "text") && (
-                        <Input
-                          placeholder={field.placeholder}
-                          value={specificForm[field.key] || ""}
-                          onChange={(event) => setSpecificField(field.key, event.target.value)}
-                        />
-                      )}
-                    </FormField>
-                  </div>
-                ))}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-
-          <FormField label="Observacoes">
-            <Textarea value={form.descricao} onChange={(event) => setField("descricao", event.target.value)} rows={4} />
-          </FormField>
-
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={handleNewRecord}>
-              Limpar
-            </Button>
-            {!selected && (
-              <Button onClick={() => void handleCreate()} className="gap-2">
-                <Save className="w-4 h-4" />
-                Salvar registro
-              </Button>
-            )}
-            {selected && (
-              <Button onClick={() => void handleUpdate()} className="gap-2">
-                <Save className="w-4 h-4" />
-                Atualizar registro
-              </Button>
             )}
           </div>
-        </SectionCard>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Contexto compacto inline */}
+      {lookupSummary && (
+        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <span>Unidades: <strong className="text-foreground">{Array.isArray(lookupSummary?.unidades) ? lookupSummary.unidades.length : 0}</strong></span>
+          <span>Setores: <strong className="text-foreground">{Array.isArray(lookupSummary?.setores) ? lookupSummary.setores.length : 0}</strong></span>
+          <span>Colaboradores: <strong className="text-foreground">{Array.isArray(lookupSummary?.colaboradores) ? lookupSummary.colaboradores.length : 0}</strong></span>
+          <span>NR aplicáveis: <strong className="text-foreground">{nrAplicaveis}</strong></span>
+        </div>
+      )}
+
+      {/* Tabela full-width */}
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Tipo</TableHead>
+                <TableHead className="text-xs">Código</TableHead>
+                <TableHead className="text-xs">Título</TableHead>
+                <TableHead className="text-xs">Unidade</TableHead>
+                <TableHead className="text-xs">Status</TableHead>
+                <TableHead className="text-xs">Criticidade</TableHead>
+                <TableHead className="text-xs">Vencimento</TableHead>
+                <TableHead className="text-xs">NR</TableHead>
+                <TableHead className="text-xs">Responsável</TableHead>
+                <TableHead className="text-xs text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading && (
+                <TableRow>
+                  <TableCell className="text-center text-muted-foreground text-xs py-8" colSpan={10}>Carregando registros...</TableCell>
+                </TableRow>
+              )}
+              {!loading && filteredRecords.length === 0 && (
+                <TableRow>
+                  <TableCell className="text-center text-muted-foreground text-xs py-8" colSpan={10}>
+                    Nenhum registro encontrado. Clique em <strong>Novo</strong> para criar o primeiro.
+                  </TableCell>
+                </TableRow>
+              )}
+              {filteredRecords.map((record) => (
+                <TableRow
+                  key={record.id}
+                  className={`cursor-pointer hover:bg-muted/40 ${selected?.id === record.id ? "bg-primary/5" : ""}`}
+                  onClick={() => void openRecordInPanel(record.id)}
+                >
+                  <TableCell className="whitespace-nowrap text-xs py-2">{getRecordTypeLabel(record)}</TableCell>
+                  <TableCell className="whitespace-nowrap font-medium text-xs py-2">{record.id}</TableCell>
+                  <TableCell className="text-xs py-2 max-w-[200px] truncate">{record.titulo}</TableCell>
+                  <TableCell className="text-xs py-2">{record.unidade}</TableCell>
+                  <TableCell className="py-2">
+                    <span className={`inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${getStatusTone(record.status)}`}>{record.status}</span>
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <span className={`inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${getCriticidadeTone(record.criticidade)}`}>{record.criticidade}</span>
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <span className={`text-xs ${isOverdue(record) ? "font-semibold text-destructive" : "text-foreground"}`}>{record.vencimentoAt || "-"}</span>
+                  </TableCell>
+                  <TableCell className="text-xs py-2">{record.nr || "-"}</TableCell>
+                  <TableCell className="text-xs py-2">{record.responsavel || "-"}</TableCell>
+                  <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-end gap-0.5">
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Editar" onClick={() => void openRecordInPanel(record.id, "form")}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Histórico" onClick={() => void openRecordInPanel(record.id, "historico")}>
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Evidência" onClick={() => void openRecordInPanel(record.id, "evidencias")}>
+                        <UploadCloud className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Duplicar" onClick={() => handleDuplicateRecord(record)}>
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-emerald-700" title="Concluir" disabled={record.status === "CONCLUIDO"} onClick={() => void handleSetRecordStatus(record, "CONCLUIDO")}>
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs text-muted-foreground">
+          <p>{filteredRecords.length} de {totalRecords} • Pág. {Math.min(page, totalPages)}/{totalPages}</p>
+          <div className="flex items-center gap-1.5">
+            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={loading || page <= 1} onClick={() => setPage((c) => Math.max(1, c - 1))}>Anterior</Button>
+            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={loading || page >= totalPages} onClick={() => setPage((c) => Math.min(totalPages, c + 1))}>Próxima</Button>
+          </div>
         </div>
       </div>
 
-      <SectionCard
-        title="Detalhe avancado"
-        description={selected ? `${selected.id} • historico, evidencias, comentarios e acoes` : "Selecione um registro para abrir o detalhe avancado"}
-      >
-        {!selected && (
-          <p className="text-sm text-muted-foreground">
-            Clique em um registro da lista para visualizar historico, anexar evidencias e registrar comentarios.
-          </p>
-        )}
-        {selected && (
-          <Tabs value={detailTab} onValueChange={setDetailTab} className="space-y-3">
-            <TabsList className="flex w-full flex-wrap justify-start gap-1 bg-muted/40 p-1">
-              <TabsTrigger value="historico">Historico</TabsTrigger>
-              <TabsTrigger value="evidencias">Evidencias</TabsTrigger>
-              <TabsTrigger value="comentarios">Comentarios</TabsTrigger>
-              <TabsTrigger value="acoes">Acoes</TabsTrigger>
+      {/* Sheet lateral para form + detalhe */}
+      <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="text-base">
+              {selected ? `${selected.id} — ${selected.titulo}` : "Novo registro"}
+            </SheetTitle>
+          </SheetHeader>
+
+          <Tabs value={panelTab} onValueChange={(v) => setPanelTab(v as typeof panelTab)} className="mt-4">
+            <TabsList className="w-full grid grid-cols-5 h-8">
+              <TabsTrigger value="form" className="text-xs">Dados</TabsTrigger>
+              <TabsTrigger value="historico" className="text-xs" disabled={!selected}>Histórico</TabsTrigger>
+              <TabsTrigger value="evidencias" className="text-xs" disabled={!selected}>Evidências</TabsTrigger>
+              <TabsTrigger value="comentarios" className="text-xs" disabled={!selected}>Coment.</TabsTrigger>
+              <TabsTrigger value="acoes" className="text-xs" disabled={!selected}>Ações</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="historico" className="space-y-2">
-              {selectedHistorico.length === 0 && (
-                <p className="text-sm text-muted-foreground">Sem historico registrado ate o momento.</p>
+            <TabsContent value="form" className="space-y-3 mt-3">
+              <div className="grid gap-2.5 grid-cols-2">
+                <div className="col-span-2">
+                  <FormField label="Título" required><Input value={form.titulo} onChange={(event) => setField("titulo", event.target.value)} /></FormField>
+                </div>
+                <FormField label="Responsável" required><Input value={form.responsavel} onChange={(event) => setField("responsavel", event.target.value)} /></FormField>
+                <FormField label="Unidade">
+                  <Select value={form.unidade} onValueChange={(value) => setField("unidade", value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{UNIT_OPTIONS.map((unit) => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}</SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Status">
+                  <Select value={form.status} onValueChange={(value) => setField("status", value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{STATUS_OPTIONS.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Criticidade">
+                  <Select value={form.criticidade} onValueChange={(value) => setField("criticidade", value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{CRITICALITY_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="NR"><Input value={form.nr} onChange={(event) => setField("nr", event.target.value)} /></FormField>
+                <FormField label="Setor"><Input value={form.setor} onChange={(event) => setField("setor", event.target.value)} /></FormField>
+                <FormField label="Função"><Input value={form.funcao} onChange={(event) => setField("funcao", event.target.value)} /></FormField>
+                <FormField label="Vencimento"><Input type="date" value={form.vencimentoAt} onChange={(event) => setField("vencimentoAt", event.target.value)} /></FormField>
+                <FormField label="Investimento (R$)"><Input value={form.investimento} onChange={(event) => setField("investimento", event.target.value)} /></FormField>
+                <FormField label="Custo (R$)"><Input value={form.custo} onChange={(event) => setField("custo", event.target.value)} /></FormField>
+                <FormField label="Risco Inerente"><Input value={form.riscoInerente} onChange={(event) => setField("riscoInerente", event.target.value)} /></FormField>
+                <FormField label="Risco Residual"><Input value={form.riscoResidual} onChange={(event) => setField("riscoResidual", event.target.value)} /></FormField>
+              </div>
+
+              {moduleSchema.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold text-foreground mb-2 mt-3">Campos do submódulo</h3>
+                  <div className="grid gap-2.5 grid-cols-2">
+                    {moduleSchema.map((field) => (
+                      <div key={field.key} className={field.type === "textarea" ? "col-span-2" : ""}>
+                        <FormField label={field.label} required={field.required}>
+                          {field.type === "textarea" && <Textarea rows={2} placeholder={field.placeholder} value={specificForm[field.key] || ""} onChange={(event) => setSpecificField(field.key, event.target.value)} />}
+                          {field.type === "select" && (
+                            <Select value={specificForm[field.key] || undefined} onValueChange={(value) => setSpecificField(field.key, value)}>
+                              <SelectTrigger><SelectValue placeholder={field.placeholder || "Selecione"} /></SelectTrigger>
+                              <SelectContent>{(field.options || []).map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+                            </Select>
+                          )}
+                          {field.type === "number" && <Input inputMode="decimal" placeholder={field.placeholder} value={specificForm[field.key] || ""} onChange={(event) => setSpecificField(field.key, event.target.value)} />}
+                          {field.type === "date" && <Input type="date" value={specificForm[field.key] || ""} onChange={(event) => setSpecificField(field.key, event.target.value)} />}
+                          {field.type === "text" && <Input placeholder={field.placeholder} value={specificForm[field.key] || ""} onChange={(event) => setSpecificField(field.key, event.target.value)} />}
+                        </FormField>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-              <div className="max-h-[280px] space-y-2 overflow-auto pr-1">
+
+              <FormField label="Observações">
+                <Textarea value={form.descricao} onChange={(event) => setField("descricao", event.target.value)} rows={3} />
+              </FormField>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={handleNewRecord}>Limpar</Button>
+                {!selected && (
+                  <Button size="sm" onClick={() => void handleCreate()} className="gap-1.5">
+                    <Save className="w-3.5 h-3.5" /> Salvar
+                  </Button>
+                )}
+                {selected && (
+                  <Button size="sm" onClick={() => void handleUpdate()} className="gap-1.5">
+                    <Save className="w-3.5 h-3.5" /> Atualizar
+                  </Button>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="historico" className="space-y-2 mt-3">
+              {selectedHistorico.length === 0 && <p className="text-sm text-muted-foreground">Sem histórico registrado.</p>}
+              <div className="max-h-[60vh] space-y-2 overflow-auto pr-1">
                 {selectedHistorico.map((item) => (
                   <div key={item.id} className="rounded-md border border-border px-3 py-2">
                     <p className="text-sm font-medium">{item.acao}</p>
@@ -1607,35 +1472,19 @@ const SesmtModulePage = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="evidencias" className="space-y-3">
-              <div className="space-y-2">
-                <Textarea
-                  placeholder="Descreva a evidencia operacional"
-                  value={evidenceText}
-                  onChange={(event) => setEvidenceText(event.target.value)}
-                  rows={3}
-                />
-                <div className="flex justify-end">
-                  <Button type="button" onClick={() => void handleEvidence()} disabled={!evidenceText.trim()}>
-                    Adicionar evidencia
-                  </Button>
-                </div>
-              </div>
-              <AttachmentUploader
-                maxFiles={8}
-                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.xls,.csv,.txt"
-                onFilesChange={(files) => setUploadFiles(files)}
-              />
+            <TabsContent value="evidencias" className="space-y-3 mt-3">
+              <Textarea placeholder="Descreva a evidência" value={evidenceText} onChange={(event) => setEvidenceText(event.target.value)} rows={2} />
               <div className="flex justify-end">
-                <Button type="button" onClick={() => void handleUpload()} disabled={uploadFiles.length === 0} className="gap-2">
-                  <UploadCloud className="h-4 w-4" />
-                  Enviar anexos
+                <Button type="button" size="sm" onClick={() => void handleEvidence()} disabled={!evidenceText.trim()}>Adicionar evidência</Button>
+              </div>
+              <AttachmentUploader maxFiles={8} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.xls,.csv,.txt" onFilesChange={(files) => setUploadFiles(files)} />
+              <div className="flex justify-end">
+                <Button type="button" size="sm" onClick={() => void handleUpload()} disabled={uploadFiles.length === 0} className="gap-1.5">
+                  <UploadCloud className="h-3.5 w-3.5" /> Enviar anexos
                 </Button>
               </div>
-              <div className="max-h-[220px] space-y-2 overflow-auto pr-1">
-                {selectedEvidencias.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Sem evidencias registradas.</p>
-                )}
+              <div className="max-h-[40vh] space-y-2 overflow-auto pr-1">
+                {selectedEvidencias.length === 0 && <p className="text-sm text-muted-foreground">Sem evidências registradas.</p>}
                 {selectedEvidencias.map((evidence) => (
                   <div key={evidence.id} className="rounded-md border border-border px-3 py-2">
                     <p className="text-sm font-medium">{evidence.descricao}</p>
@@ -1645,32 +1494,19 @@ const SesmtModulePage = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="comentarios" className="space-y-3">
-              <div className="space-y-2">
-                {replyToCommentId && (
-                  <p className="text-xs text-muted-foreground">
-                    Respondendo comentario {replyToCommentId}
-                    <Button type="button" variant="link" className="ml-1 h-auto p-0 text-xs" onClick={() => setReplyToCommentId(null)}>
-                      cancelar
-                    </Button>
-                  </p>
-                )}
-                <Textarea
-                  placeholder="Registrar comentario e mencoes"
-                  value={commentDraft}
-                  onChange={(event) => setCommentDraft(event.target.value)}
-                  rows={3}
-                />
-                <div className="flex justify-end">
-                  <Button type="button" onClick={handleAddComment} disabled={!commentDraft.trim()}>
-                    Registrar comentario
-                  </Button>
-                </div>
+            <TabsContent value="comentarios" className="space-y-3 mt-3">
+              {replyToCommentId && (
+                <p className="text-xs text-muted-foreground">
+                  Respondendo {replyToCommentId}
+                  <Button type="button" variant="link" className="ml-1 h-auto p-0 text-xs" onClick={() => setReplyToCommentId(null)}>cancelar</Button>
+                </p>
+              )}
+              <Textarea placeholder="Comentário" value={commentDraft} onChange={(event) => setCommentDraft(event.target.value)} rows={2} />
+              <div className="flex justify-end">
+                <Button type="button" size="sm" onClick={handleAddComment} disabled={!commentDraft.trim()}>Comentar</Button>
               </div>
-              <div className="max-h-[220px] space-y-2 overflow-auto pr-1">
-                {selectedComments.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Sem comentarios colaborativos.</p>
-                )}
+              <div className="max-h-[40vh] space-y-2 overflow-auto pr-1">
+                {selectedComments.length === 0 && <p className="text-sm text-muted-foreground">Sem comentários.</p>}
                 {selectedComments.map((comment) => (
                   <div key={comment.id} className="rounded-md border border-border px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
@@ -1679,58 +1515,51 @@ const SesmtModulePage = () => {
                     </div>
                     {comment.parentId && <p className="text-xs text-muted-foreground">Resposta para {comment.parentId}</p>}
                     <p className="text-sm">{comment.texto}</p>
-                    <div className="mt-2 flex justify-end">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setReplyToCommentId(comment.id)}>
-                        Responder
-                      </Button>
+                    <div className="mt-1 flex justify-end">
+                      <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setReplyToCommentId(comment.id)}>Responder</Button>
                     </div>
                   </div>
                 ))}
               </div>
             </TabsContent>
 
-            <TabsContent value="acoes" className="space-y-3">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Button type="button" variant="outline" className="justify-start gap-2" onClick={() => void handleSetRecordStatus(selected, "EM_ANDAMENTO")}>
-                  <RefreshCw className="h-4 w-4" />
-                  Marcar em andamento
-                </Button>
-                <Button type="button" variant="outline" className="justify-start gap-2" onClick={() => void handleSetRecordStatus(selected, "ABERTO")}>
-                  <RefreshCw className="h-4 w-4" />
-                  Reabrir registro
-                </Button>
-                <Button type="button" variant="outline" className="justify-start gap-2" onClick={() => handleDuplicateRecord(selected)}>
-                  <Copy className="h-4 w-4" />
-                  Duplicar registro
-                </Button>
-                <Button type="button" className="justify-start gap-2" onClick={() => void handleSetRecordStatus(selected, "CONCLUIDO")}>
-                  <CheckCircle2 className="h-4 w-4" />
-                  Concluir registro
-                </Button>
-              </div>
-              {moduleSchema.length > 0 && (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {moduleSchema.map((field) => (
-                    <div key={field.key} className="rounded-md border border-border px-3 py-2">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">{field.label}</p>
-                      <p className="text-sm font-medium">
-                        {selected.dadosEspecificos?.[field.key] == null || String(selected.dadosEspecificos?.[field.key]).trim() === ""
-                          ? "-"
-                          : String(selected.dadosEspecificos?.[field.key])}
-                      </p>
+            <TabsContent value="acoes" className="space-y-3 mt-3">
+              {selected && (
+                <>
+                  <div className="grid gap-2 grid-cols-2">
+                    <Button type="button" variant="outline" size="sm" className="justify-start gap-1.5 text-xs" onClick={() => void handleSetRecordStatus(selected, "EM_ANDAMENTO")}>
+                      <RefreshCw className="h-3.5 w-3.5" /> Em andamento
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" className="justify-start gap-1.5 text-xs" onClick={() => void handleSetRecordStatus(selected, "ABERTO")}>
+                      <RefreshCw className="h-3.5 w-3.5" /> Reabrir
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" className="justify-start gap-1.5 text-xs" onClick={() => handleDuplicateRecord(selected)}>
+                      <Copy className="h-3.5 w-3.5" /> Duplicar
+                    </Button>
+                    <Button type="button" size="sm" className="justify-start gap-1.5 text-xs" onClick={() => void handleSetRecordStatus(selected, "CONCLUIDO")}>
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
+                    </Button>
+                  </div>
+                  {moduleSchema.length > 0 && (
+                    <div className="grid gap-2 grid-cols-2">
+                      {moduleSchema.map((field) => (
+                        <div key={field.key} className="rounded-md border border-border px-2.5 py-1.5">
+                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{field.label}</p>
+                          <p className="text-sm font-medium">
+                            {selected.dadosEspecificos?.[field.key] == null || String(selected.dadosEspecificos?.[field.key]).trim() === "" ? "-" : String(selected.dadosEspecificos?.[field.key])}
+                          </p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </TabsContent>
           </Tabs>
-        )}
-      </SectionCard>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
 
 export default SesmtModulePage;
-
-
-
