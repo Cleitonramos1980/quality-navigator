@@ -1,111 +1,144 @@
-import type { ChecklistPreInventario, ChecklistBloco } from "@/types/checklistPreInventario";
+import type { ChecklistPreInventario, ChecklistBloco, ChecklistCriticidade, ChecklistItemStatus } from "@/types/checklistPreInventario";
 
-const BLOCOS_TEMPLATE: Omit<ChecklistBloco, "itens">[] = [
-  { id: "B01", ordem: 1, nome: "Planejamento do Inventário" },
-  { id: "B02", ordem: 2, nome: "Organização do Estoque" },
-  { id: "B03", ordem: 3, nome: "Bloqueio de Movimentações" },
-  { id: "B04", ordem: 4, nome: "Conciliação Sistêmica" },
-  { id: "B05", ordem: 5, nome: "Identificação e Controle" },
-  { id: "B06", ordem: 6, nome: "Tratamento de Exceções" },
-  { id: "B07", ordem: 7, nome: "Comunicação" },
-  { id: "B08", ordem: 8, nome: "Infraestrutura" },
-  { id: "B09", ordem: 9, nome: "Teste" },
-  { id: "B10", ordem: 10, nome: "Validação" },
+interface ItemDef { descricao: string; criticidade: ChecklistCriticidade }
+
+const BLOCOS: { id: string; ordem: number; nome: string; itens: ItemDef[] }[] = [
+  {
+    id: "B01", ordem: 1, nome: "Planejamento do Inventário",
+    itens: [
+      { descricao: "Definir data e horário do inventário", criticidade: "ALTA" },
+      { descricao: "Definir tipo de inventário", criticidade: "ALTA" },
+      { descricao: "Nomear responsável geral", criticidade: "ALTA" },
+      { descricao: "Definir equipe e treinar", criticidade: "ALTA" },
+      { descricao: "Definir áreas/setores", criticidade: "MEDIA" },
+      { descricao: "Elaborar cronograma", criticidade: "MEDIA" },
+    ],
+  },
+  {
+    id: "B02", ordem: 2, nome: "Organização do Estoque",
+    itens: [
+      { descricao: "Estoque limpo e organizado", criticidade: "ALTA" },
+      { descricao: "Endereçamento atualizado", criticidade: "ALTA" },
+      { descricao: "Separação por tipo de material", criticidade: "MEDIA" },
+      { descricao: "Materiais identificados", criticidade: "MEDIA" },
+      { descricao: "Segregar avariados/obsoletos / caixas secas", criticidade: "ALTA" },
+      { descricao: "Eliminar materiais fora do lugar", criticidade: "MEDIA" },
+    ],
+  },
+  {
+    id: "B03", ordem: 3, nome: "Bloqueio de Movimentações",
+    itens: [
+      { descricao: "Definir corte de movimentação", criticidade: "ALTA" },
+      { descricao: "Bloquear sistema", criticidade: "ALTA" },
+      { descricao: "Suspender recebimento", criticidade: "ALTA" },
+      { descricao: "Suspender expedição", criticidade: "ALTA" },
+      { descricao: "Validação pedidos em abertos", criticidade: "MEDIA" },
+      { descricao: "Comunicar áreas", criticidade: "MEDIA" },
+      { descricao: "Garantir ausência de movimentação", criticidade: "ALTA" },
+    ],
+  },
+  {
+    id: "B04", ordem: 4, nome: "Conciliação Sistêmica",
+    itens: [
+      { descricao: "Atualizar entradas", criticidade: "ALTA" },
+      { descricao: "Atualizar saídas", criticidade: "ALTA" },
+      { descricao: "Baixar OPs", criticidade: "MEDIA" },
+      { descricao: "Conferir saldo", criticidade: "ALTA" },
+      { descricao: "Validar WIP", criticidade: "MEDIA" },
+    ],
+  },
+  {
+    id: "B05", ordem: 5, nome: "Identificação e Controle",
+    itens: [
+      { descricao: "Gerar etiquetas", criticidade: "MEDIA" },
+      { descricao: "Definir método de contagem", criticidade: "ALTA" },
+      { descricao: "Disponibilizar materiais", criticidade: "MEDIA" },
+      { descricao: "Definir responsáveis", criticidade: "ALTA" },
+    ],
+  },
+  {
+    id: "B06", ordem: 6, nome: "Tratamento de Exceções",
+    itens: [
+      { descricao: "Separar materiais de terceiros", criticidade: "MEDIA" },
+      { descricao: "Identificar quarentena", criticidade: "ALTA" },
+      { descricao: "Isolar devoluções", criticidade: "MEDIA" },
+      { descricao: "Identificar sem cadastro", criticidade: "BAIXA" },
+    ],
+  },
+  {
+    id: "B07", ordem: 7, nome: "Comunicação",
+    itens: [
+      { descricao: "Comunicar inventário", criticidade: "MEDIA" },
+      { descricao: "Alinhar líderes", criticidade: "MEDIA" },
+      { descricao: "Orientar bloqueios", criticidade: "ALTA" },
+    ],
+  },
+  {
+    id: "B08", ordem: 8, nome: "Infraestrutura",
+    itens: [
+      { descricao: "Verificar iluminação", criticidade: "MEDIA" },
+      { descricao: "Disponibilizar equipamentos", criticidade: "ALTA" },
+      { descricao: "EPIs disponíveis", criticidade: "MEDIA" },
+      { descricao: "Suporte TI", criticidade: "ALTA" },
+    ],
+  },
+  {
+    id: "B09", ordem: 9, nome: "Teste",
+    itens: [
+      { descricao: "Realizar piloto", criticidade: "ALTA" },
+      { descricao: "Validar método", criticidade: "ALTA" },
+    ],
+  },
+  {
+    id: "B10", ordem: 10, nome: "Validação",
+    itens: [
+      { descricao: "Aprovação final", criticidade: "ALTA" },
+      { descricao: "Equipe posicionada", criticidade: "MEDIA" },
+    ],
+  },
 ];
 
-const ITENS_POR_BLOCO: Record<string, { descricao: string; criticidade: "ALTA" | "MEDIA" | "BAIXA" }[]> = {
-  B01: [
-    { descricao: "Definir data e horário do inventário", criticidade: "ALTA" },
-    { descricao: "Definir equipes e responsáveis por setor", criticidade: "ALTA" },
-    { descricao: "Comunicar cronograma aos gestores", criticidade: "MEDIA" },
-    { descricao: "Reservar equipamentos (coletores, impressoras)", criticidade: "MEDIA" },
-    { descricao: "Validar escopo de produtos/setores a inventariar", criticidade: "ALTA" },
-  ],
-  B02: [
-    { descricao: "Organizar endereçamentos e corredores", criticidade: "ALTA" },
-    { descricao: "Retirar produtos avariados/vencidos da área", criticidade: "MEDIA" },
-    { descricao: "Garantir que todos os produtos estão endereçados", criticidade: "ALTA" },
-    { descricao: "Separar devoluções pendentes", criticidade: "MEDIA" },
-    { descricao: "Conferir unitização de pallets", criticidade: "BAIXA" },
-  ],
-  B03: [
-    { descricao: "Bloquear entrada de mercadorias no período", criticidade: "ALTA" },
-    { descricao: "Bloquear saída de mercadorias no período", criticidade: "ALTA" },
-    { descricao: "Suspender transferências entre filiais", criticidade: "ALTA" },
-    { descricao: "Notificar fornecedores sobre bloqueio de recebimento", criticidade: "MEDIA" },
-  ],
-  B04: [
-    { descricao: "Fechar notas fiscais pendentes de entrada", criticidade: "ALTA" },
-    { descricao: "Fechar notas fiscais pendentes de saída", criticidade: "ALTA" },
-    { descricao: "Conciliar saldos WMS x ERP", criticidade: "ALTA" },
-    { descricao: "Ajustar divergências encontradas antes do inventário", criticidade: "MEDIA" },
-  ],
-  B05: [
-    { descricao: "Verificar etiquetas de endereçamento", criticidade: "MEDIA" },
-    { descricao: "Garantir código de barras legível nos produtos", criticidade: "ALTA" },
-    { descricao: "Conferir placas de identificação de setores", criticidade: "BAIXA" },
-    { descricao: "Identificar áreas de quarentena e avaria", criticidade: "MEDIA" },
-  ],
-  B06: [
-    { descricao: "Listar produtos em poder de terceiros", criticidade: "MEDIA" },
-    { descricao: "Listar produtos de terceiros em poder da empresa", criticidade: "MEDIA" },
-    { descricao: "Tratar itens em trânsito", criticidade: "ALTA" },
-    { descricao: "Definir critério para itens sem código de barras", criticidade: "BAIXA" },
-  ],
-  B07: [
-    { descricao: "Enviar comunicado geral sobre o inventário", criticidade: "MEDIA" },
-    { descricao: "Reunião de kick-off com equipes", criticidade: "MEDIA" },
-    { descricao: "Divulgar regras e procedimentos do inventário", criticidade: "ALTA" },
-    { descricao: "Comunicar clientes sobre possível atraso de entregas", criticidade: "BAIXA" },
-  ],
-  B08: [
-    { descricao: "Testar coletores de dados", criticidade: "ALTA" },
-    { descricao: "Verificar rede Wi-Fi nos galpões", criticidade: "ALTA" },
-    { descricao: "Verificar iluminação das áreas de contagem", criticidade: "MEDIA" },
-    { descricao: "Disponibilizar pranchetas e formulários de contingência", criticidade: "BAIXA" },
-  ],
-  B09: [
-    { descricao: "Realizar contagem piloto em área menor", criticidade: "ALTA" },
-    { descricao: "Validar integração coletor → sistema", criticidade: "ALTA" },
-    { descricao: "Testar impressão de relatórios de divergência", criticidade: "MEDIA" },
-  ],
-  B10: [
-    { descricao: "Aprovar checklist com gestor responsável", criticidade: "ALTA" },
-    { descricao: "Confirmar que todos os bloqueios estão ativos", criticidade: "ALTA" },
-    { descricao: "Confirmar presença das equipes escaladas", criticidade: "MEDIA" },
-    { descricao: "Validação final pelo coordenador do inventário", criticidade: "ALTA" },
-  ],
-};
+const SETORES = [
+  "Espumação", "Aglomerado", "Laminação", "Bordado", "Costura reta",
+  "Montagem", "Fechamento", "Embalagem", "Marcenaria", "Móveis",
+  "Almoxarifado", "CD", "Lojas", "Avaria",
+];
+
+const EVIDENCIAS = ["Foto", "Print do sistema bloqueado", "Etiquetas aplicadas", "Relatório do sistema"];
+
+const RESPONSAVEIS = ["Ana Souza", "Carlos Lima", "Fernanda Dias", "Roberto Mendes", "Juliana Rocha", "Marcos Pereira"];
 
 function buildBlocos(seed: number): ChecklistBloco[] {
-  const responsaveis = ["Ana Souza", "Carlos Lima", "Fernanda Dias", "Roberto Mendes", "Juliana Rocha"];
-  const setores = ["Logística", "Almoxarifado", "TI", "Operações", "Qualidade", "Compras"];
-  const statuses: ("PENDENTE" | "EM_ANDAMENTO" | "CONCLUIDO")[] = ["PENDENTE", "EM_ANDAMENTO", "CONCLUIDO"];
+  const statuses: ChecklistItemStatus[] = ["PENDENTE", "EM_ANDAMENTO", "CONCLUIDO"];
 
-  return BLOCOS_TEMPLATE.map((bloco) => {
-    const itensTemplate = ITENS_POR_BLOCO[bloco.id] || [];
-    return {
-      ...bloco,
-      itens: itensTemplate.map((item, idx) => {
-        const st = statuses[(seed + idx) % statuses.length];
-        return {
-          id: `${bloco.id}-I${String(idx + 1).padStart(2, "0")}`,
-          blocoId: bloco.id,
-          descricao: item.descricao,
-          status: st,
-          responsavel: responsaveis[(seed + idx) % responsaveis.length],
-          data: `2026-04-${String(5 + idx).padStart(2, "0")}`,
-          setor: setores[(seed + idx) % setores.length],
-          criticidade: item.criticidade,
-          observacao: st === "CONCLUIDO" ? "Concluído dentro do prazo." : undefined,
-          evidencias: st === "CONCLUIDO" ? ["evidencia_exemplo.pdf"] : [],
-          historico: [
-            { id: "H1", data: "2026-03-25T10:00:00", usuario: "Sistema", acao: "Criação", detalhe: "Item criado automaticamente." },
-          ],
-        };
-      }),
-    };
-  });
+  return BLOCOS.map((bloco) => ({
+    id: bloco.id,
+    ordem: bloco.ordem,
+    nome: bloco.nome,
+    itens: bloco.itens.map((item, idx) => {
+      const st = statuses[(seed + idx + bloco.ordem) % statuses.length];
+      const hasNc = st === "PENDENTE" && item.criticidade === "ALTA" && idx % 3 === 0;
+      return {
+        id: `${bloco.id}-I${String(idx + 1).padStart(2, "0")}`,
+        blocoId: bloco.id,
+        descricao: item.descricao,
+        status: st,
+        responsavel: RESPONSAVEIS[(seed + idx + bloco.ordem) % RESPONSAVEIS.length],
+        data: `2026-04-${String(3 + idx + bloco.ordem).padStart(2, "0")}`,
+        setor: SETORES[(seed + idx + bloco.ordem) % SETORES.length],
+        criticidade: item.criticidade,
+        evidencia: st === "CONCLUIDO" ? EVIDENCIAS[(idx + bloco.ordem) % EVIDENCIAS.length] : undefined,
+        nc: hasNc,
+        planoAcao: hasNc ? "Abrir CAPA e reavaliar processo antes do inventário" : undefined,
+        observacao: st === "CONCLUIDO" ? "Concluído dentro do prazo." : undefined,
+        evidencias: st === "CONCLUIDO" ? ["evidencia_exemplo.pdf"] : [],
+        historico: [
+          { id: "H1", data: "2026-03-25T10:00:00", usuario: "Sistema", acao: "Criação", detalhe: "Item criado automaticamente." },
+          ...(st === "CONCLUIDO" ? [{ id: "H2", data: "2026-04-02T14:30:00", usuario: RESPONSAVEIS[(seed + idx) % RESPONSAVEIS.length], acao: "Conclusão", detalhe: "Item concluído e evidência anexada." }] : []),
+        ],
+      };
+    }),
+  }));
 }
 
 export const mockChecklists: ChecklistPreInventario[] = [
