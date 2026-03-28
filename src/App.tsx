@@ -75,6 +75,8 @@ const HistoricoDivergenciaPage = lazy(() => import("@/pages/inventario/Historico
 const RelatoriosInventarioPage = lazy(() => import("@/pages/inventario/RelatoriosInventarioPage"));
 const ConfiguracaoInventarioPage = lazy(() => import("@/pages/inventario/ConfiguracaoInventarioPage"));
 const NovoPlanoInventarioPage = lazy(() => import("@/pages/inventario/NovoPlanoInventarioPage"));
+const ChecklistPreInventarioPage = lazy(() => import("@/pages/inventario/ChecklistPreInventarioPage"));
+const ChecklistPreInventarioDetalhePage = lazy(() => import("@/pages/inventario/ChecklistPreInventarioDetalhePage"));
 
 // Operational modules
 const AcessosListPage = lazy(() => import("@/pages/portaria/AcessosListPage"));
@@ -192,6 +194,8 @@ const App = () => (
           <Route path="/qualidade/inventario/divergencia" element={<AppLayout><Lazy><HistoricoDivergenciaPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/relatorios" element={<AppLayout><Lazy><RelatoriosInventarioPage /></Lazy></AppLayout>} />
           <Route path="/qualidade/inventario/configuracao" element={<AppLayout><Lazy><ConfiguracaoInventarioPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/checklist-pre" element={<AppLayout><Lazy><ChecklistPreInventarioPage /></Lazy></AppLayout>} />
+          <Route path="/qualidade/inventario/checklist-pre/:checklistId/item/:itemId" element={<AppLayout><Lazy><ChecklistPreInventarioDetalhePage /></Lazy></AppLayout>} />
 
           <Route path="/sac/dashboard" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><Lazy><SACDashboardPage /></Lazy></RequireRole></AppLayout>} />
           <Route path="/sac/atendimentos" element={<AppLayout><RequireRole roles={["SAC", "DIRETORIA"]}><Lazy><AtendimentosPage /></Lazy></RequireRole></AppLayout>} />
