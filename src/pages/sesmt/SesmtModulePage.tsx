@@ -351,10 +351,10 @@ const SesmtModulePage = () => {
     return [
       { label: "Total registros", value: totalRecords },
       { label: "Abertos", value: abertos },
-      { label: "Vencidos", value: vencidos, tone: "text-red-600" },
-      { label: "Criticos", value: criticos, tone: "text-red-600" },
-      { label: "Sem responsavel", value: semResponsavel, tone: "text-amber-600" },
-      { label: "Concluidos no periodo", value: concluidosPeriodo, tone: "text-emerald-600" },
+      { label: "Vencidos", value: vencidos, tone: "text-destructive" },
+      { label: "Criticos", value: criticos, tone: "text-destructive" },
+      { label: "Sem responsavel", value: semResponsavel, tone: "text-warning" },
+      { label: "Concluidos no periodo", value: concluidosPeriodo, tone: "text-[hsl(var(--status-done-fg))]" },
     ];
   }, [filteredRecords, totalRecords, periodStartFilter, periodEndFilter, today]);
   const nrAplicaveis = useMemo(() => {
