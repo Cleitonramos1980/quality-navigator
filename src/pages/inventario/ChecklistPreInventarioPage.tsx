@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ClipboardCheck, ChevronDown, ChevronRight, Search, Printer, FileDown,
   Plus, AlertTriangle, CheckCircle2, Clock, XCircle, Users, Building2,
-  Filter, FileWarning, Eye,
+  Filter, FileWarning, Eye, Pencil, MoreHorizontal,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { mockChecklists } from "@/data/mockChecklistPreInventario";
 import NovoChecklistModal from "@/components/inventario/NovoChecklistModal";
+import EditarItemChecklistModal from "@/components/inventario/EditarItemChecklistModal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS,
   STATUS_GERAL_LABELS, type ChecklistItemStatus, type ChecklistCriticidade,
