@@ -2,6 +2,8 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Copy,
   Download,
   Eye,
@@ -11,6 +13,7 @@ import {
   Save,
   Star,
   UploadCloud,
+  X,
 } from "lucide-react";
 import SectionCard from "@/components/forms/SectionCard";
 import FormField from "@/components/forms/FormField";
