@@ -94,12 +94,12 @@ const InventarioDashboardPage = () => {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="cursor-pointer hover:ring-1 hover:ring-primary/30 transition-shadow" onClick={() => navigate("/qualidade/inventario/contagens")}>
           <CardHeader><CardTitle className="text-sm font-medium">Status das Contagens (Hoje)</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie data={statusData} dataKey="value" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2}>
+                <Pie data={statusData} dataKey="value" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2} style={{ cursor: "pointer" }} onClick={() => navigate("/qualidade/inventario/contagens")}>
                   {statusData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                 </Pie>
                 <Tooltip />
@@ -116,8 +116,8 @@ const InventarioDashboardPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">AderÃªncia por Loja</CardTitle></CardHeader>
+        <Card className="cursor-pointer hover:ring-1 hover:ring-primary/30 transition-shadow" onClick={() => navigate("/qualidade/inventario/contagens")}>
+          <CardHeader><CardTitle className="text-sm font-medium">Aderência por Loja</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={lojaRanking} layout="vertical">
@@ -125,7 +125,7 @@ const InventarioDashboardPage = () => {
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
                 <YAxis dataKey="nome" type="category" width={110} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="aderencia" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="aderencia" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} style={{ cursor: "pointer" }} onClick={() => navigate("/qualidade/inventario/contagens")} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
