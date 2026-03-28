@@ -1277,92 +1277,7 @@ const SesmtModulePage = () => {
         </div>
       )}
 
-      {/* Tabela full-width */}
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Tipo</TableHead>
-                <TableHead className="text-xs">Código</TableHead>
-                <TableHead className="text-xs">Título</TableHead>
-                <TableHead className="text-xs">Unidade</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-                <TableHead className="text-xs">Criticidade</TableHead>
-                <TableHead className="text-xs">Vencimento</TableHead>
-                <TableHead className="text-xs">NR</TableHead>
-                <TableHead className="text-xs">Responsável</TableHead>
-                <TableHead className="text-xs text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell className="text-center text-muted-foreground text-xs py-8" colSpan={10}>Carregando registros...</TableCell>
-                </TableRow>
-              )}
-              {!loading && filteredRecords.length === 0 && (
-                <TableRow>
-                  <TableCell className="text-center text-muted-foreground text-xs py-8" colSpan={10}>
-                    Nenhum registro encontrado. Clique em <strong>Novo</strong> para criar o primeiro.
-                  </TableCell>
-                </TableRow>
-              )}
-              {filteredRecords.map((record) => (
-                <TableRow
-                  key={record.id}
-                  className={`cursor-pointer hover:bg-muted/40 ${selected?.id === record.id ? "bg-primary/5" : ""}`}
-                  onClick={() => void openRecordInPanel(record.id)}
-                >
-                  <TableCell className="whitespace-nowrap text-xs py-2">{getRecordTypeLabel(record)}</TableCell>
-                  <TableCell className="whitespace-nowrap font-medium text-xs py-2">{record.id}</TableCell>
-                  <TableCell className="text-xs py-2 max-w-[200px] truncate">{record.titulo}</TableCell>
-                  <TableCell className="text-xs py-2">{record.unidade}</TableCell>
-                  <TableCell className="py-2">
-                    <span className={`inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${getStatusTone(record.status)}`}>{record.status}</span>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <span className={`inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${getCriticidadeTone(record.criticidade)}`}>{record.criticidade}</span>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <span className={`text-xs ${isOverdue(record) ? "font-semibold text-destructive" : "text-foreground"}`}>{record.vencimentoAt || "-"}</span>
-                  </TableCell>
-                  <TableCell className="text-xs py-2">{record.nr || "-"}</TableCell>
-                  <TableCell className="text-xs py-2">{record.responsavel || "-"}</TableCell>
-                  <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-end gap-0.5">
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Editar" onClick={() => void openRecordInPanel(record.id, "form")}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Histórico" onClick={() => void openRecordInPanel(record.id, "historico")}>
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Evidência" onClick={() => void openRecordInPanel(record.id, "evidencias")}>
-                        <UploadCloud className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Duplicar" onClick={() => handleDuplicateRecord(record)}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-emerald-700" title="Concluir" disabled={record.status === "CONCLUIDO"} onClick={() => void handleSetRecordStatus(record, "CONCLUIDO")}>
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs text-muted-foreground">
-          <p>{filteredRecords.length} de {totalRecords} • Pág. {Math.min(page, totalPages)}/{totalPages}</p>
-          <div className="flex items-center gap-1.5">
-            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={loading || page <= 1} onClick={() => setPage((c) => Math.max(1, c - 1))}>Anterior</Button>
-            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={loading || page >= totalPages} onClick={() => setPage((c) => Math.min(totalPages, c + 1))}>Próxima</Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Painel inferior inline para form + detalhe */}
+      {/* Painel central — formulário de criação/edição */}
       {bottomPanelOpen && (
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="flex items-center justify-between border-b border-border px-3 py-2">
@@ -1571,6 +1486,91 @@ const SesmtModulePage = () => {
           </Tabs>
         </div>
       )}
+
+      {/* Tabela de registros — rodapé */}
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Tipo</TableHead>
+                <TableHead className="text-xs">Código</TableHead>
+                <TableHead className="text-xs">Título</TableHead>
+                <TableHead className="text-xs">Unidade</TableHead>
+                <TableHead className="text-xs">Status</TableHead>
+                <TableHead className="text-xs">Criticidade</TableHead>
+                <TableHead className="text-xs">Vencimento</TableHead>
+                <TableHead className="text-xs">NR</TableHead>
+                <TableHead className="text-xs">Responsável</TableHead>
+                <TableHead className="text-xs text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading && (
+                <TableRow>
+                  <TableCell className="text-center text-muted-foreground text-xs py-8" colSpan={10}>Carregando registros...</TableCell>
+                </TableRow>
+              )}
+              {!loading && filteredRecords.length === 0 && (
+                <TableRow>
+                  <TableCell className="text-center text-muted-foreground text-xs py-8" colSpan={10}>
+                    Nenhum registro encontrado. Clique em <strong>Novo</strong> para criar o primeiro.
+                  </TableCell>
+                </TableRow>
+              )}
+              {filteredRecords.map((record) => (
+                <TableRow
+                  key={record.id}
+                  className={`cursor-pointer hover:bg-muted/40 ${selected?.id === record.id ? "bg-primary/5" : ""}`}
+                  onClick={() => void openRecordInPanel(record.id)}
+                >
+                  <TableCell className="whitespace-nowrap text-xs py-2">{getRecordTypeLabel(record)}</TableCell>
+                  <TableCell className="whitespace-nowrap font-medium text-xs py-2">{record.id}</TableCell>
+                  <TableCell className="text-xs py-2 max-w-[200px] truncate">{record.titulo}</TableCell>
+                  <TableCell className="text-xs py-2">{record.unidade}</TableCell>
+                  <TableCell className="py-2">
+                    <span className={`inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${getStatusTone(record.status)}`}>{record.status}</span>
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <span className={`inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${getCriticidadeTone(record.criticidade)}`}>{record.criticidade}</span>
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <span className={`text-xs ${isOverdue(record) ? "font-semibold text-destructive" : "text-foreground"}`}>{record.vencimentoAt || "-"}</span>
+                  </TableCell>
+                  <TableCell className="text-xs py-2">{record.nr || "-"}</TableCell>
+                  <TableCell className="text-xs py-2">{record.responsavel || "-"}</TableCell>
+                  <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-end gap-0.5">
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Editar" onClick={() => void openRecordInPanel(record.id, "form")}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Histórico" onClick={() => void openRecordInPanel(record.id, "historico")}>
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Evidência" onClick={() => void openRecordInPanel(record.id, "evidencias")}>
+                        <UploadCloud className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Duplicar" onClick={() => handleDuplicateRecord(record)}>
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-emerald-700" title="Concluir" disabled={record.status === "CONCLUIDO"} onClick={() => void handleSetRecordStatus(record, "CONCLUIDO")}>
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs text-muted-foreground">
+          <p>{filteredRecords.length} de {totalRecords} • Pág. {Math.min(page, totalPages)}/{totalPages}</p>
+          <div className="flex items-center gap-1.5">
+            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={loading || page <= 1} onClick={() => setPage((c) => Math.max(1, c - 1))}>Anterior</Button>
+            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={loading || page >= totalPages} onClick={() => setPage((c) => Math.min(totalPages, c + 1))}>Próxima</Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
