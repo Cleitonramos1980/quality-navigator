@@ -261,6 +261,16 @@ const App = () => (
           {/* SESMT / SST */}
           <Route path="/sesmt" element={<Navigate to="/sesmt/visao-executiva/painel-mestre" replace />} />
           <Route
+            path="/sesmt/pessoas-e-saude/dossie-colaborador"
+            element={
+              <AppLayout>
+                <RequireSesmtAccess>
+                  <Lazy><DossieColaboradorPage /></Lazy>
+                </RequireSesmtAccess>
+              </AppLayout>
+            }
+          />
+          <Route
             path="/sesmt/visao-executiva/:viewKey"
             element={
               <AppLayout>
