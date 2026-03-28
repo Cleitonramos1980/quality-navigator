@@ -470,7 +470,14 @@ export default function ChecklistPreInventarioPage() {
       <div className="space-y-2">
         {filteredBlocos.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhum item encontrado com os filtros aplicados.</p>}
         {filteredBlocos.map((bloco) => (
-          <BlocoSection key={bloco.id} bloco={bloco} onItemClick={handleItemClick} onEditItem={(item) => { setEditItem(item); setEditOpen(true); }} />
+          <BlocoSection key={bloco.id} bloco={bloco} onItemClick={handleItemClick} onEditItem={(item) => { setEditItem(item); setEditOpen(true); }} onUpdateField={(itemId, field, value) => {
+            if (checklist) {
+              for (const b of checklist.blocos) {
+                const found = b.itens.find((i) => i.id === itemId);
+                if (found) { (found as any)[field] = value; break; }
+              }
+            }
+          }} />
         ))}
       </div>
 
