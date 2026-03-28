@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, TrendingUp, Store, Plus, RefreshCw, Target } from "lucide-react";
+import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, TrendingUp, Store, Plus, RefreshCw, Target, ClipboardCheck, FileWarning, Users, Building2 } from "lucide-react";
 import KPICard from "@/components/KPICard";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
@@ -9,8 +9,13 @@ import type { Contagem, LojaInventario } from "@/types/inventario";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
+import { mockChecklists } from "@/data/mockChecklistPreInventario";
+import { STATUS_LABELS, STATUS_COLORS, CRITICIDADE_COLORS } from "@/types/checklistPreInventario";
+import { cn } from "@/lib/utils";
 
 const InventarioDashboardPage = () => {
   const navigate = useNavigate();
