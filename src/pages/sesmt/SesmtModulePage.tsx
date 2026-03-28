@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+// Sheet removed — form is now inline below the table
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Table,
@@ -1065,7 +1065,7 @@ const SesmtModulePage = () => {
   const isOverdue = (record: SesmtRecord) => Boolean(record.vencimentoAt && record.vencimentoAt < today && record.status !== "CONCLUIDO");
 
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [bottomPanelOpen, setBottomPanelOpen] = useState(false);
   const [panelTab, setPanelTab] = useState<"form" | "historico" | "evidencias" | "comentarios" | "acoes">("form");
 
   if (!moduleNode) {
@@ -1093,13 +1093,13 @@ const SesmtModulePage = () => {
   const openRecordInPanel = async (id: string, tab: "form" | "historico" | "evidencias" | "comentarios" | "acoes" = "form") => {
     await openRecord(id);
     setPanelTab(tab);
-    setPanelOpen(true);
+    setBottomPanelOpen(true);
   };
 
   const openNewRecordPanel = () => {
     handleNewRecord();
     setPanelTab("form");
-    setPanelOpen(true);
+    setBottomPanelOpen(true);
   };
 
   return (
@@ -1362,17 +1362,20 @@ const SesmtModulePage = () => {
         </div>
       </div>
 
-      {/* Sheet lateral para form + detalhe */}
-      <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="text-base">
+      {/* Painel inferior inline para form + detalhe */}
+      {bottomPanelOpen && (
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border px-3 py-2">
+            <h2 className="text-sm font-semibold text-foreground">
               {selected ? `${selected.id} — ${selected.titulo}` : "Novo registro"}
-            </SheetTitle>
-          </SheetHeader>
+            </h2>
+            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setBottomPanelOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
 
-          <Tabs value={panelTab} onValueChange={(v) => setPanelTab(v as typeof panelTab)} className="mt-4">
-            <TabsList className="w-full grid grid-cols-5 h-8">
+          <Tabs value={panelTab} onValueChange={(v) => setPanelTab(v as typeof panelTab)} className="px-3 pb-3">
+            <TabsList className="w-full grid grid-cols-5 h-8 mt-2">
               <TabsTrigger value="form" className="text-xs">Dados</TabsTrigger>
               <TabsTrigger value="historico" className="text-xs" disabled={!selected}>Histórico</TabsTrigger>
               <TabsTrigger value="evidencias" className="text-xs" disabled={!selected}>Evidências</TabsTrigger>
@@ -1381,7 +1384,7 @@ const SesmtModulePage = () => {
             </TabsList>
 
             <TabsContent value="form" className="space-y-3 mt-3">
-              <div className="grid gap-2.5 grid-cols-2">
+              <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                 <div className="col-span-2">
                   <FormField label="Título" required><Input value={form.titulo} onChange={(event) => setField("titulo", event.target.value)} /></FormField>
                 </div>
@@ -1416,8 +1419,8 @@ const SesmtModulePage = () => {
 
               {moduleSchema.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-semibold text-foreground mb-2 mt-3">Campos do submódulo</h3>
-                  <div className="grid gap-2.5 grid-cols-2">
+                  <h3 className="text-xs font-semibold text-foreground mb-2 mt-1">Campos do submódulo</h3>
+                  <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                     {moduleSchema.map((field) => (
                       <div key={field.key} className={field.type === "textarea" ? "col-span-2" : ""}>
                         <FormField label={field.label} required={field.required}>
@@ -1438,11 +1441,13 @@ const SesmtModulePage = () => {
                 </div>
               )}
 
-              <FormField label="Observações">
-                <Textarea value={form.descricao} onChange={(event) => setField("descricao", event.target.value)} rows={3} />
-              </FormField>
+              <div className="grid gap-2.5 grid-cols-1 lg:grid-cols-2">
+                <FormField label="Observações">
+                  <Textarea value={form.descricao} onChange={(event) => setField("descricao", event.target.value)} rows={2} />
+                </FormField>
+              </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-1">
                 <Button type="button" variant="outline" size="sm" onClick={handleNewRecord}>Limpar</Button>
                 {!selected && (
                   <Button size="sm" onClick={() => void handleCreate()} className="gap-1.5">
@@ -1459,7 +1464,7 @@ const SesmtModulePage = () => {
 
             <TabsContent value="historico" className="space-y-2 mt-3">
               {selectedHistorico.length === 0 && <p className="text-sm text-muted-foreground">Sem histórico registrado.</p>}
-              <div className="max-h-[60vh] space-y-2 overflow-auto pr-1">
+              <div className="max-h-[30vh] space-y-2 overflow-auto pr-1">
                 {selectedHistorico.map((item) => (
                   <div key={item.id} className="rounded-md border border-border px-3 py-2">
                     <p className="text-sm font-medium">{item.acao}</p>
@@ -1471,17 +1476,23 @@ const SesmtModulePage = () => {
             </TabsContent>
 
             <TabsContent value="evidencias" className="space-y-3 mt-3">
-              <Textarea placeholder="Descreva a evidência" value={evidenceText} onChange={(event) => setEvidenceText(event.target.value)} rows={2} />
-              <div className="flex justify-end">
-                <Button type="button" size="sm" onClick={() => void handleEvidence()} disabled={!evidenceText.trim()}>Adicionar evidência</Button>
+              <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+                <div className="space-y-2">
+                  <Textarea placeholder="Descreva a evidência" value={evidenceText} onChange={(event) => setEvidenceText(event.target.value)} rows={2} />
+                  <div className="flex justify-end">
+                    <Button type="button" size="sm" onClick={() => void handleEvidence()} disabled={!evidenceText.trim()}>Adicionar evidência</Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <AttachmentUploader maxFiles={8} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.xls,.csv,.txt" onFilesChange={(files) => setUploadFiles(files)} />
+                  <div className="flex justify-end">
+                    <Button type="button" size="sm" onClick={() => void handleUpload()} disabled={uploadFiles.length === 0} className="gap-1.5">
+                      <UploadCloud className="h-3.5 w-3.5" /> Enviar anexos
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <AttachmentUploader maxFiles={8} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.xls,.csv,.txt" onFilesChange={(files) => setUploadFiles(files)} />
-              <div className="flex justify-end">
-                <Button type="button" size="sm" onClick={() => void handleUpload()} disabled={uploadFiles.length === 0} className="gap-1.5">
-                  <UploadCloud className="h-3.5 w-3.5" /> Enviar anexos
-                </Button>
-              </div>
-              <div className="max-h-[40vh] space-y-2 overflow-auto pr-1">
+              <div className="max-h-[20vh] space-y-2 overflow-auto pr-1">
                 {selectedEvidencias.length === 0 && <p className="text-sm text-muted-foreground">Sem evidências registradas.</p>}
                 {selectedEvidencias.map((evidence) => (
                   <div key={evidence.id} className="rounded-md border border-border px-3 py-2">
@@ -1493,38 +1504,42 @@ const SesmtModulePage = () => {
             </TabsContent>
 
             <TabsContent value="comentarios" className="space-y-3 mt-3">
-              {replyToCommentId && (
-                <p className="text-xs text-muted-foreground">
-                  Respondendo {replyToCommentId}
-                  <Button type="button" variant="link" className="ml-1 h-auto p-0 text-xs" onClick={() => setReplyToCommentId(null)}>cancelar</Button>
-                </p>
-              )}
-              <Textarea placeholder="Comentário" value={commentDraft} onChange={(event) => setCommentDraft(event.target.value)} rows={2} />
-              <div className="flex justify-end">
-                <Button type="button" size="sm" onClick={handleAddComment} disabled={!commentDraft.trim()}>Comentar</Button>
-              </div>
-              <div className="max-h-[40vh] space-y-2 overflow-auto pr-1">
-                {selectedComments.length === 0 && <p className="text-sm text-muted-foreground">Sem comentários.</p>}
-                {selectedComments.map((comment) => (
-                  <div key={comment.id} className="rounded-md border border-border px-3 py-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">{comment.usuario}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(comment.data).toLocaleString("pt-BR")}</p>
-                    </div>
-                    {comment.parentId && <p className="text-xs text-muted-foreground">Resposta para {comment.parentId}</p>}
-                    <p className="text-sm">{comment.texto}</p>
-                    <div className="mt-1 flex justify-end">
-                      <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setReplyToCommentId(comment.id)}>Responder</Button>
-                    </div>
+              <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+                <div className="space-y-2">
+                  {replyToCommentId && (
+                    <p className="text-xs text-muted-foreground">
+                      Respondendo {replyToCommentId}
+                      <Button type="button" variant="link" className="ml-1 h-auto p-0 text-xs" onClick={() => setReplyToCommentId(null)}>cancelar</Button>
+                    </p>
+                  )}
+                  <Textarea placeholder="Comentário" value={commentDraft} onChange={(event) => setCommentDraft(event.target.value)} rows={2} />
+                  <div className="flex justify-end">
+                    <Button type="button" size="sm" onClick={handleAddComment} disabled={!commentDraft.trim()}>Comentar</Button>
                   </div>
-                ))}
+                </div>
+                <div className="max-h-[20vh] space-y-2 overflow-auto pr-1">
+                  {selectedComments.length === 0 && <p className="text-sm text-muted-foreground">Sem comentários.</p>}
+                  {selectedComments.map((comment) => (
+                    <div key={comment.id} className="rounded-md border border-border px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium">{comment.usuario}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(comment.data).toLocaleString("pt-BR")}</p>
+                      </div>
+                      {comment.parentId && <p className="text-xs text-muted-foreground">Resposta para {comment.parentId}</p>}
+                      <p className="text-sm">{comment.texto}</p>
+                      <div className="mt-1 flex justify-end">
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setReplyToCommentId(comment.id)}>Responder</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabsContent>
 
             <TabsContent value="acoes" className="space-y-3 mt-3">
               {selected && (
                 <>
-                  <div className="grid gap-2 grid-cols-2">
+                  <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
                     <Button type="button" variant="outline" size="sm" className="justify-start gap-1.5 text-xs" onClick={() => void handleSetRecordStatus(selected, "EM_ANDAMENTO")}>
                       <RefreshCw className="h-3.5 w-3.5" /> Em andamento
                     </Button>
@@ -1539,7 +1554,7 @@ const SesmtModulePage = () => {
                     </Button>
                   </div>
                   {moduleSchema.length > 0 && (
-                    <div className="grid gap-2 grid-cols-2">
+                    <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
                       {moduleSchema.map((field) => (
                         <div key={field.key} className="rounded-md border border-border px-2.5 py-1.5">
                           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{field.label}</p>
@@ -1554,8 +1569,8 @@ const SesmtModulePage = () => {
               )}
             </TabsContent>
           </Tabs>
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
     </div>
   );
 };
