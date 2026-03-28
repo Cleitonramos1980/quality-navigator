@@ -13,8 +13,6 @@ import SesmtKPIBar from "@/components/sesmt/SesmtKPIBar";
 import SesmtRecordTable from "@/components/sesmt/SesmtRecordTable";
 import SesmtFormPanel from "@/components/sesmt/SesmtFormPanel";
 import ApiStatusBanner from "@/components/layout/ApiStatusBanner";
-import FormField from "@/components/forms/FormField";
-import AttachmentUploader from "@/components/upload/AttachmentUploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,18 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// Sheet removed — form is now inline below the table
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { getSesmtFilterPresets, getSesmtFormSchema } from "@/lib/sesmtFormSchemas";
 import { getSesmtNodeByModuleKey } from "@/lib/sesmtMenu";
