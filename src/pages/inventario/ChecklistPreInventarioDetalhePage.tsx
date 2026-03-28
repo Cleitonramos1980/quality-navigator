@@ -1,11 +1,28 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, AlertTriangle, FileText, Clock, User, Building2, Tag } from "lucide-react";
+import { ArrowLeft, AlertTriangle, FileText, Clock, User, Building2, Tag, Pencil, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { mockChecklists } from "@/data/mockChecklistPreInventario";
-import { STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS } from "@/types/checklistPreInventario";
+import { STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS, SETORES_CHECKLIST } from "@/types/checklistPreInventario";
+import { toast } from "@/hooks/use-toast";
+
+const RESPONSAVEIS = [
+  "Carlos Lima", "Ana Souza", "Pedro Santos", "Joana Costa",
+  "Marcos Silva", "Fernanda Oliveira", "Rafael Almeida", "Juliana Pereira",
+  "Roberto Mendes", "Camila Rocha", "Lucas Ferreira", "Beatriz Nunes",
+];
 
 export default function ChecklistPreInventarioDetalhePage() {
   const { checklistId, itemId } = useParams();
@@ -14,6 +31,33 @@ export default function ChecklistPreInventarioDetalhePage() {
   const checklist = mockChecklists.find((c) => c.id === checklistId);
   const item = checklist?.blocos.flatMap((b) => b.itens).find((i) => i.id === itemId);
   const bloco = checklist?.blocos.find((b) => b.id === item?.blocoId);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [responsavel, setResponsavel] = useState("");
+  const [date, setDate] = useState<Date | undefined>();
+  const [setor, setSetor] = useState("");
+  const [responsavelSearchOpen, setResponsavelSearchOpen] = useState(false);
+
+  const openEdit = () => {
+    if (!item) return;
+    setResponsavel(item.responsavel);
+    setDate(item.data ? new Date(item.data) : undefined);
+    setSetor(item.setor);
+    setEditOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!item) return;
+    if (!responsavel.trim()) {
+      toast({ title: "Erro", description: "Informe o responsável.", variant: "destructive" });
+      return;
+    }
+    item.responsavel = responsavel.trim();
+    item.data = date ? format(date, "yyyy-MM-dd") : "";
+    item.setor = setor;
+    setEditOpen(false);
+    toast({ title: "Item atualizado", description: `"${item.descricao}" foi atualizado com sucesso.` });
+  };
 
   if (!checklist || !item) {
     return (
@@ -35,7 +79,10 @@ export default function ChecklistPreInventarioDetalhePage() {
             <p className="text-xs text-muted-foreground mb-1">{checklist.nome} → {bloco?.nome}</p>
             <h1 className="text-lg font-bold text-foreground">{item.descricao}</h1>
           </div>
-          <span className={cn("status-badge", STATUS_COLORS[item.status])}>{STATUS_LABELS[item.status]}</span>
+          <div className="flex items-center gap-2">
+            <span className={cn("status-badge", STATUS_COLORS[item.status])}>{STATUS_LABELS[item.status]}</span>
+            <Button variant="outline" size="sm" onClick={openEdit}><Pencil className="h-4 w-4 mr-1" />Editar</Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
@@ -92,6 +139,78 @@ export default function ChecklistPreInventarioDetalhePage() {
           </div>
         )}
       </div>
+
+      {/* Modal Editar */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="text-base">Editar Item</DialogTitle>
+            <p className="text-sm text-muted-foreground">{item.descricao}</p>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Responsável com busca */}
+            <div className="space-y-1.5">
+              <Label>Responsável</Label>
+              <Popover open={responsavelSearchOpen} onOpenChange={setResponsavelSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                    {responsavel || "Buscar responsável..."}
+                    <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 pointer-events-auto" align="start">
+                  <Command>
+                    <CommandInput placeholder="Pesquisar nome..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum responsável encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {RESPONSAVEIS.map((r) => (
+                          <CommandItem key={r} value={r} onSelect={(val) => { setResponsavel(val); setResponsavelSearchOpen(false); }}>
+                            {r}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Data com calendário */}
+            <div className="space-y-1.5">
+              <Label>Data</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Selecione a data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+                  <Calendar mode="single" selected={date} onSelect={setDate} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Setor */}
+            <div className="space-y-1.5">
+              <Label>Setor</Label>
+              <Select value={setor} onValueChange={setSetor}>
+                <SelectTrigger><SelectValue placeholder="Selecione o setor" /></SelectTrigger>
+                <SelectContent>
+                  {SETORES_CHECKLIST.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
