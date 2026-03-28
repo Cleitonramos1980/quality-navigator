@@ -54,7 +54,7 @@ function CritPill({ crit }: { crit: ChecklistCriticidade }) {
 }
 
 /* ─── Bloco Accordion ──────────────────────────────────── */
-function BlocoSection({ bloco, onItemClick }: { bloco: ChecklistBloco; onItemClick: (itemId: string) => void }) {
+function BlocoSection({ bloco, onItemClick, onEditItem }: { bloco: ChecklistBloco; onItemClick: (itemId: string) => void; onEditItem: (item: any) => void }) {
   const [open, setOpen] = useState(true);
   const total = bloco.itens.length;
   const concluidos = bloco.itens.filter((i) => i.status === "CONCLUIDO").length;
