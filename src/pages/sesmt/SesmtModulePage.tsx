@@ -1129,15 +1129,11 @@ const SesmtModulePage = () => {
         </div>
       </div>
 
+      {/* API Status */}
+      <ApiStatusBanner />
+
       {/* KPIs compactos */}
-      <div className="grid gap-2 grid-cols-3 lg:grid-cols-6">
-        {kpiCards.map((card) => (
-          <div key={card.label} className="rounded-lg border border-border bg-card px-2.5 py-1.5">
-            <p className="text-[10px] text-muted-foreground leading-tight">{card.label}</p>
-            <p className={`text-lg font-bold leading-tight ${card.tone || "text-foreground"}`}>{card.value}</p>
-          </div>
-        ))}
-      </div>
+      <SesmtKPIBar cards={kpiCards} />
 
       {/* Filtros colapsáveis */}
       <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
