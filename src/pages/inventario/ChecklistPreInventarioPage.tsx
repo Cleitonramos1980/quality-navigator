@@ -25,9 +25,15 @@ import EditarItemChecklistModal from "@/components/inventario/EditarItemChecklis
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS,
-  STATUS_GERAL_LABELS, type ChecklistItemStatus, type ChecklistCriticidade,
-  type ChecklistBloco,
+  STATUS_GERAL_LABELS, SETORES_CHECKLIST, type ChecklistItemStatus, type ChecklistCriticidade,
+  type ChecklistBloco, type ChecklistItem,
 } from "@/types/checklistPreInventario";
+
+const RESPONSAVEIS = [
+  "Carlos Lima", "Ana Souza", "Pedro Santos", "Joana Costa",
+  "Marcos Silva", "Fernanda Oliveira", "Rafael Almeida", "Juliana Pereira",
+  "Roberto Mendes", "Camila Rocha", "Lucas Ferreira", "Beatriz Nunes",
+];
 
 /* ─── KPI Card ──────────────────────────────────────────── */
 function KPI({ label, value, icon: Icon, variant = "default" }: { label: string; value: number; icon: any; variant?: string }) {
