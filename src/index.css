@@ -39,6 +39,39 @@
     --info: 200 80% 50%;
     --info-foreground: 0 0% 100%;
 
+    /* Status semantic tokens */
+    --status-open-bg: 220 15% 94%;
+    --status-open-fg: 220 15% 35%;
+    --status-open-border: 220 15% 88%;
+
+    --status-progress-bg: 200 80% 92%;
+    --status-progress-fg: 200 80% 35%;
+    --status-progress-border: 200 80% 80%;
+
+    --status-done-bg: 152 50% 92%;
+    --status-done-fg: 152 60% 30%;
+    --status-done-border: 152 50% 78%;
+
+    --status-overdue-bg: 0 65% 94%;
+    --status-overdue-fg: 0 72% 42%;
+    --status-overdue-border: 0 60% 82%;
+
+    --crit-low-bg: 152 50% 92%;
+    --crit-low-fg: 152 60% 30%;
+    --crit-low-border: 152 50% 78%;
+
+    --crit-medium-bg: 38 80% 92%;
+    --crit-medium-fg: 38 80% 35%;
+    --crit-medium-border: 38 70% 78%;
+
+    --crit-high-bg: 25 80% 92%;
+    --crit-high-fg: 25 80% 35%;
+    --crit-high-border: 25 70% 78%;
+
+    --crit-critical-bg: 0 65% 94%;
+    --crit-critical-fg: 0 72% 42%;
+    --crit-critical-border: 0 60% 82%;
+
     --border: 220 15% 88%;
     --input: 220 15% 88%;
     --ring: 220 70% 45%;
@@ -86,6 +119,39 @@
 
     --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
+
+    /* Status semantic tokens — dark */
+    --status-open-bg: 220 15% 18%;
+    --status-open-fg: 220 15% 70%;
+    --status-open-border: 220 15% 25%;
+
+    --status-progress-bg: 200 50% 18%;
+    --status-progress-fg: 200 80% 70%;
+    --status-progress-border: 200 50% 28%;
+
+    --status-done-bg: 152 30% 16%;
+    --status-done-fg: 152 60% 65%;
+    --status-done-border: 152 30% 25%;
+
+    --status-overdue-bg: 0 40% 18%;
+    --status-overdue-fg: 0 72% 65%;
+    --status-overdue-border: 0 40% 28%;
+
+    --crit-low-bg: 152 30% 16%;
+    --crit-low-fg: 152 60% 65%;
+    --crit-low-border: 152 30% 25%;
+
+    --crit-medium-bg: 38 40% 18%;
+    --crit-medium-fg: 38 80% 65%;
+    --crit-medium-border: 38 40% 28%;
+
+    --crit-high-bg: 25 40% 18%;
+    --crit-high-fg: 25 80% 65%;
+    --crit-high-border: 25 40% 28%;
+
+    --crit-critical-bg: 0 40% 18%;
+    --crit-critical-fg: 0 72% 65%;
+    --crit-critical-border: 0 40% 28%;
 
     --border: 222 20% 20%;
     --input: 222 20% 20%;

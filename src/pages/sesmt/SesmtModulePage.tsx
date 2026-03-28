@@ -1,23 +1,18 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Copy,
   Download,
-  Eye,
-  Pencil,
   Plus,
   RefreshCw,
-  Save,
   Star,
-  UploadCloud,
-  X,
 } from "lucide-react";
 import SectionCard from "@/components/forms/SectionCard";
-import FormField from "@/components/forms/FormField";
-import AttachmentUploader from "@/components/upload/AttachmentUploader";
+import SesmtKPIBar from "@/components/sesmt/SesmtKPIBar";
+import SesmtRecordTable from "@/components/sesmt/SesmtRecordTable";
+import SesmtFormPanel from "@/components/sesmt/SesmtFormPanel";
+import ApiStatusBanner from "@/components/layout/ApiStatusBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,18 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// Sheet removed — form is now inline below the table
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { getSesmtFilterPresets, getSesmtFormSchema } from "@/lib/sesmtFormSchemas";
 import { getSesmtNodeByModuleKey } from "@/lib/sesmtMenu";
@@ -367,10 +351,10 @@ const SesmtModulePage = () => {
     return [
       { label: "Total registros", value: totalRecords },
       { label: "Abertos", value: abertos },
-      { label: "Vencidos", value: vencidos, tone: "text-red-600" },
-      { label: "Criticos", value: criticos, tone: "text-red-600" },
-      { label: "Sem responsavel", value: semResponsavel, tone: "text-amber-600" },
-      { label: "Concluidos no periodo", value: concluidosPeriodo, tone: "text-emerald-600" },
+      { label: "Vencidos", value: vencidos, tone: "text-destructive" },
+      { label: "Criticos", value: criticos, tone: "text-destructive" },
+      { label: "Sem responsavel", value: semResponsavel, tone: "text-warning" },
+      { label: "Concluidos no periodo", value: concluidosPeriodo, tone: "text-[hsl(var(--status-done-fg))]" },
     ];
   }, [filteredRecords, totalRecords, periodStartFilter, periodEndFilter, today]);
   const nrAplicaveis = useMemo(() => {
@@ -1132,15 +1116,11 @@ const SesmtModulePage = () => {
         </div>
       </div>
 
+      {/* API Status */}
+      <ApiStatusBanner />
+
       {/* KPIs compactos */}
-      <div className="grid gap-2 grid-cols-3 lg:grid-cols-6">
-        {kpiCards.map((card) => (
-          <div key={card.label} className="rounded-lg border border-border bg-card px-2.5 py-1.5">
-            <p className="text-[10px] text-muted-foreground leading-tight">{card.label}</p>
-            <p className={`text-lg font-bold leading-tight ${card.tone || "text-foreground"}`}>{card.value}</p>
-          </div>
-        ))}
-      </div>
+      <SesmtKPIBar cards={kpiCards} />
 
       {/* Filtros colapsáveis */}
       <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -1279,298 +1259,53 @@ const SesmtModulePage = () => {
 
       {/* Painel central — formulário de criação/edição */}
       {bottomPanelOpen && (
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
-          <div className="flex items-center justify-between border-b border-border px-3 py-2">
-            <h2 className="text-sm font-semibold text-foreground">
-              {selected ? `${selected.id} — ${selected.titulo}` : "Novo registro"}
-            </h2>
-            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setBottomPanelOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <Tabs value={panelTab} onValueChange={(v) => setPanelTab(v as typeof panelTab)} className="px-3 pb-3">
-            <TabsList className="w-full grid grid-cols-5 h-8 mt-2">
-              <TabsTrigger value="form" className="text-xs">Dados</TabsTrigger>
-              <TabsTrigger value="historico" className="text-xs" disabled={!selected}>Histórico</TabsTrigger>
-              <TabsTrigger value="evidencias" className="text-xs" disabled={!selected}>Evidências</TabsTrigger>
-              <TabsTrigger value="comentarios" className="text-xs" disabled={!selected}>Coment.</TabsTrigger>
-              <TabsTrigger value="acoes" className="text-xs" disabled={!selected}>Ações</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="form" className="space-y-3 mt-3">
-              <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-                <div className="col-span-2">
-                  <FormField label="Título" required><Input value={form.titulo} onChange={(event) => setField("titulo", event.target.value)} /></FormField>
-                </div>
-                <FormField label="Responsável" required><Input value={form.responsavel} onChange={(event) => setField("responsavel", event.target.value)} /></FormField>
-                <FormField label="Unidade">
-                  <Select value={form.unidade} onValueChange={(value) => setField("unidade", value)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{UNIT_OPTIONS.map((unit) => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}</SelectContent>
-                  </Select>
-                </FormField>
-                <FormField label="Status">
-                  <Select value={form.status} onValueChange={(value) => setField("status", value)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{STATUS_OPTIONS.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent>
-                  </Select>
-                </FormField>
-                <FormField label="Criticidade">
-                  <Select value={form.criticidade} onValueChange={(value) => setField("criticidade", value)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{CRITICALITY_OPTIONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
-                  </Select>
-                </FormField>
-                <FormField label="NR"><Input value={form.nr} onChange={(event) => setField("nr", event.target.value)} /></FormField>
-                <FormField label="Setor"><Input value={form.setor} onChange={(event) => setField("setor", event.target.value)} /></FormField>
-                <FormField label="Função"><Input value={form.funcao} onChange={(event) => setField("funcao", event.target.value)} /></FormField>
-                <FormField label="Vencimento"><Input type="date" value={form.vencimentoAt} onChange={(event) => setField("vencimentoAt", event.target.value)} /></FormField>
-                <FormField label="Investimento (R$)"><Input value={form.investimento} onChange={(event) => setField("investimento", event.target.value)} /></FormField>
-                <FormField label="Custo (R$)"><Input value={form.custo} onChange={(event) => setField("custo", event.target.value)} /></FormField>
-                <FormField label="Risco Inerente"><Input value={form.riscoInerente} onChange={(event) => setField("riscoInerente", event.target.value)} /></FormField>
-                <FormField label="Risco Residual"><Input value={form.riscoResidual} onChange={(event) => setField("riscoResidual", event.target.value)} /></FormField>
-              </div>
-
-              {moduleSchema.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-semibold text-foreground mb-2 mt-1">Campos do submódulo</h3>
-                  <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-                    {moduleSchema.map((field) => (
-                      <div key={field.key} className={field.type === "textarea" ? "col-span-2" : ""}>
-                        <FormField label={field.label} required={field.required}>
-                          {field.type === "textarea" && <Textarea rows={2} placeholder={field.placeholder} value={specificForm[field.key] || ""} onChange={(event) => setSpecificField(field.key, event.target.value)} />}
-                          {field.type === "select" && (
-                            <Select value={specificForm[field.key] || undefined} onValueChange={(value) => setSpecificField(field.key, value)}>
-                              <SelectTrigger><SelectValue placeholder={field.placeholder || "Selecione"} /></SelectTrigger>
-                              <SelectContent>{(field.options || []).map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
-                            </Select>
-                          )}
-                          {field.type === "number" && <Input inputMode="decimal" placeholder={field.placeholder} value={specificForm[field.key] || ""} onChange={(event) => setSpecificField(field.key, event.target.value)} />}
-                          {field.type === "date" && <Input type="date" value={specificForm[field.key] || ""} onChange={(event) => setSpecificField(field.key, event.target.value)} />}
-                          {field.type === "text" && <Input placeholder={field.placeholder} value={specificForm[field.key] || ""} onChange={(event) => setSpecificField(field.key, event.target.value)} />}
-                        </FormField>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="grid gap-2.5 grid-cols-1 lg:grid-cols-2">
-                <FormField label="Observações">
-                  <Textarea value={form.descricao} onChange={(event) => setField("descricao", event.target.value)} rows={2} />
-                </FormField>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-1">
-                <Button type="button" variant="outline" size="sm" onClick={handleNewRecord}>Limpar</Button>
-                {!selected && (
-                  <Button size="sm" onClick={() => void handleCreate()} className="gap-1.5">
-                    <Save className="w-3.5 h-3.5" /> Salvar
-                  </Button>
-                )}
-                {selected && (
-                  <Button size="sm" onClick={() => void handleUpdate()} className="gap-1.5">
-                    <Save className="w-3.5 h-3.5" /> Atualizar
-                  </Button>
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="historico" className="space-y-2 mt-3">
-              {selectedHistorico.length === 0 && <p className="text-sm text-muted-foreground">Sem histórico registrado.</p>}
-              <div className="max-h-[30vh] space-y-2 overflow-auto pr-1">
-                {selectedHistorico.map((item) => (
-                  <div key={item.id} className="rounded-md border border-border px-3 py-2">
-                    <p className="text-sm font-medium">{item.acao}</p>
-                    <p className="text-xs text-muted-foreground">{item.descricao}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(item.data).toLocaleString("pt-BR")} • {item.usuario}</p>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="evidencias" className="space-y-3 mt-3">
-              <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
-                <div className="space-y-2">
-                  <Textarea placeholder="Descreva a evidência" value={evidenceText} onChange={(event) => setEvidenceText(event.target.value)} rows={2} />
-                  <div className="flex justify-end">
-                    <Button type="button" size="sm" onClick={() => void handleEvidence()} disabled={!evidenceText.trim()}>Adicionar evidência</Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <AttachmentUploader maxFiles={8} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.xls,.csv,.txt" onFilesChange={(files) => setUploadFiles(files)} />
-                  <div className="flex justify-end">
-                    <Button type="button" size="sm" onClick={() => void handleUpload()} disabled={uploadFiles.length === 0} className="gap-1.5">
-                      <UploadCloud className="h-3.5 w-3.5" /> Enviar anexos
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <div className="max-h-[20vh] space-y-2 overflow-auto pr-1">
-                {selectedEvidencias.length === 0 && <p className="text-sm text-muted-foreground">Sem evidências registradas.</p>}
-                {selectedEvidencias.map((evidence) => (
-                  <div key={evidence.id} className="rounded-md border border-border px-3 py-2">
-                    <p className="text-sm font-medium">{evidence.descricao}</p>
-                    <p className="text-xs text-muted-foreground">{evidence.tipo} • {evidence.responsavel} • {evidence.data}</p>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="comentarios" className="space-y-3 mt-3">
-              <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
-                <div className="space-y-2">
-                  {replyToCommentId && (
-                    <p className="text-xs text-muted-foreground">
-                      Respondendo {replyToCommentId}
-                      <Button type="button" variant="link" className="ml-1 h-auto p-0 text-xs" onClick={() => setReplyToCommentId(null)}>cancelar</Button>
-                    </p>
-                  )}
-                  <Textarea placeholder="Comentário" value={commentDraft} onChange={(event) => setCommentDraft(event.target.value)} rows={2} />
-                  <div className="flex justify-end">
-                    <Button type="button" size="sm" onClick={handleAddComment} disabled={!commentDraft.trim()}>Comentar</Button>
-                  </div>
-                </div>
-                <div className="max-h-[20vh] space-y-2 overflow-auto pr-1">
-                  {selectedComments.length === 0 && <p className="text-sm text-muted-foreground">Sem comentários.</p>}
-                  {selectedComments.map((comment) => (
-                    <div key={comment.id} className="rounded-md border border-border px-3 py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium">{comment.usuario}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(comment.data).toLocaleString("pt-BR")}</p>
-                      </div>
-                      {comment.parentId && <p className="text-xs text-muted-foreground">Resposta para {comment.parentId}</p>}
-                      <p className="text-sm">{comment.texto}</p>
-                      <div className="mt-1 flex justify-end">
-                        <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setReplyToCommentId(comment.id)}>Responder</Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="acoes" className="space-y-3 mt-3">
-              {selected && (
-                <>
-                  <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
-                    <Button type="button" variant="outline" size="sm" className="justify-start gap-1.5 text-xs" onClick={() => void handleSetRecordStatus(selected, "EM_ANDAMENTO")}>
-                      <RefreshCw className="h-3.5 w-3.5" /> Em andamento
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" className="justify-start gap-1.5 text-xs" onClick={() => void handleSetRecordStatus(selected, "ABERTO")}>
-                      <RefreshCw className="h-3.5 w-3.5" /> Reabrir
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" className="justify-start gap-1.5 text-xs" onClick={() => handleDuplicateRecord(selected)}>
-                      <Copy className="h-3.5 w-3.5" /> Duplicar
-                    </Button>
-                    <Button type="button" size="sm" className="justify-start gap-1.5 text-xs" onClick={() => void handleSetRecordStatus(selected, "CONCLUIDO")}>
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
-                    </Button>
-                  </div>
-                  {moduleSchema.length > 0 && (
-                    <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
-                      {moduleSchema.map((field) => (
-                        <div key={field.key} className="rounded-md border border-border px-2.5 py-1.5">
-                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{field.label}</p>
-                          <p className="text-sm font-medium">
-                            {selected.dadosEspecificos?.[field.key] == null || String(selected.dadosEspecificos?.[field.key]).trim() === "" ? "-" : String(selected.dadosEspecificos?.[field.key])}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+        <SesmtFormPanel
+          selected={selected}
+          form={form}
+          specificForm={specificForm}
+          moduleSchema={moduleSchema}
+          panelTab={panelTab}
+          evidenceText={evidenceText}
+          uploadFiles={uploadFiles}
+          commentDraft={commentDraft}
+          replyToCommentId={replyToCommentId}
+          comments={selectedComments}
+          evidencias={selectedEvidencias}
+          historico={selectedHistorico}
+          onClose={() => setBottomPanelOpen(false)}
+          onSetField={setField}
+          onSetSpecificField={setSpecificField}
+          onSetPanelTab={(tab) => setPanelTab(tab as typeof panelTab)}
+          onSetEvidenceText={setEvidenceText}
+          onSetUploadFiles={setUploadFiles}
+          onSetCommentDraft={setCommentDraft}
+          onSetReplyToCommentId={setReplyToCommentId}
+          onCreate={() => void handleCreate()}
+          onUpdate={() => void handleUpdate()}
+          onClear={handleNewRecord}
+          onEvidence={() => void handleEvidence()}
+          onUpload={() => void handleUpload()}
+          onAddComment={handleAddComment}
+          onSetStatus={(record, status) => void handleSetRecordStatus(record, status as any)}
+          onDuplicate={handleDuplicateRecord}
+        />
       )}
 
       {/* Tabela de registros — rodapé */}
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Tipo</TableHead>
-                <TableHead className="text-xs">Código</TableHead>
-                <TableHead className="text-xs">Título</TableHead>
-                <TableHead className="text-xs">Unidade</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-                <TableHead className="text-xs">Criticidade</TableHead>
-                <TableHead className="text-xs">Vencimento</TableHead>
-                <TableHead className="text-xs">NR</TableHead>
-                <TableHead className="text-xs">Responsável</TableHead>
-                <TableHead className="text-xs text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell className="text-center text-muted-foreground text-xs py-8" colSpan={10}>Carregando registros...</TableCell>
-                </TableRow>
-              )}
-              {!loading && filteredRecords.length === 0 && (
-                <TableRow>
-                  <TableCell className="text-center text-muted-foreground text-xs py-8" colSpan={10}>
-                    Nenhum registro encontrado. Clique em <strong>Novo</strong> para criar o primeiro.
-                  </TableCell>
-                </TableRow>
-              )}
-              {filteredRecords.map((record) => (
-                <TableRow
-                  key={record.id}
-                  className={`cursor-pointer hover:bg-muted/40 ${selected?.id === record.id ? "bg-primary/5" : ""}`}
-                  onClick={() => void openRecordInPanel(record.id)}
-                >
-                  <TableCell className="whitespace-nowrap text-xs py-2">{getRecordTypeLabel(record)}</TableCell>
-                  <TableCell className="whitespace-nowrap font-medium text-xs py-2">{record.id}</TableCell>
-                  <TableCell className="text-xs py-2 max-w-[200px] truncate">{record.titulo}</TableCell>
-                  <TableCell className="text-xs py-2">{record.unidade}</TableCell>
-                  <TableCell className="py-2">
-                    <span className={`inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${getStatusTone(record.status)}`}>{record.status}</span>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <span className={`inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${getCriticidadeTone(record.criticidade)}`}>{record.criticidade}</span>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <span className={`text-xs ${isOverdue(record) ? "font-semibold text-destructive" : "text-foreground"}`}>{record.vencimentoAt || "-"}</span>
-                  </TableCell>
-                  <TableCell className="text-xs py-2">{record.nr || "-"}</TableCell>
-                  <TableCell className="text-xs py-2">{record.responsavel || "-"}</TableCell>
-                  <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-end gap-0.5">
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Editar" onClick={() => void openRecordInPanel(record.id, "form")}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Histórico" onClick={() => void openRecordInPanel(record.id, "historico")}>
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Evidência" onClick={() => void openRecordInPanel(record.id, "evidencias")}>
-                        <UploadCloud className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Duplicar" onClick={() => handleDuplicateRecord(record)}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="icon" variant="ghost" className="h-7 w-7 text-emerald-700" title="Concluir" disabled={record.status === "CONCLUIDO"} onClick={() => void handleSetRecordStatus(record, "CONCLUIDO")}>
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs text-muted-foreground">
-          <p>{filteredRecords.length} de {totalRecords} • Pág. {Math.min(page, totalPages)}/{totalPages}</p>
-          <div className="flex items-center gap-1.5">
-            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={loading || page <= 1} onClick={() => setPage((c) => Math.max(1, c - 1))}>Anterior</Button>
-            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={loading || page >= totalPages} onClick={() => setPage((c) => Math.min(totalPages, c + 1))}>Próxima</Button>
-          </div>
-        </div>
-      </div>
+      <SesmtRecordTable
+        records={filteredRecords}
+        totalRecords={totalRecords}
+        loading={loading}
+        selectedId={selected?.id}
+        page={page}
+        totalPages={totalPages}
+        getRecordTypeLabel={getRecordTypeLabel}
+        isOverdue={isOverdue}
+        onOpenRecord={(id, tab) => void openRecordInPanel(id, tab)}
+        onDuplicate={handleDuplicateRecord}
+        onSetStatus={(record, status) => void handleSetRecordStatus(record, status as any)}
+        onPageChange={setPage}
+      />
     </div>
   );
 };
