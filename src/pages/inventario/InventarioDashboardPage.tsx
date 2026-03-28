@@ -241,9 +241,193 @@ const InventarioDashboardPage = () => {
           </div>
         </CardContent>
       </Card>
+      {/* ─── Checklist Pré-Inventário Dashboard ─────────────── */}
+      <ChecklistPreInventarioDashboard navigate={navigate} />
     </div>
   );
 };
+
+/* ─── Checklist Pré-Inventário Section ──────────────────── */
+function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
+  const checklists = mockChecklists;
+
+  const stats = useMemo(() => {
+    const allItens = checklists.flatMap((c) => c.blocos.flatMap((b) => b.itens));
+    const total = allItens.length;
+    const concluidos = allItens.filter((i) => i.status === "CONCLUIDO").length;
+    const pendentes = allItens.filter((i) => i.status === "PENDENTE").length;
+    const emAndamento = allItens.filter((i) => i.status === "EM_ANDAMENTO").length;
+    const criticos = allItens.filter((i) => i.criticidade === "ALTA" && i.status !== "CONCLUIDO").length;
+    const ncs = allItens.filter((i) => i.nc).length;
+    const pctGeral = total > 0 ? Math.round((concluidos / total) * 100) : 0;
+    return { total, concluidos, pendentes, emAndamento, criticos, ncs, pctGeral };
+  }, [checklists]);
+
+  const blocoStats = useMemo(() => {
+    return checklists.flatMap((c) =>
+      c.blocos.map((b) => {
+        const total = b.itens.length;
+        const done = b.itens.filter((i) => i.status === "CONCLUIDO").length;
+        const criticos = b.itens.filter((i) => i.criticidade === "ALTA" && i.status !== "CONCLUIDO").length;
+        return { nome: b.nome, total, done, pct: total > 0 ? Math.round((done / total) * 100) : 0, criticos };
+      })
+    );
+  }, [checklists]);
+
+  const statusPieData = useMemo(() => {
+    const allItens = checklists.flatMap((c) => c.blocos.flatMap((b) => b.itens));
+    return [
+      { name: "Concluído", value: allItens.filter((i) => i.status === "CONCLUIDO").length, fill: "hsl(var(--success))" },
+      { name: "Em Andamento", value: allItens.filter((i) => i.status === "EM_ANDAMENTO").length, fill: "hsl(var(--primary))" },
+      { name: "Pendente", value: allItens.filter((i) => i.status === "PENDENTE").length, fill: "hsl(var(--warning))" },
+      { name: "Cancelado", value: allItens.filter((i) => i.status === "CANCELADO").length, fill: "hsl(var(--muted-foreground))" },
+      { name: "N/A", value: allItens.filter((i) => i.status === "NAO_APLICAVEL").length, fill: "hsl(var(--border))" },
+    ].filter((d) => d.value > 0);
+  }, [checklists]);
+
+  const barData = useMemo(() => {
+    return blocoStats.map((b) => ({
+      nome: b.nome.length > 18 ? b.nome.slice(0, 18) + "…" : b.nome,
+      concluido: b.pct,
+    }));
+  }, [blocoStats]);
+
+  const itensCriticosAbertos = useMemo(() => {
+    return checklists.flatMap((c) =>
+      c.blocos.flatMap((b) =>
+        b.itens
+          .filter((i) => i.criticidade === "ALTA" && i.status !== "CONCLUIDO")
+          .map((i) => ({ ...i, blocoNome: b.nome, checklistNome: c.nome }))
+      )
+    ).slice(0, 6);
+  }, [checklists]);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ClipboardCheck className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-bold text-foreground">Checklist Pré-Inventário</h2>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => navigate("/qualidade/inventario/checklist-pre")}>
+          Ver Checklists
+        </Button>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <KPICard title="Total Itens" value={stats.total} icon={<ClipboardCheck className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/checklist-pre")} />
+        <KPICard title="Concluídos" value={stats.concluidos} icon={<CheckCircle className="h-4 w-4" />} />
+        <KPICard title="Em Andamento" value={stats.emAndamento} icon={<Clock className="h-4 w-4" />} />
+        <KPICard title="Pendentes" value={stats.pendentes} icon={<AlertTriangle className="h-4 w-4" />} />
+        <KPICard title="Críticos Abertos" value={stats.criticos} icon={<AlertTriangle className="h-4 w-4" />} />
+        <KPICard title="NCs Abertas" value={stats.ncs} icon={<FileWarning className="h-4 w-4" />} />
+        <KPICard title="Progresso" value={`${stats.pctGeral}%`} icon={<TrendingUp className="h-4 w-4" />} />
+      </div>
+
+      {/* Progresso geral */}
+      <Card>
+        <CardContent className="pt-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-foreground">Progresso Geral do Pré-Inventário</span>
+            <span className="text-sm font-bold text-primary">{stats.pctGeral}%</span>
+          </div>
+          <Progress value={stats.pctGeral} className="h-3" />
+          <p className="text-xs text-muted-foreground mt-1.5">{stats.concluidos} de {stats.total} itens concluídos</p>
+        </CardContent>
+      </Card>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Status pie */}
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-medium">Distribuição por Status</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={statusPieData} dataKey="value" cx="50%" cy="50%" outerRadius={80} innerRadius={45} paddingAngle={2}>
+                  {statusPieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex flex-wrap gap-3 justify-center mt-2">
+              {statusPieData.map((d) => (
+                <span key={d.name} className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.fill }} />
+                  {d.name}: {d.value}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Progresso por bloco */}
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-medium">Progresso por Bloco</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={barData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
+                <YAxis dataKey="nome" type="category" width={140} tick={{ fontSize: 10 }} />
+                <Tooltip formatter={(val: number) => `${val}%`} />
+                <Bar dataKey="concluido" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Blocos detalhados + Itens críticos */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" />Acompanhamento por Bloco</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {blocoStats.map((b) => (
+              <div key={b.nome} className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm truncate">{b.nome}</span>
+                    <span className="text-xs text-muted-foreground shrink-0 ml-2">{b.done}/{b.total}</span>
+                  </div>
+                  <Progress value={b.pct} className="h-1.5" />
+                </div>
+                {b.criticos > 0 && (
+                  <Badge variant="destructive" className="text-[10px] px-1.5 shrink-0">{b.criticos}</Badge>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-destructive" />Itens Críticos em Aberto</CardTitle></CardHeader>
+          <CardContent>
+            {itensCriticosAbertos.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum item crítico pendente 🎉</p>
+            ) : (
+              <div className="space-y-2">
+                {itensCriticosAbertos.map((i) => (
+                  <div
+                    key={i.id}
+                    className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0 cursor-pointer hover:bg-muted/30 rounded px-1"
+                    onClick={() => navigate(`/qualidade/inventario/checklist-pre/CKL-001/item/${i.id}`)}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm truncate">{i.descricao}</p>
+                      <p className="text-xs text-muted-foreground">{i.blocoNome} · {i.responsavel}</p>
+                    </div>
+                    <span className={cn("status-badge text-[10px] shrink-0", STATUS_COLORS[i.status])}>{STATUS_LABELS[i.status]}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
 
 export default InventarioDashboardPage;
 
