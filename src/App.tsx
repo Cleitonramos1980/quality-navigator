@@ -75,6 +75,8 @@ const HistoricoDivergenciaPage = lazy(() => import("@/pages/inventario/Historico
 const RelatoriosInventarioPage = lazy(() => import("@/pages/inventario/RelatoriosInventarioPage"));
 const ConfiguracaoInventarioPage = lazy(() => import("@/pages/inventario/ConfiguracaoInventarioPage"));
 const NovoPlanoInventarioPage = lazy(() => import("@/pages/inventario/NovoPlanoInventarioPage"));
+const ChecklistPreInventarioPage = lazy(() => import("@/pages/inventario/ChecklistPreInventarioPage"));
+const ChecklistPreInventarioDetalhePage = lazy(() => import("@/pages/inventario/ChecklistPreInventarioDetalhePage"));
 
 // Operational modules
 const AcessosListPage = lazy(() => import("@/pages/portaria/AcessosListPage"));
