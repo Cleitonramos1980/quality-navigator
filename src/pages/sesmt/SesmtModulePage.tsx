@@ -1,21 +1,18 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Copy,
   Download,
-  Eye,
-  Pencil,
   Plus,
   RefreshCw,
-  Save,
   Star,
-  UploadCloud,
-  X,
 } from "lucide-react";
 import SectionCard from "@/components/forms/SectionCard";
+import SesmtKPIBar from "@/components/sesmt/SesmtKPIBar";
+import SesmtRecordTable from "@/components/sesmt/SesmtRecordTable";
+import SesmtFormPanel from "@/components/sesmt/SesmtFormPanel";
+import ApiStatusBanner from "@/components/layout/ApiStatusBanner";
 import FormField from "@/components/forms/FormField";
 import AttachmentUploader from "@/components/upload/AttachmentUploader";
 import { Button } from "@/components/ui/button";
