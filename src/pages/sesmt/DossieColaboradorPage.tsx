@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Search, Printer, FileDown, RefreshCw, Share2, AlertTriangle, User, Calendar,
@@ -15,7 +15,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
-import { MOCK_COLABORADORES, getDossieByColaboradorId, type Colaborador, type DossieColaborador } from "@/data/mockDossieColaborador";
+import type { Colaborador, DossieColaborador } from "@/data/mockDossieColaborador";
+import {
+  exportSesmtColaboradorDossie,
+  getSesmtColaboradorDossie,
+  listSesmtColaboradores,
+} from "@/services/sesmt";
+import { toast } from "@/hooks/use-toast";
 
 /* ───── helpers ───── */
 const statusColor = (s: string) => {
@@ -91,12 +97,12 @@ const StatusBadge = ({ status }: { status: string }) => (
 );
 
 /* ───── Collaborator search panel ───── */
-const ColaboradorSearchPanel = ({ onSelect }: { onSelect: (c: Colaborador) => void }) => {
+const ColaboradorSearchPanel = ({ colaboradores, onSelect }: { colaboradores: Colaborador[]; onSelect: (c: Colaborador) => void }) => {
   const [search, setSearch] = useState("");
   const [unidade, setUnidade] = useState("all");
 
   const filtered = useMemo(() => {
-    let list = MOCK_COLABORADORES;
+    let list = colaboradores;
     if (unidade !== "all") list = list.filter(c => c.unidade === unidade);
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -107,7 +113,7 @@ const ColaboradorSearchPanel = ({ onSelect }: { onSelect: (c: Colaborador) => vo
       );
     }
     return list;
-  }, [search, unidade]);
+  }, [colaboradores, search, unidade]);
 
   return (
     <div className="space-y-3">
@@ -436,8 +442,41 @@ const DossieColaboradorPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedId, setSelectedId] = useState<string | null>(searchParams.get("id") || null);
   const [activeTab, setActiveTab] = useState("geral");
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
+  const [dossie, setDossie] = useState<DossieColaborador | null>(null);
+  const [loadingDossie, setLoadingDossie] = useState(false);
 
-  const dossie = selectedId ? getDossieByColaboradorId(selectedId) : null;
+  useEffect(() => {
+    let active = true;
+    const loadColaboradores = async () => {
+      const items = await listSesmtColaboradores();
+      if (!active) return;
+      setColaboradores(items);
+    };
+    void loadColaboradores();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadDossie = async () => {
+      if (!selectedId) {
+        setDossie(null);
+        return;
+      }
+      setLoadingDossie(true);
+      const result = await getSesmtColaboradorDossie(selectedId);
+      if (!active) return;
+      setDossie(result);
+      setLoadingDossie(false);
+    };
+    void loadDossie();
+    return () => {
+      active = false;
+    };
+  }, [selectedId]);
 
   const handleSelect = (c: Colaborador) => {
     setSelectedId(c.id);
@@ -448,6 +487,32 @@ const DossieColaboradorPage = () => {
     setSelectedId(null);
     setSearchParams({});
     setActiveTab("geral");
+  };
+
+  const handleExportPdf = async () => {
+    if (!selectedId) return;
+    try {
+      await exportSesmtColaboradorDossie(selectedId, { formato: "PDF" });
+      toast({
+        title: "Exportação solicitada",
+        description: "O relatório do dossiê entrou na fila de geração.",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao exportar dossiê.";
+      toast({
+        title: "Erro na exportação",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (!selectedId) return;
+    setLoadingDossie(true);
+    const result = await getSesmtColaboradorDossie(selectedId);
+    setDossie(result);
+    setLoadingDossie(false);
   };
 
   return (
@@ -461,9 +526,12 @@ const DossieColaboradorPage = () => {
         {dossie && (
           <div className="flex gap-1.5 flex-wrap">
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1"><Printer className="h-3.5 w-3.5" />Imprimir</Button>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1"><FileDown className="h-3.5 w-3.5" />PDF</Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => void handleExportPdf()}><FileDown className="h-3.5 w-3.5" />PDF</Button>
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1"><Share2 className="h-3.5 w-3.5" />Compartilhar</Button>
-            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1"><RefreshCw className="h-3.5 w-3.5" />Atualizar</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => void handleRefresh()}>
+              <RefreshCw className={`h-3.5 w-3.5 ${loadingDossie ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
           </div>
         )}
       </div>
@@ -471,7 +539,11 @@ const DossieColaboradorPage = () => {
       <Separator />
 
       {!dossie ? (
-        <ColaboradorSearchPanel onSelect={handleSelect} />
+        loadingDossie ? (
+          <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">Carregando dossiê...</div>
+        ) : (
+          <ColaboradorSearchPanel colaboradores={colaboradores} onSelect={handleSelect} />
+        )
       ) : (
         <>
           <ColaboradorHeader c={dossie.colaborador} onClear={handleClear} />

@@ -258,6 +258,7 @@ export const db = {
   inventarioTarefas: [] as any[],
   inventarioContagens: [] as any[],
   inventarioDivergencias: [] as any[],
+  inventarioChecklists: [] as any[],
 
   // Operacional (seeded below)
   operacionalAcessos: [] as any[],

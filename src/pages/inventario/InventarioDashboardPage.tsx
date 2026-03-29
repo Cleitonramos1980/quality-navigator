@@ -4,7 +4,7 @@ import { BarChart3, CheckCircle, Clock, AlertTriangle, XCircle, ShieldCheck, Tre
 import KPICard from "@/components/KPICard";
 import ExportActionsBar from "@/components/inventario/ExportActionsBar";
 import InventoryStatusPill from "@/components/inventario/InventoryStatusPill";
-import { getContagens, getLojas } from "@/services/inventario";
+import { getChecklistPreInventarioDashboard, getContagens, getLojas, listChecklistsPreInventario } from "@/services/inventario";
 import type { Contagem, LojaInventario } from "@/types/inventario";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
-import { mockChecklists } from "@/data/mockChecklistPreInventario";
+import type { ChecklistPreInventario } from "@/types/checklistPreInventario";
 import { STATUS_LABELS, STATUS_COLORS, CRITICIDADE_COLORS } from "@/types/checklistPreInventario";
 import { cn } from "@/lib/utils";
 
@@ -42,10 +42,10 @@ const InventarioDashboardPage = () => {
 
   const statusData = [
     { name: "Validado", value: validadas, fill: "hsl(var(--primary))" },
-    { name: "ConcluÃ­do", value: concluidas - validadas, fill: "hsl(var(--success))" },
+    { name: "Conclu?do", value: concluidas - validadas, fill: "hsl(var(--success))" },
     { name: "Em Andamento", value: emAndamento, fill: "hsl(var(--warning))" },
-    { name: "NÃ£o Iniciado", value: naoIniciadas, fill: "hsl(var(--muted-foreground))" },
-    { name: "NÃ£o Feito", value: naoFeitas, fill: "hsl(var(--destructive))" },
+    { name: "N?o Iniciado", value: naoIniciadas, fill: "hsl(var(--muted-foreground))" },
+    { name: "N?o Feito", value: naoFeitas, fill: "hsl(var(--destructive))" },
   ].filter((d) => d.value > 0);
 
   const lojaRanking = lojas.slice(0, 6).map((l) => {
@@ -58,8 +58,8 @@ const InventarioDashboardPage = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard de InventÃ¡rio</h1>
-          <p className="text-sm text-muted-foreground">Acompanhamento de aderÃªncia e qualidade das contagens</p>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard de Invent?rio</h1>
+          <p className="text-sm text-muted-foreground">Acompanhamento de ader?ncia e qualidade das contagens</p>
         </div>
         <div className="flex items-center gap-3">
           <Button size="sm" onClick={() => navigate("/qualidade/inventario/novo-plano")}>
@@ -71,7 +71,7 @@ const InventarioDashboardPage = () => {
               <SelectItem value="hoje">Hoje</SelectItem>
               <SelectItem value="semana">Semana</SelectItem>
               <SelectItem value="quinzena">Quinzena</SelectItem>
-              <SelectItem value="mes">MÃªs</SelectItem>
+              <SelectItem value="mes">M?s</SelectItem>
             </SelectContent>
           </Select>
           <ExportActionsBar />
@@ -80,17 +80,17 @@ const InventarioDashboardPage = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <KPICard title="Previstas Hoje" value={previstas} icon={<Store className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/agenda")} />
-        <KPICard title="ConcluÃ­das" value={concluidas} icon={<CheckCircle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
+        <KPICard title="Conclu?das" value={concluidas} icon={<CheckCircle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
         <KPICard title="Em Andamento" value={emAndamento} icon={<Clock className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
-        <KPICard title="NÃ£o Iniciadas" value={naoIniciadas} icon={<AlertTriangle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
-        <KPICard title="NÃ£o Feitas" value={naoFeitas} icon={<XCircle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
+        <KPICard title="N?o Iniciadas" value={naoIniciadas} icon={<AlertTriangle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
+        <KPICard title="N?o Feitas" value={naoFeitas} icon={<XCircle className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/contagens")} />
         <KPICard
           title="Validadas"
           value={validadas}
           icon={<ShieldCheck className="h-4 w-4" />}
           onClick={() => navigate(contagemParaValidacao ? `/qualidade/inventario/validacao/${contagemParaValidacao.id}` : "/qualidade/inventario/contagens")}
         />
-        <KPICard title="AderÃªncia" value={`${aderencia}%`} icon={<TrendingUp className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/relatorios")} />
+        <KPICard title="Ader?ncia" value={`${aderencia}%`} icon={<TrendingUp className="h-4 w-4" />} onClick={() => navigate("/qualidade/inventario/relatorios")} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -147,7 +147,7 @@ const InventarioDashboardPage = () => {
                     <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
                       <div>
                         <span className="text-sm font-mono">{c.numero}</span>
-                        <p className="text-xs text-muted-foreground">{c.lojaNome} â€” {c.departamentoNome}</p>
+                        <p className="text-xs text-muted-foreground">{c.lojaNome} ? {c.departamentoNome}</p>
                       </div>
                       <InventoryStatusPill status={c.status} />
                     </div>
@@ -159,7 +159,7 @@ const InventarioDashboardPage = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" />Aguardando ValidaÃ§Ã£o</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" />Aguardando Valida??o</CardTitle></CardHeader>
           <CardContent>
             {(() => {
               const aguardando = contagens.filter((c) => c.status === "CONCLUIDO");
@@ -173,7 +173,7 @@ const InventarioDashboardPage = () => {
                         <span className="text-sm font-mono">{c.numero}</span>
                         <p className="text-xs text-muted-foreground">{c.lojaNome}</p>
                       </div>
-                      <span className="text-sm font-medium">{c.acuracidade > 0 ? `${c.acuracidade}%` : "â€”"}</span>
+                      <span className="text-sm font-medium">{c.acuracidade > 0 ? `${c.acuracidade}%` : "?"}</span>
                     </div>
                   ))}
                 </div>
@@ -183,12 +183,12 @@ const InventarioDashboardPage = () => {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><Target className="h-4 w-4 text-destructive" />Itens com Maior DivergÃªncia</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium flex items-center gap-2"><Target className="h-4 w-4 text-destructive" />Itens com Maior Diverg?ncia</CardTitle></CardHeader>
           <CardContent>
             {(() => {
               const comDivergencia = contagens.filter((c) => c.itensDivergentes > 0).sort((a, b) => b.itensDivergentes - a.itensDivergentes).slice(0, 5);
               return comDivergencia.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Sem divergÃªncias relevantes</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Sem diverg?ncias relevantes</p>
               ) : (
                 <div className="space-y-2">
                   {comDivergencia.map((c) => (
@@ -217,7 +217,7 @@ const InventarioDashboardPage = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left">
-                  <th className="pb-2 font-medium text-muted-foreground">NÃºmero</th>
+                  <th className="pb-2 font-medium text-muted-foreground">N?mero</th>
                   <th className="pb-2 font-medium text-muted-foreground">Loja</th>
                   <th className="pb-2 font-medium text-muted-foreground">Depto</th>
                   <th className="pb-2 font-medium text-muted-foreground">Supervisor</th>
@@ -232,7 +232,7 @@ const InventarioDashboardPage = () => {
                     <td className="py-2.5">{c.lojaNome}</td>
                     <td className="py-2.5">{c.departamentoNome}</td>
                     <td className="py-2.5">{c.supervisor}</td>
-                    <td className="py-2.5 font-medium">{c.acuracidade > 0 ? `${c.acuracidade}%` : "â€”"}</td>
+                    <td className="py-2.5 font-medium">{c.acuracidade > 0 ? `${c.acuracidade}%` : "?"}</td>
                     <td className="py-2.5"><InventoryStatusPill status={c.status} /></td>
                   </tr>
                 ))}
@@ -249,9 +249,50 @@ const InventarioDashboardPage = () => {
 
 /* ─── Checklist Pré-Inventário Section ──────────────────── */
 function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
-  const checklists = mockChecklists;
+  const [checklists, setChecklists] = useState<ChecklistPreInventario[]>([]);
+  const [statsResumo, setStatsResumo] = useState<{
+    totalChecklists: number;
+    totalItens: number;
+    concluidos: number;
+    pendentes: number;
+    emAndamento: number;
+    criticos: number;
+    ncs: number;
+    semResponsavel: number;
+    semEvidencia: number;
+    progresso: number;
+    bloqueadosPorNc: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      const [items, dashboard] = await Promise.all([
+        listChecklistsPreInventario(),
+        getChecklistPreInventarioDashboard(),
+      ]);
+      if (!active) return;
+      setChecklists(items);
+      setStatsResumo(dashboard);
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const stats = useMemo(() => {
+    if (statsResumo) {
+      return {
+        total: statsResumo.totalItens,
+        concluidos: statsResumo.concluidos,
+        pendentes: statsResumo.pendentes,
+        emAndamento: statsResumo.emAndamento,
+        criticos: statsResumo.criticos,
+        ncs: statsResumo.ncs,
+        pctGeral: Math.round(statsResumo.progresso),
+      };
+    }
     const allItens = checklists.flatMap((c) => c.blocos.flatMap((b) => b.itens));
     const total = allItens.length;
     const concluidos = allItens.filter((i) => i.status === "CONCLUIDO").length;
@@ -261,7 +302,7 @@ function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<ty
     const ncs = allItens.filter((i) => i.nc).length;
     const pctGeral = total > 0 ? Math.round((concluidos / total) * 100) : 0;
     return { total, concluidos, pendentes, emAndamento, criticos, ncs, pctGeral };
-  }, [checklists]);
+  }, [checklists, statsResumo]);
 
   const blocoStats = useMemo(() => {
     return checklists.flatMap((c) =>
@@ -297,7 +338,7 @@ function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<ty
       c.blocos.flatMap((b) =>
         b.itens
           .filter((i) => i.criticidade === "ALTA" && i.status !== "CONCLUIDO")
-          .map((i) => ({ ...i, blocoNome: b.nome, checklistNome: c.nome }))
+          .map((i) => ({ ...i, blocoNome: b.nome, checklistNome: c.nome, checklistId: c.id }))
       )
     ).slice(0, 6);
   }, [checklists]);
@@ -414,7 +455,7 @@ function ChecklistPreInventarioDashboard({ navigate }: { navigate: ReturnType<ty
                   <div
                     key={i.id}
                     className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0 cursor-pointer hover:bg-muted/30 rounded px-1"
-                    onClick={() => navigate(`/qualidade/inventario/checklist-pre/CKL-001/item/${i.id}`)}
+                    onClick={() => navigate(`/qualidade/inventario/checklist-pre/${i.checklistId}/item/${i.id}`)}
                   >
                     <div className="min-w-0">
                       <p className="text-sm truncate">{i.descricao}</p>

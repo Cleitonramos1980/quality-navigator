@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,14 +19,14 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { mockChecklists } from "@/data/mockChecklistPreInventario";
 import NovoChecklistModal from "@/components/inventario/NovoChecklistModal";
 import EditarItemChecklistModal from "@/components/inventario/EditarItemChecklistModal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { listChecklistsPreInventario, updateChecklistPreInventarioItem } from "@/services/inventario";
 import {
   STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS,
   STATUS_GERAL_LABELS, SETORES_CHECKLIST, type ChecklistItemStatus, type ChecklistCriticidade,
-  type ChecklistBloco, type ChecklistItem,
+  type ChecklistBloco, type ChecklistItem, type ChecklistPreInventario,
 } from "@/types/checklistPreInventario";
 
 const RESPONSAVEIS = [
@@ -300,17 +300,33 @@ function BlocoSection({ bloco, onItemClick, onEditItem, onUpdateField }: {
 /* ─── Main Page ─────────────────────────────────────────── */
 export default function ChecklistPreInventarioPage() {
   const navigate = useNavigate();
+  const [checklists, setChecklists] = useState<ChecklistPreInventario[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [critFilter, setCritFilter] = useState<string>("all");
   const [setorFilter, setSetorFilter] = useState<string>("all");
-  const [selectedId, setSelectedId] = useState<string>(mockChecklists[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState<string>("");
   const [quickFilter, setQuickFilter] = useState<string | null>(null);
   const [novoChecklistOpen, setNovoChecklistOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const checklist = checklists.find((c) => c.id === selectedId);
 
-  const checklist = mockChecklists.find((c) => c.id === selectedId);
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      const data = await listChecklistsPreInventario();
+      if (!active) return;
+      setChecklists(data);
+      if (!selectedId && data.length > 0) {
+        setSelectedId(data[0].id);
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [selectedId]);
 
   /* aggregate KPIs */
   const kpis = useMemo(() => {
@@ -330,7 +346,7 @@ export default function ChecklistPreInventarioPage() {
   }, [checklist]);
 
   /* unique setores for filter */
-  const allSetores = useMemo(() => {
+  const allSetores = useMemo<string[]>(() => {
     if (!checklist) return [];
     const s = new Set(checklist.blocos.flatMap((b) => b.itens).map((i) => i.setor));
     return [...s].sort();
@@ -342,7 +358,11 @@ export default function ChecklistPreInventarioPage() {
     return checklist.blocos.map((bloco) => ({
       ...bloco,
       itens: bloco.itens.filter((item) => {
-        if (search && !item.descricao.toLowerCase().includes(search.toLowerCase()) && !item.responsavel.toLowerCase().includes(search.toLowerCase())) return false;
+        if (
+          search
+          && !String(item.descricao ?? "").toLowerCase().includes(search.toLowerCase())
+          && !String(item.responsavel ?? "").toLowerCase().includes(search.toLowerCase())
+        ) return false;
         if (statusFilter !== "all" && item.status !== statusFilter) return false;
         if (critFilter !== "all" && item.criticidade !== critFilter) return false;
         if (setorFilter !== "all" && item.setor !== setorFilter) return false;
@@ -362,6 +382,42 @@ export default function ChecklistPreInventarioPage() {
     setCritFilter(crit ?? "all");
     setQuickFilter(key === quickFilter ? null : key);
     if (key !== "nc" && key !== "sem-evidencia") setQuickFilter(null);
+  };
+
+  const patchChecklistItem = (itemId: string, patch: Record<string, unknown>) => {
+    setChecklists((prev) => prev.map((entry) => {
+      if (entry.id !== selectedId) return entry;
+      return {
+        ...entry,
+        blocos: entry.blocos.map((bloco: any) => ({
+          ...bloco,
+          itens: bloco.itens.map((item: any) => (
+            item.id === itemId
+              ? {
+                ...item,
+                ...patch,
+              }
+              : item
+          )),
+        })),
+      };
+    }));
+  };
+
+  const persistChecklistItemPatch = async (itemId: string, patch: Record<string, unknown>) => {
+    if (!selectedId) return;
+    patchChecklistItem(itemId, patch);
+    try {
+      const updated = await updateChecklistPreInventarioItem(selectedId, itemId, patch as any);
+      patchChecklistItem(itemId, updated as unknown as Record<string, unknown>);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao persistir item.";
+      toast({
+        title: "Erro ao salvar item",
+        description: message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -392,7 +448,7 @@ export default function ChecklistPreInventarioPage() {
         <Select value={selectedId} onValueChange={setSelectedId}>
           <SelectTrigger className="w-full sm:w-[360px]"><SelectValue placeholder="Selecione um checklist" /></SelectTrigger>
           <SelectContent>
-            {mockChecklists.map((c) => (
+            {checklists.map((c) => (
               <SelectItem key={c.id} value={c.id}>{c.id} — {c.nome}</SelectItem>
             ))}
           </SelectContent>
@@ -470,14 +526,15 @@ export default function ChecklistPreInventarioPage() {
       <div className="space-y-2">
         {filteredBlocos.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhum item encontrado com os filtros aplicados.</p>}
         {filteredBlocos.map((bloco) => (
-          <BlocoSection key={bloco.id} bloco={bloco} onItemClick={handleItemClick} onEditItem={(item) => { setEditItem(item); setEditOpen(true); }} onUpdateField={(itemId, field, value) => {
-            if (checklist) {
-              for (const b of checklist.blocos) {
-                const found = b.itens.find((i) => i.id === itemId);
-                if (found) { (found as any)[field] = value; break; }
-              }
-            }
-          }} />
+          <BlocoSection
+            key={bloco.id}
+            bloco={bloco}
+            onItemClick={handleItemClick}
+            onEditItem={(item) => { setEditItem(item); setEditOpen(true); }}
+            onUpdateField={(itemId, field, value) => {
+              void persistChecklistItemPatch(itemId, { [field]: value });
+            }}
+          />
         ))}
       </div>
 
@@ -487,19 +544,13 @@ export default function ChecklistPreInventarioPage() {
         onOpenChange={setEditOpen}
         item={editItem}
         onSave={(itemId, data) => {
-          if (checklist) {
-            for (const bloco of checklist.blocos) {
-              const found = bloco.itens.find((i) => i.id === itemId);
-              if (found) {
-                found.responsavel = data.responsavel;
-                found.data = data.data;
-                found.setor = data.setor;
-                found.status = data.status;
-                found.criticidade = data.criticidade;
-                break;
-              }
-            }
-          }
+          void persistChecklistItemPatch(itemId, {
+            responsavel: data.responsavel,
+            data: data.data,
+            setor: data.setor,
+            status: data.status,
+            criticidade: data.criticidade,
+          });
         }}
       />
     </div>

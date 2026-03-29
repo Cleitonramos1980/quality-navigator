@@ -95,6 +95,106 @@ export async function sesmtRoutes(app: FastifyInstance) {
     }
   });
 
+  app.get("/api/sesmt/colaboradores", async (req, reply) => {
+    try {
+      const ctx = authContext(req);
+      const query = z.object({
+        search: z.string().optional(),
+        unidade: z.string().optional(),
+        status: z.string().optional(),
+      }).parse(req.query);
+      return await sesmtRepo.listDossieColaboradores({
+        ...ctx,
+        ...query,
+      });
+    } catch (error) {
+      return sendHandledError(reply, error);
+    }
+  });
+
+  app.get("/api/sesmt/colaboradores/:id/dossie", async (req, reply) => {
+    try {
+      const ctx = authContext(req);
+      const params = z.object({ id: z.string().min(1) }).parse(req.params);
+      return await sesmtRepo.getColaboradorDossie({
+        ...ctx,
+        colaboradorId: params.id,
+      });
+    } catch (error) {
+      return sendHandledError(reply, error);
+    }
+  });
+
+  app.get("/api/sesmt/colaboradores/:id/dossie/timeline", async (req, reply) => {
+    try {
+      const ctx = authContext(req);
+      const params = z.object({ id: z.string().min(1) }).parse(req.params);
+      return await sesmtRepo.getColaboradorDossieTimeline({
+        ...ctx,
+        colaboradorId: params.id,
+      });
+    } catch (error) {
+      return sendHandledError(reply, error);
+    }
+  });
+
+  app.get("/api/sesmt/colaboradores/:id/dossie/documentos", async (req, reply) => {
+    try {
+      const ctx = authContext(req);
+      const params = z.object({ id: z.string().min(1) }).parse(req.params);
+      return await sesmtRepo.getColaboradorDossieDocumentos({
+        ...ctx,
+        colaboradorId: params.id,
+      });
+    } catch (error) {
+      return sendHandledError(reply, error);
+    }
+  });
+
+  app.get("/api/sesmt/colaboradores/:id/dossie/alertas", async (req, reply) => {
+    try {
+      const ctx = authContext(req);
+      const params = z.object({ id: z.string().min(1) }).parse(req.params);
+      return await sesmtRepo.getColaboradorDossieAlertas({
+        ...ctx,
+        colaboradorId: params.id,
+      });
+    } catch (error) {
+      return sendHandledError(reply, error);
+    }
+  });
+
+  app.get("/api/sesmt/colaboradores/:id/dossie/relatorio", async (req, reply) => {
+    try {
+      const ctx = authContext(req);
+      const params = z.object({ id: z.string().min(1) }).parse(req.params);
+      return await sesmtRepo.getColaboradorDossieRelatorio({
+        ...ctx,
+        colaboradorId: params.id,
+      });
+    } catch (error) {
+      return sendHandledError(reply, error);
+    }
+  });
+
+  app.post("/api/sesmt/colaboradores/:id/dossie/exportar", async (req, reply) => {
+    try {
+      const ctx = authContext(req);
+      const params = z.object({ id: z.string().min(1) }).parse(req.params);
+      const payload = z.object({
+        formato: z.enum(["PDF", "XLSX", "JSON"]).optional(),
+        incluirSigiloso: z.boolean().optional(),
+      }).passthrough().parse(req.body ?? {});
+      return await sesmtRepo.exportColaboradorDossie({
+        ...ctx,
+        colaboradorId: params.id,
+        payload,
+      });
+    } catch (error) {
+      return sendHandledError(reply, error);
+    }
+  });
+
   app.get("/api/sesmt/dashboard/painel-mestre", async (req, reply) => {
     try {
       const ctx = authContext(req);

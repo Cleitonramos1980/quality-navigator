@@ -1,5 +1,7 @@
 ﻿import { apiGet, apiPost, apiPostFormData, apiPut } from "@/services/api";
 import { SESMT_MENU_GROUPS, SESMT_MENU_CHILDREN } from "@/lib/sesmtMenu";
+import { MOCK_COLABORADORES, getDossieByColaboradorId } from "@/data/mockDossieColaborador";
+import type { Colaborador, DossieColaborador } from "@/data/mockDossieColaborador";
 import type {
   SesmtExecutiveView,
   SesmtFavoritePreset,
@@ -288,3 +290,107 @@ export async function uploadSesmtAttachments(moduleKey: string, id: string, file
 export function listSesmtAccessAudit() {
   return apiGet<any[]>("/sesmt/access-audit");
 }
+
+export interface SesmtColaboradorDossieListFilters {
+  search?: string;
+  unidade?: string;
+  status?: string;
+}
+
+export async function listSesmtColaboradores(filters?: SesmtColaboradorDossieListFilters): Promise<Colaborador[]> {
+  try {
+    return await apiGet<Colaborador[]>(`/sesmt/colaboradores${queryString(filters as unknown as Record<string, QueryValue>)}`);
+  } catch {
+    return MOCK_COLABORADORES;
+  }
+}
+
+export async function getSesmtColaboradorDossie(colaboradorId: string): Promise<DossieColaborador | null> {
+  try {
+    return await apiGet<DossieColaborador>(`/sesmt/colaboradores/${encodeURIComponent(colaboradorId)}/dossie`);
+  } catch {
+    return getDossieByColaboradorId(colaboradorId);
+  }
+}
+
+export async function getSesmtColaboradorDossieTimeline(colaboradorId: string) {
+  try {
+    return await apiGet<{ colaboradorId: string; timeline: DossieColaborador["timeline"] }>(
+      `/sesmt/colaboradores/${encodeURIComponent(colaboradorId)}/dossie/timeline`,
+    );
+  } catch {
+    return {
+      colaboradorId,
+      timeline: getDossieByColaboradorId(colaboradorId)?.timeline ?? [],
+    };
+  }
+}
+
+export async function getSesmtColaboradorDossieDocumentos(colaboradorId: string) {
+  try {
+    return await apiGet<{ colaboradorId: string; documentos: DossieColaborador["documentos"] }>(
+      `/sesmt/colaboradores/${encodeURIComponent(colaboradorId)}/dossie/documentos`,
+    );
+  } catch {
+    return {
+      colaboradorId,
+      documentos: getDossieByColaboradorId(colaboradorId)?.documentos ?? [],
+    };
+  }
+}
+
+export async function getSesmtColaboradorDossieAlertas(colaboradorId: string) {
+  try {
+    return await apiGet<{ colaboradorId: string; alertas: string[]; pendencias: string[] }>(
+      `/sesmt/colaboradores/${encodeURIComponent(colaboradorId)}/dossie/alertas`,
+    );
+  } catch {
+    const dossie = getDossieByColaboradorId(colaboradorId);
+    return {
+      colaboradorId,
+      alertas: dossie?.colaborador.alertas ?? [],
+      pendencias: dossie?.colaborador.alertas ?? [],
+    };
+  }
+}
+
+export async function getSesmtColaboradorDossieRelatorio(colaboradorId: string) {
+  try {
+    return await apiGet<any>(`/sesmt/colaboradores/${encodeURIComponent(colaboradorId)}/dossie/relatorio`);
+  } catch {
+    const dossie = getDossieByColaboradorId(colaboradorId);
+    return {
+      colaborador: dossie?.colaborador ?? null,
+      resumo: {
+        totalExames: dossie?.exames.length ?? 0,
+        examesVencidos: dossie?.exames.filter((item) => item.status === "VENCIDO").length ?? 0,
+        totalTreinamentos: dossie?.treinamentos.length ?? 0,
+        treinamentosPendentes: dossie?.treinamentos.filter((item) => item.status === "PENDENTE" || item.status === "VENCIDO").length ?? 0,
+        totalVacinas: dossie?.vacinas.length ?? 0,
+        vacinasPendentes: dossie?.vacinas.filter((item) => item.status === "PENDENTE" || item.status === "ATRASADA").length ?? 0,
+      },
+      alertas: dossie?.colaborador.alertas ?? [],
+      pendencias: dossie?.colaborador.alertas ?? [],
+      generatedAt: new Date().toISOString(),
+      generatedBy: "frontend-fallback",
+    };
+  }
+}
+
+export async function exportSesmtColaboradorDossie(colaboradorId: string, payload?: { formato?: "PDF" | "XLSX" | "JSON"; incluirSigiloso?: boolean }) {
+  try {
+    return await apiPost<any>(
+      `/sesmt/colaboradores/${encodeURIComponent(colaboradorId)}/dossie/exportar`,
+      payload ?? {},
+    );
+  } catch {
+    return {
+      status: "QUEUED",
+      colaboradorId,
+      exportId: `EXP-${Math.floor(Math.random() * 1_000_000)}`,
+      solicitadoPor: "frontend-fallback",
+      solicitadoEm: new Date().toISOString(),
+    };
+  }
+}
+

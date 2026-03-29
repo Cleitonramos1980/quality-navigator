@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, AlertTriangle, FileText, Clock, User, Building2, Tag, Pencil, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -14,9 +14,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { mockChecklists } from "@/data/mockChecklistPreInventario";
 import { STATUS_LABELS, STATUS_COLORS, CRITICIDADE_LABELS, CRITICIDADE_COLORS, SETORES_CHECKLIST, type ChecklistItemStatus, type ChecklistCriticidade } from "@/types/checklistPreInventario";
 import { toast } from "@/hooks/use-toast";
+import { getChecklistPreInventarioById, getChecklistPreInventarioItemHistorico, updateChecklistPreInventarioItem } from "@/services/inventario";
 
 const RESPONSAVEIS = [
   "Carlos Lima", "Ana Souza", "Pedro Santos", "Joana Costa",
@@ -27,10 +27,8 @@ const RESPONSAVEIS = [
 export default function ChecklistPreInventarioDetalhePage() {
   const { checklistId, itemId } = useParams();
   const navigate = useNavigate();
-
-  const checklist = mockChecklists.find((c) => c.id === checklistId);
-  const item = checklist?.blocos.flatMap((b) => b.itens).find((i) => i.id === itemId);
-  const bloco = checklist?.blocos.find((b) => b.id === item?.blocoId);
+  const [checklist, setChecklist] = useState<any | null>(null);
+  const [itemHistorico, setItemHistorico] = useState<Array<{ id: string; data: string; usuario: string; acao: string; detalhe: string }>>([]);
 
   const [editOpen, setEditOpen] = useState(false);
   const [responsavel, setResponsavel] = useState("");
@@ -39,6 +37,43 @@ export default function ChecklistPreInventarioDetalhePage() {
   const [status, setStatus] = useState<ChecklistItemStatus>("PENDENTE");
   const [criticidade, setCriticidade] = useState<ChecklistCriticidade>("MEDIA");
   const [responsavelSearchOpen, setResponsavelSearchOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!checklistId) return;
+      const data = await getChecklistPreInventarioById(checklistId);
+      if (!active) return;
+      setChecklist(data);
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [checklistId]);
+
+  const item = useMemo(
+    () => checklist?.blocos.flatMap((b: any) => b.itens).find((i: any) => i.id === itemId),
+    [checklist, itemId],
+  );
+  const bloco = useMemo(
+    () => checklist?.blocos.find((b: any) => b.id === item?.blocoId),
+    [checklist, item?.blocoId],
+  );
+
+  useEffect(() => {
+    let active = true;
+    const loadHistorico = async () => {
+      if (!checklistId || !itemId) return;
+      const historico = await getChecklistPreInventarioItemHistorico(checklistId, itemId);
+      if (!active) return;
+      setItemHistorico(historico);
+    };
+    void loadHistorico();
+    return () => {
+      active = false;
+    };
+  }, [checklistId, itemId]);
 
   const openEdit = () => {
     if (!item) return;
@@ -50,26 +85,54 @@ export default function ChecklistPreInventarioDetalhePage() {
     setEditOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!item) return;
     if (!responsavel.trim()) {
       toast({ title: "Erro", description: "Informe o responsável.", variant: "destructive" });
       return;
     }
-    item.responsavel = responsavel.trim();
-    item.data = date ? format(date, "yyyy-MM-dd") : "";
-    item.setor = setor;
-    item.status = status;
-    item.criticidade = criticidade;
-    setEditOpen(false);
-    toast({ title: "Item atualizado", description: `"${item.descricao}" foi atualizado com sucesso.` });
+
+    try {
+      const payload = {
+        responsavel: responsavel.trim(),
+        data: date ? format(date, "yyyy-MM-dd") : "",
+        setor,
+        status,
+        criticidade,
+      };
+      const updated = await updateChecklistPreInventarioItem(checklistId ?? "", item.id, payload);
+      setChecklist((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          blocos: prev.blocos.map((blocoEntry: any) => ({
+            ...blocoEntry,
+            itens: blocoEntry.itens.map((itemEntry: any) => (
+              itemEntry.id === item.id
+                ? {
+                  ...itemEntry,
+                  ...updated,
+                }
+                : itemEntry
+            )),
+          })),
+        };
+      });
+      const historico = await getChecklistPreInventarioItemHistorico(checklistId ?? "", item.id);
+      setItemHistorico(historico);
+      setEditOpen(false);
+      toast({ title: "Item atualizado", description: `"${item.descricao}" foi atualizado com sucesso.` });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha ao salvar item.";
+      toast({ title: "Erro", description: message, variant: "destructive" });
+    }
   };
 
   if (!checklist || !item) {
     return (
       <div className="p-6 space-y-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button>
-        <p className="text-muted-foreground">Item não encontrado.</p>
+        <p className="text-muted-foreground">Item nÃ£o encontrado.</p>
       </div>
     );
   }
@@ -82,7 +145,7 @@ export default function ChecklistPreInventarioDetalhePage() {
       <div className="glass-card rounded-lg p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs text-muted-foreground mb-1">{checklist.nome} → {bloco?.nome}</p>
+            <p className="text-xs text-muted-foreground mb-1">{checklist.nome} â†’ {bloco?.nome}</p>
             <h1 className="text-lg font-bold text-foreground">{item.descricao}</h1>
           </div>
           <div className="flex items-center gap-2">
@@ -92,7 +155,7 @@ export default function ChecklistPreInventarioDetalhePage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-          <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Responsável:</span><span className="font-medium">{item.responsavel}</span></div>
+          <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">ResponsÃ¡vel:</span><span className="font-medium">{item.responsavel}</span></div>
           <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Data:</span><span className="font-medium">{item.data}</span></div>
           <div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Setor:</span><span className="font-medium">{item.setor}</span></div>
           <div className="flex items-center gap-2"><Tag className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Criticidade:</span><span className={cn("status-badge text-[11px]", CRITICIDADE_COLORS[item.criticidade])}>{CRITICIDADE_LABELS[item.criticidade]}</span></div>
@@ -102,7 +165,7 @@ export default function ChecklistPreInventarioDetalhePage() {
           <>
             <Separator />
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Observação</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">ObservaÃ§Ã£o</p>
               <p className="text-sm text-foreground">{item.observacao}</p>
             </div>
           </>
@@ -112,7 +175,7 @@ export default function ChecklistPreInventarioDetalhePage() {
           <>
             <Separator />
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Evidências</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">EvidÃªncias</p>
               <div className="flex flex-wrap gap-2">
                 {item.evidencias.map((e, i) => (
                   <Badge key={i} variant="outline" className="text-xs"><FileText className="h-3 w-3 mr-1" />{e}</Badge>
@@ -123,14 +186,14 @@ export default function ChecklistPreInventarioDetalhePage() {
         )}
       </div>
 
-      {/* Histórico */}
+      {/* HistÃ³rico */}
       <div className="glass-card rounded-lg p-5 space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Histórico de Alterações</h2>
-        {item.historico.length === 0 ? (
+        <h2 className="text-sm font-semibold text-foreground">HistÃ³rico de AlteraÃ§Ãµes</h2>
+        {itemHistorico.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum registro.</p>
         ) : (
           <div className="space-y-2">
-            {item.historico.map((h) => (
+            {itemHistorico.map((h) => (
               <div key={h.id} className="flex items-start gap-3 text-sm border-l-2 border-primary/30 pl-3 py-1">
                 <div className="shrink-0">
                   <p className="text-xs text-muted-foreground">{new Date(h.data).toLocaleString("pt-BR")}</p>
@@ -154,13 +217,13 @@ export default function ChecklistPreInventarioDetalhePage() {
             <p className="text-sm text-muted-foreground">{item.descricao}</p>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            {/* Responsável com busca */}
+            {/* ResponsÃ¡vel com busca */}
             <div className="space-y-1.5">
-              <Label>Responsável</Label>
+              <Label>ResponsÃ¡vel</Label>
               <Popover open={responsavelSearchOpen} onOpenChange={setResponsavelSearchOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                    {responsavel || "Buscar responsável..."}
+                    {responsavel || "Buscar responsÃ¡vel..."}
                     <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -168,7 +231,7 @@ export default function ChecklistPreInventarioDetalhePage() {
                   <Command>
                     <CommandInput placeholder="Pesquisar nome..." />
                     <CommandList>
-                      <CommandEmpty>Nenhum responsável encontrado.</CommandEmpty>
+                      <CommandEmpty>Nenhum responsÃ¡vel encontrado.</CommandEmpty>
                       <CommandGroup>
                         {RESPONSAVEIS.map((r) => (
                           <CommandItem key={r} value={r} onSelect={(val) => { setResponsavel(val); setResponsavelSearchOpen(false); }}>
@@ -182,7 +245,7 @@ export default function ChecklistPreInventarioDetalhePage() {
               </Popover>
             </div>
 
-            {/* Data com calendário */}
+            {/* Data com calendÃ¡rio */}
             <div className="space-y-1.5">
               <Label>Data</Label>
               <Popover>
@@ -246,3 +309,5 @@ export default function ChecklistPreInventarioDetalhePage() {
     </div>
   );
 }
+
+

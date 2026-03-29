@@ -46,6 +46,7 @@ const COLLECTION_KEYS: DbKey[] = [
   "inventarioTarefas",
   "inventarioContagens",
   "inventarioDivergencias",
+  "inventarioChecklists",
   "operacionalAcessos",
   "operacionalVisitantes",
   "operacionalVeiculosVisitantes",

@@ -37,6 +37,8 @@ import { seedInspecoesData } from "./repositories/seedInspecoesData.js";
 import { seedSesmtData } from "./repositories/seedSesmtData.js";
 import { ensureInspecoesTables } from "./repositories/inspecoes/initTables.js";
 import { isOracleEnabled } from "./db/oracle.js";
+import { ensureInventarioTables } from "./repositories/inventario/initTables.js";
+import { ensureSesmtTables } from "./repositories/sesmt/initTables.js";
 
 const app = Fastify({
   bodyLimit: 6 * 1024 * 1024,
@@ -159,6 +161,8 @@ async function start() {
   await initOraclePool();
   await initPersistentCollections();
   await ensureInspecoesTables();
+  await ensureInventarioTables();
+  await ensureSesmtTables();
 
   // Seed operational and inventory data if empty
   seedInventarioData();

@@ -1,4 +1,6 @@
 ﻿
+import { isOracleEnabled } from "../db/oracle.js";
+import { execDml, queryOne, queryRows } from "./baseRepository.js";
 import { appendAudit, db } from "./dataStore.js";
 import {
   getSesmtModuleDefinition,
@@ -166,6 +168,10 @@ function normalizeNumber(value: unknown): number | undefined {
     if (Number.isFinite(parsed)) return parsed;
   }
   return undefined;
+}
+
+function asNumber(value: unknown, fallback = 0): number {
+  return normalizeNumber(value) ?? fallback;
 }
 
 function buildHistoryEntry(acao: string, descricao: string, usuario: string) {
@@ -343,6 +349,764 @@ function withModuleMetadata(record: SesmtRecord): SesmtRecord & { moduleLabel: s
     moduleLabel: moduleDef?.label ?? record.moduleKey,
     moduleGroup: moduleDef?.groupLabel ?? "SESMT/SST",
   };
+}
+
+type DossieColaboradorStatus = "ATIVO" | "AFASTADO" | "FERIAS" | "DESLIGADO";
+
+type DossieActor = {
+  profile: string;
+  userId: string;
+  userName: string;
+  colaboradorId: string;
+};
+
+type DossieColaboradorResumo = {
+  id: string;
+  nome: string;
+  matricula: string;
+  cpf: string;
+  unidade: string;
+  setor: string;
+  cargo: string;
+  funcao: string;
+  gestor: string;
+  dataAdmissao: string;
+  status: DossieColaboradorStatus;
+  grupoRisco?: string;
+  situacaoOcupacional: string;
+  scoreAtencao: number;
+  alertas: string[];
+};
+
+type DossieCompleto = {
+  colaborador: DossieColaboradorResumo;
+  exames: Array<Record<string, unknown>>;
+  asos: Array<Record<string, unknown>>;
+  treinamentos: Array<Record<string, unknown>>;
+  integracoes: Array<Record<string, unknown>>;
+  atendimentos: Array<Record<string, unknown>>;
+  vacinas: Array<Record<string, unknown>>;
+  medicacoes: Array<Record<string, unknown>>;
+  acidentes: Array<Record<string, unknown>>;
+  afastamentos: Array<Record<string, unknown>>;
+  atestados: Array<Record<string, unknown>>;
+  restricoes: Array<Record<string, unknown>>;
+  laudos: Array<Record<string, unknown>>;
+  monitoramentos: Array<Record<string, unknown>>;
+  epis: Array<Record<string, unknown>>;
+  advertencias: Array<Record<string, unknown>>;
+  comunicados: Array<Record<string, unknown>>;
+  documentos: Array<Record<string, unknown>>;
+  timeline: Array<Record<string, unknown>>;
+  prontuarioResumido: Record<string, unknown>;
+  alertas: string[];
+  pendencias: string[];
+};
+
+function toDateOnly(value: unknown): string {
+  const normalized = cleanString(value);
+  if (!normalized) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return normalized;
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return normalized;
+  return parsed.toISOString().slice(0, 10);
+}
+
+function toBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "1" || normalized === "true" || normalized === "sim";
+  }
+  return false;
+}
+
+function normalizeCollaboratorStatus(value: unknown): DossieColaboradorStatus {
+  const normalized = cleanString(value)?.toUpperCase();
+  if (normalized === "ATIVO" || normalized === "AFASTADO" || normalized === "FERIAS" || normalized === "DESLIGADO") {
+    return normalized;
+  }
+  return "ATIVO";
+}
+
+function safeStatus(value: unknown, fallback: string): string {
+  const normalized = cleanString(value);
+  return normalized ? normalized.toUpperCase() : fallback;
+}
+
+function buildDossieAlerts(input: {
+  exames: Array<Record<string, unknown>>;
+  asos: Array<Record<string, unknown>>;
+  treinamentos: Array<Record<string, unknown>>;
+  vacinas: Array<Record<string, unknown>>;
+  afastamentos: Array<Record<string, unknown>>;
+  restricoes: Array<Record<string, unknown>>;
+}): string[] {
+  const alertas: string[] = [];
+  if (input.exames.some((row) => safeStatus(row.status, "") === "VENCIDO")) alertas.push("Exame vencido");
+  if (input.exames.some((row) => safeStatus(row.status, "") === "PENDENTE")) alertas.push("Exame pendente");
+  if (input.asos.some((row) => safeStatus(row.status, "") === "VENCIDO")) alertas.push("ASO vencido");
+  if (input.asos.some((row) => safeStatus(row.status, "") === "PROXIMO_VENCIMENTO")) alertas.push("ASO próximo do vencimento");
+  if (input.treinamentos.some((row) => safeStatus(row.status, "") === "VENCIDO")) alertas.push("Treinamento vencido");
+  if (input.treinamentos.some((row) => safeStatus(row.status, "") === "PENDENTE")) alertas.push("Treinamento pendente");
+  if (input.vacinas.some((row) => {
+    const status = safeStatus(row.status, "");
+    return status === "PENDENTE" || status === "ATRASADA";
+  })) alertas.push("Pendência vacinal");
+  if (input.afastamentos.some((row) => {
+    const status = safeStatus(row.status, "");
+    return status === "ATIVO" || status === "PRORROGADO";
+  })) alertas.push("Afastamento ativo");
+  if (input.restricoes.some((row) => safeStatus(row.status, "") === "ATIVA")) alertas.push("Restrição ocupacional ativa");
+  return Array.from(new Set(alertas));
+}
+
+async function appendSesmtAuditEvent(input: {
+  acao: string;
+  entidade: string;
+  entidadeId?: string;
+  userId: string;
+  userName: string;
+  profile: string;
+  detalhe: string;
+  payload?: Record<string, unknown>;
+}): Promise<void> {
+  appendAudit(input.acao, input.entidade, input.entidadeId ?? "N/A", input.detalhe, input.userName);
+  if (!isOracleEnabled()) return;
+  try {
+    await execDml(
+      `INSERT INTO SESMT_LOG_AUDITORIA (
+        ID, ACAO, ENTIDADE, ENTIDADE_ID, USUARIO_ID, USUARIO_NOME, PERFIL, DETALHE, PAYLOAD
+      ) VALUES (
+        :id, :acao, :entidade, :entidadeId, :usuarioId, :usuarioNome, :perfil, :detalhe, :payload
+      )`,
+      {
+        id: `AUD-${Math.floor(Math.random() * 1_000_000_000)}`,
+        acao: input.acao,
+        entidade: input.entidade,
+        entidadeId: input.entidadeId ?? null,
+        usuarioId: input.userId,
+        usuarioNome: input.userName,
+        perfil: input.profile,
+        detalhe: input.detalhe,
+        payload: input.payload ? JSON.stringify(input.payload) : null,
+      },
+    );
+  } catch {
+    // Falha de auditoria nao deve derrubar o fluxo principal.
+  }
+}
+
+async function loadOracleDossie(actor: DossieActor, allowedUnits: string[]): Promise<DossieCompleto | null> {
+  const base = await queryOne<Record<string, unknown>>(
+    `SELECT
+      ID,
+      MATRICULA,
+      NOME,
+      CPF,
+      UNIDADE,
+      SETOR,
+      CARGO,
+      FUNCAO,
+      GESTOR,
+      TO_CHAR(DATA_ADMISSAO, 'YYYY-MM-DD') AS DATA_ADMISSAO,
+      STATUS,
+      GRUPO_RISCO,
+      SITUACAO_OCUPACIONAL,
+      SCORE_ATENCAO
+    FROM SESMT_COLABORADORES
+    WHERE ID = :id`,
+    { id: actor.colaboradorId },
+  );
+
+  if (!base) return null;
+  const unidade = cleanString(base.UNIDADE) ?? "";
+  if (!allowedUnits.includes(unidade)) {
+    throw Object.assign(new Error("Colaborador fora do escopo de unidade deste perfil."), { statusCode: 403 });
+  }
+
+  const examesRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      TIPO,
+      TO_CHAR(DATA_EXAME, 'YYYY-MM-DD') AS DATA_EXAME,
+      RESULTADO,
+      STATUS,
+      LABORATORIO,
+      CUSTO,
+      TO_CHAR(VALIDADE, 'YYYY-MM-DD') AS VALIDADE
+    FROM SESMT_EXAMES
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_EXAME DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const asosRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      TIPO,
+      TO_CHAR(DATA_ASO, 'YYYY-MM-DD') AS DATA_ASO,
+      RESULTADO,
+      MEDICO,
+      TO_CHAR(VALIDADE, 'YYYY-MM-DD') AS VALIDADE,
+      STATUS
+    FROM SESMT_ASOS
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_ASO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const treinamentosRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      NOME,
+      TIPO,
+      TO_CHAR(DATA_TREINAMENTO, 'YYYY-MM-DD') AS DATA_TREINAMENTO,
+      CARGA_HORARIA,
+      STATUS,
+      TO_CHAR(VALIDADE, 'YYYY-MM-DD') AS VALIDADE,
+      INSTRUTOR
+    FROM SESMT_TREINAMENTOS
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_TREINAMENTO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const atendimentosRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      TO_CHAR(DATA_ATENDIMENTO, 'YYYY-MM-DD') AS DATA_ATENDIMENTO,
+      TIPO,
+      DESCRICAO,
+      PROFISSIONAL,
+      STATUS,
+      CID,
+      RESTRICAO
+    FROM SESMT_ATENDIMENTOS
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_ATENDIMENTO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const vacinasRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      VACINA,
+      DOSE,
+      TO_CHAR(DATA_APLICACAO, 'YYYY-MM-DD') AS DATA_APLICACAO,
+      STATUS,
+      CAMPANHA,
+      TO_CHAR(PROXIMA_DOSE, 'YYYY-MM-DD') AS PROXIMA_DOSE
+    FROM SESMT_VACINAS
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_APLICACAO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const medicacoesRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      MEDICAMENTO,
+      TO_CHAR(DATA_REGISTRO, 'YYYY-MM-DD') AS DATA_REGISTRO,
+      TIPO,
+      QUANTIDADE,
+      RESPONSAVEL
+    FROM SESMT_MEDICACOES
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_REGISTRO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const acidentesRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      TIPO,
+      TO_CHAR(DATA_OCORRENCIA, 'YYYY-MM-DD') AS DATA_OCORRENCIA,
+      DESCRICAO,
+      NATUREZA_LESAO,
+      CAUSA,
+      DIAS_AFASTAMENTO,
+      STATUS
+    FROM SESMT_ACIDENTES
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_OCORRENCIA DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const afastamentosRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      TIPO,
+      TO_CHAR(DATA_INICIO, 'YYYY-MM-DD') AS DATA_INICIO,
+      TO_CHAR(DATA_FIM, 'YYYY-MM-DD') AS DATA_FIM,
+      MOTIVO,
+      CID,
+      DIAS_AFASTADO,
+      STATUS
+    FROM SESMT_AFASTAMENTOS
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_INICIO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const atestadosRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      TO_CHAR(DATA_ATESTADO, 'YYYY-MM-DD') AS DATA_ATESTADO,
+      DIAS,
+      CID,
+      MEDICO,
+      STATUS
+    FROM SESMT_ATESTADOS
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_ATESTADO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const restricoesRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      DESCRICAO,
+      TO_CHAR(DATA_INICIO, 'YYYY-MM-DD') AS DATA_INICIO,
+      TO_CHAR(DATA_FIM, 'YYYY-MM-DD') AS DATA_FIM,
+      STATUS
+    FROM SESMT_RESTRICOES
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_INICIO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const episRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      DESCRICAO,
+      CA,
+      TO_CHAR(DATA_ENTREGA, 'YYYY-MM-DD') AS DATA_ENTREGA,
+      TO_CHAR(DATA_DEVOLUCAO, 'YYYY-MM-DD') AS DATA_DEVOLUCAO,
+      MOTIVO,
+      ASSINATURA
+    FROM SESMT_EPI_ENTREGAS
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_ENTREGA DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const comunicadosRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      TITULO,
+      TIPO,
+      TO_CHAR(DATA_REGISTRO, 'YYYY-MM-DD') AS DATA_REGISTRO,
+      STATUS
+    FROM SESMT_COMUNICADOS
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_REGISTRO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  const documentosRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      NOME,
+      TIPO,
+      TO_CHAR(DATA_DOCUMENTO, 'YYYY-MM-DD') AS DATA_DOCUMENTO,
+      MIME_TYPE,
+      TAMANHO_BYTES
+    FROM SESMT_DOCUMENTOS
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_DOCUMENTO DESC NULLS LAST, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  let laudosRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      l.ID,
+      l.TIPO,
+      COALESCE(l.TITULO, l.CODIGO, l.ID) AS TITULO,
+      TO_CHAR(l.DATA_EMISSAO, 'YYYY-MM-DD') AS DATA_EMISSAO,
+      TO_CHAR(l.DATA_VALIDADE, 'YYYY-MM-DD') AS DATA_VALIDADE
+    FROM SESMT_LAUDOS l
+    JOIN SESMT_LAUDOS_VINCULOS v ON v.LAUDO_ID = l.ID
+    WHERE v.TIPO_VINCULO = 'COLABORADOR'
+      AND v.ENTIDADE_ID = :id
+    ORDER BY l.DATA_EMISSAO DESC NULLS LAST, l.CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  if (laudosRows.length === 0) {
+    laudosRows = await queryRows<Record<string, unknown>>(
+      `SELECT
+        ID,
+        TIPO,
+        COALESCE(TITULO, CODIGO, ID) AS TITULO,
+        TO_CHAR(DATA_EMISSAO, 'YYYY-MM-DD') AS DATA_EMISSAO,
+        TO_CHAR(DATA_VALIDADE, 'YYYY-MM-DD') AS DATA_VALIDADE
+      FROM SESMT_LAUDOS
+      WHERE UNIDADE = :unidade
+      ORDER BY DATA_EMISSAO DESC NULLS LAST, CREATED_AT DESC`,
+      { unidade },
+    );
+  }
+
+  let timelineRows = await queryRows<Record<string, unknown>>(
+    `SELECT
+      ID,
+      TO_CHAR(DATA_EVENTO, 'YYYY-MM-DD') AS DATA_EVENTO,
+      TIPO,
+      TITULO,
+      DESCRICAO,
+      COR
+    FROM SESMT_EVENTOS_COLABORADOR
+    WHERE COLABORADOR_ID = :id
+    ORDER BY DATA_EVENTO DESC, CREATED_AT DESC`,
+    { id: actor.colaboradorId },
+  );
+
+  if (timelineRows.length === 0) {
+    timelineRows = [
+      ...examesRows.map((row) => ({
+        ID: row.ID,
+        DATA_EVENTO: row.DATA_EXAME,
+        TIPO: "EXAME",
+        TITULO: `Exame ${cleanString(row.TIPO) ?? ""}`,
+        DESCRICAO: cleanString(row.RESULTADO) ?? "Exame ocupacional registrado.",
+        COR: "success",
+      })),
+      ...treinamentosRows.map((row) => ({
+        ID: row.ID,
+        DATA_EVENTO: row.DATA_TREINAMENTO,
+        TIPO: "TREINAMENTO",
+        TITULO: cleanString(row.NOME) ?? "Treinamento",
+        DESCRICAO: `Status: ${safeStatus(row.STATUS, "EM_ANDAMENTO")}`,
+        COR: safeStatus(row.STATUS, "") === "CONCLUIDO" ? "success" : "warning",
+      })),
+    ].sort((a, b) => String(b.DATA_EVENTO ?? "").localeCompare(String(a.DATA_EVENTO ?? "")));
+  }
+
+  const exames = examesRows.map((row) => ({
+    id: String(row.ID),
+    tipo: cleanString(row.TIPO) ?? "Exame",
+    data: toDateOnly(row.DATA_EXAME),
+    resultado: cleanString(row.RESULTADO) ?? "",
+    status: safeStatus(row.STATUS, "PENDENTE"),
+    laboratorio: cleanString(row.LABORATORIO) ?? undefined,
+    custo: asNumber(row.CUSTO, 0) || undefined,
+    validade: toDateOnly(row.VALIDADE) || undefined,
+  }));
+
+  const asos = asosRows.map((row) => ({
+    id: String(row.ID),
+    tipo: safeStatus(row.TIPO, "PERIODICO"),
+    data: toDateOnly(row.DATA_ASO),
+    resultado: safeStatus(row.RESULTADO, "APTO"),
+    medico: cleanString(row.MEDICO) ?? "",
+    validade: toDateOnly(row.VALIDADE),
+    status: safeStatus(row.STATUS, "VIGENTE"),
+  }));
+
+  const treinamentos = treinamentosRows.map((row) => ({
+    id: String(row.ID),
+    nome: cleanString(row.NOME) ?? "Treinamento",
+    tipo: safeStatus(row.TIPO, "ESPECIFICO"),
+    data: toDateOnly(row.DATA_TREINAMENTO),
+    cargaHoraria: asNumber(row.CARGA_HORARIA, 0),
+    status: safeStatus(row.STATUS, "EM_ANDAMENTO"),
+    certificado: safeStatus(row.STATUS, "") === "CONCLUIDO",
+    validade: toDateOnly(row.VALIDADE) || undefined,
+    instrutor: cleanString(row.INSTRUTOR) ?? undefined,
+  }));
+
+  const integracoes = treinamentos.filter((row) => safeStatus(row.tipo, "") === "INTEGRACAO");
+
+  const atendimentos = atendimentosRows.map((row) => ({
+    id: String(row.ID),
+    data: toDateOnly(row.DATA_ATENDIMENTO),
+    tipo: cleanString(row.TIPO) ?? "Atendimento",
+    descricao: cleanString(row.DESCRICAO) ?? "",
+    profissional: cleanString(row.PROFISSIONAL) ?? "",
+    status: safeStatus(row.STATUS, "CONCLUIDO"),
+    cid: cleanString(row.CID) ?? undefined,
+    restricao: cleanString(row.RESTRICAO) ?? undefined,
+  }));
+
+  const vacinas = vacinasRows.map((row) => ({
+    id: String(row.ID),
+    vacina: cleanString(row.VACINA) ?? "Vacina",
+    dose: cleanString(row.DOSE) ?? "",
+    data: toDateOnly(row.DATA_APLICACAO),
+    status: safeStatus(row.STATUS, "PENDENTE"),
+    campanha: cleanString(row.CAMPANHA) ?? undefined,
+    proximaDose: toDateOnly(row.PROXIMA_DOSE) || undefined,
+  }));
+
+  const medicacoes = medicacoesRows.map((row) => ({
+    id: String(row.ID),
+    medicamento: cleanString(row.MEDICAMENTO) ?? "",
+    data: toDateOnly(row.DATA_REGISTRO),
+    tipo: safeStatus(row.TIPO, "DISPENSACAO"),
+    quantidade: asNumber(row.QUANTIDADE, 0),
+    responsavel: cleanString(row.RESPONSAVEL) ?? "",
+  }));
+
+  const acidentes = acidentesRows.map((row) => ({
+    id: String(row.ID),
+    tipo: safeStatus(row.TIPO, "INCIDENTE"),
+    data: toDateOnly(row.DATA_OCORRENCIA),
+    descricao: cleanString(row.DESCRICAO) ?? "",
+    naturezaLesao: cleanString(row.NATUREZA_LESAO) ?? undefined,
+    causa: cleanString(row.CAUSA) ?? undefined,
+    diasAfastamento: asNumber(row.DIAS_AFASTAMENTO, 0),
+    status: safeStatus(row.STATUS, "EM_INVESTIGACAO"),
+  }));
+
+  const afastamentos = afastamentosRows.map((row) => ({
+    id: String(row.ID),
+    tipo: cleanString(row.TIPO) ?? "Afastamento",
+    dataInicio: toDateOnly(row.DATA_INICIO),
+    dataFim: toDateOnly(row.DATA_FIM) || undefined,
+    motivo: cleanString(row.MOTIVO) ?? "",
+    cid: cleanString(row.CID) ?? undefined,
+    diasAfastado: asNumber(row.DIAS_AFASTADO, 0),
+    status: safeStatus(row.STATUS, "ATIVO"),
+  }));
+
+  const atestados = atestadosRows.map((row) => ({
+    id: String(row.ID),
+    data: toDateOnly(row.DATA_ATESTADO),
+    dias: asNumber(row.DIAS, 0),
+    cid: cleanString(row.CID) ?? undefined,
+    medico: cleanString(row.MEDICO) ?? "",
+    status: safeStatus(row.STATUS, "ACEITO"),
+  }));
+
+  const restricoes = restricoesRows.map((row) => ({
+    id: String(row.ID),
+    descricao: cleanString(row.DESCRICAO) ?? "",
+    dataInicio: toDateOnly(row.DATA_INICIO),
+    dataFim: toDateOnly(row.DATA_FIM) || undefined,
+    status: safeStatus(row.STATUS, "ATIVA"),
+  }));
+
+  const laudos = laudosRows.map((row) => ({
+    id: String(row.ID),
+    tipo: cleanString(row.TIPO) ?? "LAUDO",
+    descricao: cleanString(row.TITULO) ?? String(row.ID),
+    data: toDateOnly(row.DATA_EMISSAO),
+    vigencia: toDateOnly(row.DATA_VALIDADE) || undefined,
+  }));
+
+  const epis = episRows.map((row) => ({
+    id: String(row.ID),
+    descricao: cleanString(row.DESCRICAO) ?? "",
+    ca: cleanString(row.CA) ?? "",
+    dataEntrega: toDateOnly(row.DATA_ENTREGA),
+    dataDevolucao: toDateOnly(row.DATA_DEVOLUCAO) || undefined,
+    motivo: safeStatus(row.MOTIVO, "ENTREGA"),
+    assinatura: toBoolean(row.ASSINATURA),
+  }));
+
+  const comunicados = comunicadosRows.map((row) => ({
+    id: String(row.ID),
+    titulo: cleanString(row.TITULO) ?? "",
+    tipo: safeStatus(row.TIPO, "COMUNICADO"),
+    data: toDateOnly(row.DATA_REGISTRO),
+    status: safeStatus(row.STATUS, "LIDO"),
+  }));
+
+  const advertencias = comunicados
+    .filter((row) => safeStatus(row.tipo, "").includes("ADVERTENCIA"))
+    .map((row) => ({
+      id: row.id,
+      data: row.data,
+      tipo: row.tipo,
+      descricao: row.titulo,
+      responsavel: cleanString(base.GESTOR) ?? "SESMT",
+    }));
+
+  const documentos = documentosRows.map((row) => ({
+    id: String(row.ID),
+    nome: cleanString(row.NOME) ?? "",
+    tipo: cleanString(row.TIPO) ?? "DOCUMENTO",
+    data: toDateOnly(row.DATA_DOCUMENTO),
+    mimeType: cleanString(row.MIME_TYPE) ?? undefined,
+    tamanho: row.TAMANHO_BYTES != null ? `${asNumber(row.TAMANHO_BYTES, 0)} bytes` : undefined,
+  }));
+
+  const timeline = timelineRows.map((row) => ({
+    id: String(row.ID),
+    data: toDateOnly(row.DATA_EVENTO),
+    tipo: cleanString(row.TIPO) ?? "EVENTO",
+    titulo: cleanString(row.TITULO) ?? "Evento",
+    descricao: cleanString(row.DESCRICAO) ?? "",
+    cor: cleanString(row.COR) ?? "info",
+  }));
+
+  const alertas = buildDossieAlerts({ exames, asos, treinamentos, vacinas, afastamentos, restricoes });
+  const pendencias = alertas;
+
+  const colaborador: DossieColaboradorResumo = {
+    id: String(base.ID),
+    nome: cleanString(base.NOME) ?? "",
+    matricula: cleanString(base.MATRICULA) ?? "",
+    cpf: cleanString(base.CPF) ?? "",
+    unidade,
+    setor: cleanString(base.SETOR) ?? "",
+    cargo: cleanString(base.CARGO) ?? "",
+    funcao: cleanString(base.FUNCAO) ?? "",
+    gestor: cleanString(base.GESTOR) ?? "",
+    dataAdmissao: toDateOnly(base.DATA_ADMISSAO),
+    status: normalizeCollaboratorStatus(base.STATUS),
+    grupoRisco: cleanString(base.GRUPO_RISCO) ?? undefined,
+    situacaoOcupacional: cleanString(base.SITUACAO_OCUPACIONAL) ?? "Regular",
+    scoreAtencao: asNumber(base.SCORE_ATENCAO, 0),
+    alertas,
+  };
+
+  return {
+    colaborador,
+    exames,
+    asos,
+    treinamentos,
+    integracoes,
+    atendimentos,
+    vacinas,
+    medicacoes,
+    acidentes,
+    afastamentos,
+    atestados,
+    restricoes,
+    laudos,
+    monitoramentos: exames.filter((row) => safeStatus(row.status, "") === "PENDENTE"),
+    epis,
+    advertencias,
+    comunicados,
+    documentos,
+    timeline,
+    prontuarioResumido: {
+      ultimoAso: asos[0]?.data ?? null,
+      ultimoExame: exames[0]?.data ?? null,
+      ultimoAtendimento: atendimentos[0]?.data ?? null,
+      restricoesAtivas: restricoes.filter((row) => safeStatus(row.status, "") === "ATIVA").length,
+    },
+    alertas,
+    pendencias,
+  };
+}
+
+function buildFallbackDossie(actor: DossieActor, allowedUnits: string[]): DossieCompleto | null {
+  const store = ensureStore();
+  const colaboradores = Array.isArray(store.colaboradores) ? (store.colaboradores as Array<Record<string, unknown>>) : [];
+  const colaboradorSeed = colaboradores.find((item) => String(item.id) === actor.colaboradorId);
+  if (!colaboradorSeed) return null;
+  const unidade = cleanString(colaboradorSeed.unidade) ?? "MAO";
+  if (!allowedUnits.includes(unidade)) {
+    throw Object.assign(new Error("Colaborador fora do escopo de unidade deste perfil."), { statusCode: 403 });
+  }
+
+  const registros = Array.isArray(store.registros) ? (store.registros as SesmtRecord[]) : [];
+  const related = registros.filter((row) => row.unidade === unidade);
+  const exames = related
+    .filter((row) => row.moduleKey === "exames" || row.moduleKey === "saude-ocupacional")
+    .map((row) => ({
+      id: row.id,
+      tipo: row.titulo,
+      data: toDateOnly(row.createdAt),
+      resultado: row.descricao || "",
+      status: safeStatus(row.status, "PENDENTE"),
+      laboratorio: undefined,
+      validade: row.vencimentoAt,
+    }));
+
+  const treinamentos = related
+    .filter((row) => row.moduleKey === "treinamentos-e-integracao")
+    .map((row) => ({
+      id: row.id,
+      nome: row.titulo,
+      tipo: "ESPECIFICO",
+      data: toDateOnly(row.createdAt),
+      cargaHoraria: 8,
+      status: safeStatus(row.status, "EM_ANDAMENTO"),
+      certificado: row.status === "CONCLUIDO",
+      validade: row.vencimentoAt,
+      instrutor: row.responsavel,
+    }));
+
+  const timeline = related.slice(0, 20).map((row) => ({
+    id: row.id,
+    data: toDateOnly(row.updatedAt || row.createdAt),
+    tipo: row.moduleKey.toUpperCase(),
+    titulo: row.titulo,
+    descricao: row.descricao || "",
+    cor: row.status === "CONCLUIDO" ? "success" : "info",
+  }));
+
+  const colaborador: DossieColaboradorResumo = {
+    id: String(colaboradorSeed.id),
+    nome: cleanString(colaboradorSeed.nome) ?? "Colaborador",
+    matricula: cleanString(colaboradorSeed.matricula) ?? `MAT-${String(colaboradorSeed.id).replace(/\D/g, "").padStart(4, "0")}`,
+    cpf: cleanString(colaboradorSeed.cpf) ?? "",
+    unidade,
+    setor: cleanString(colaboradorSeed.setor) ?? "",
+    cargo: cleanString(colaboradorSeed.cargo) ?? "Colaborador",
+    funcao: cleanString(colaboradorSeed.funcao) ?? "Colaborador",
+    gestor: cleanString(colaboradorSeed.gestor) ?? "SESMT",
+    dataAdmissao: toDateOnly(colaboradorSeed.dataAdmissao),
+    status: normalizeCollaboratorStatus(colaboradorSeed.status),
+    grupoRisco: cleanString(colaboradorSeed.grupoRisco) ?? undefined,
+    situacaoOcupacional: cleanString(colaboradorSeed.situacaoOcupacional) ?? "Regular",
+    scoreAtencao: asNumber(colaboradorSeed.scoreAtencao, 75),
+    alertas: [],
+  };
+
+  const emptyArray: Array<Record<string, unknown>> = [];
+  const alertas = buildDossieAlerts({
+    exames,
+    asos: emptyArray,
+    treinamentos,
+    vacinas: emptyArray,
+    afastamentos: emptyArray,
+    restricoes: emptyArray,
+  });
+  colaborador.alertas = alertas;
+
+  return {
+    colaborador,
+    exames,
+    asos: emptyArray,
+    treinamentos,
+    integracoes: treinamentos.filter((row) => safeStatus(row.tipo, "") === "INTEGRACAO"),
+    atendimentos: emptyArray,
+    vacinas: emptyArray,
+    medicacoes: emptyArray,
+    acidentes: emptyArray,
+    afastamentos: emptyArray,
+    atestados: emptyArray,
+    restricoes: emptyArray,
+    laudos: emptyArray,
+    monitoramentos: exames.filter((row) => safeStatus(row.status, "") === "PENDENTE"),
+    epis: emptyArray,
+    advertencias: emptyArray,
+    comunicados: emptyArray,
+    documentos: emptyArray,
+    timeline,
+    prontuarioResumido: {
+      ultimoAso: null,
+      ultimoExame: exames[0]?.data ?? null,
+      ultimoAtendimento: null,
+      restricoesAtivas: 0,
+    },
+    alertas,
+    pendencias: alertas,
+  };
+}
+
+async function resolveDossie(actor: DossieActor): Promise<DossieCompleto | null> {
+  const allowedUnits = getAllowedUnits(actor.profile, actor.userId);
+  if (isOracleEnabled()) {
+    return loadOracleDossie(actor, allowedUnits);
+  }
+  return buildFallbackDossie(actor, allowedUnits);
 }
 export const sesmtRepo = {
   listMenu(profile: string) {
@@ -1019,6 +1783,238 @@ export const sesmtRepo = {
         .slice(0, 10)
         .map((record) => ({ id: record.id, titulo: record.titulo, unidade: record.unidade, updatedAt: record.updatedAt, status: record.status })),
       generatedAt: nowIso(),
+    };
+  },
+
+  async listDossieColaboradores(input: {
+    profile: string;
+    userId: string;
+    userName: string;
+    search?: string;
+    unidade?: string;
+    status?: string;
+  }) {
+    assertRead(input.profile);
+    assertSensitiveRead(input.profile, "dossie-colaborador", input.userName);
+
+    const allowedUnits = getAllowedUnits(input.profile, input.userId);
+    const filterUnit = cleanString(input.unidade);
+    const search = cleanString(input.search)?.toLowerCase();
+    const status = cleanString(input.status)?.toUpperCase();
+
+    if (isOracleEnabled()) {
+      const rows = await queryRows<Record<string, unknown>>(
+        `SELECT
+          ID,
+          NOME,
+          MATRICULA,
+          CPF,
+          UNIDADE,
+          SETOR,
+          CARGO,
+          FUNCAO,
+          GESTOR,
+          TO_CHAR(DATA_ADMISSAO, 'YYYY-MM-DD') AS DATA_ADMISSAO,
+          STATUS,
+          GRUPO_RISCO,
+          SITUACAO_OCUPACIONAL,
+          SCORE_ATENCAO
+        FROM SESMT_COLABORADORES
+        ORDER BY NOME`,
+      );
+
+      let items = rows
+        .map((row) => ({
+          id: String(row.ID),
+          nome: cleanString(row.NOME) ?? "",
+          matricula: cleanString(row.MATRICULA) ?? "",
+          cpf: cleanString(row.CPF) ?? "",
+          unidade: cleanString(row.UNIDADE) ?? "",
+          setor: cleanString(row.SETOR) ?? "",
+          cargo: cleanString(row.CARGO) ?? "",
+          funcao: cleanString(row.FUNCAO) ?? "",
+          gestor: cleanString(row.GESTOR) ?? "",
+          dataAdmissao: toDateOnly(row.DATA_ADMISSAO),
+          status: normalizeCollaboratorStatus(row.STATUS),
+          grupoRisco: cleanString(row.GRUPO_RISCO) ?? undefined,
+          situacaoOcupacional: cleanString(row.SITUACAO_OCUPACIONAL) ?? "Regular",
+          scoreAtencao: asNumber(row.SCORE_ATENCAO, 0),
+          alertas: [] as string[],
+        }))
+        .filter((item) => allowedUnits.includes(item.unidade));
+
+      if (filterUnit) items = items.filter((item) => item.unidade === filterUnit);
+      if (status) items = items.filter((item) => item.status === status);
+      if (search) {
+        items = items.filter((item) =>
+          [item.nome, item.matricula, item.cpf, item.cargo, item.unidade]
+            .filter(Boolean)
+            .some((part) => part.toLowerCase().includes(search)),
+        );
+      }
+      return items;
+    }
+
+    const store = ensureStore();
+    const base = Array.isArray(store.colaboradores) ? (store.colaboradores as Array<Record<string, unknown>>) : [];
+    let items = base.map((row) => ({
+      id: String(row.id ?? ""),
+      nome: cleanString(row.nome) ?? "",
+      matricula: cleanString(row.matricula) ?? `MAT-${String(row.id ?? "").replace(/\D/g, "").padStart(4, "0")}`,
+      cpf: cleanString(row.cpf) ?? "",
+      unidade: cleanString(row.unidade) ?? "MAO",
+      setor: cleanString(row.setor) ?? "",
+      cargo: cleanString(row.cargo) ?? "Colaborador",
+      funcao: cleanString(row.funcao) ?? "Colaborador",
+      gestor: cleanString(row.gestor) ?? "SESMT",
+      dataAdmissao: toDateOnly(row.dataAdmissao),
+      status: normalizeCollaboratorStatus(row.status),
+      grupoRisco: cleanString(row.grupoRisco) ?? undefined,
+      situacaoOcupacional: cleanString(row.situacaoOcupacional) ?? "Regular",
+      scoreAtencao: asNumber(row.scoreAtencao, 75),
+      alertas: [] as string[],
+    }))
+      .filter((item) => item.id.length > 0)
+      .filter((item) => allowedUnits.includes(item.unidade));
+
+    if (filterUnit) items = items.filter((item) => item.unidade === filterUnit);
+    if (status) items = items.filter((item) => item.status === status);
+    if (search) {
+      items = items.filter((item) =>
+        [item.nome, item.matricula, item.cpf, item.cargo, item.unidade]
+          .filter(Boolean)
+          .some((part) => part.toLowerCase().includes(search)),
+      );
+    }
+    return items;
+  },
+
+  async getColaboradorDossie(input: {
+    profile: string;
+    userId: string;
+    userName: string;
+    colaboradorId: string;
+  }) {
+    assertRead(input.profile);
+    assertSensitiveRead(input.profile, "dossie-colaborador", input.userName);
+    const dossie = await resolveDossie(input);
+    if (!dossie) {
+      throw Object.assign(new Error("Colaborador nao encontrado para o dossie."), { statusCode: 404 });
+    }
+    await appendSesmtAuditEvent({
+      acao: "LEITURA_DOSSIE",
+      entidade: "SESMT_DOSSIE_COLABORADOR",
+      entidadeId: input.colaboradorId,
+      userId: input.userId,
+      userName: input.userName,
+      profile: input.profile,
+      detalhe: `Dossie consultado para colaborador ${input.colaboradorId}.`,
+    });
+    return dossie;
+  },
+
+  async getColaboradorDossieTimeline(input: {
+    profile: string;
+    userId: string;
+    userName: string;
+    colaboradorId: string;
+  }) {
+    const dossie = await sesmtRepo.getColaboradorDossie(input);
+    return {
+      colaboradorId: input.colaboradorId,
+      timeline: dossie.timeline,
+    };
+  },
+
+  async getColaboradorDossieDocumentos(input: {
+    profile: string;
+    userId: string;
+    userName: string;
+    colaboradorId: string;
+  }) {
+    const dossie = await sesmtRepo.getColaboradorDossie(input);
+    return {
+      colaboradorId: input.colaboradorId,
+      documentos: dossie.documentos,
+      anexos: dossie.documentos,
+    };
+  },
+
+  async getColaboradorDossieAlertas(input: {
+    profile: string;
+    userId: string;
+    userName: string;
+    colaboradorId: string;
+  }) {
+    const dossie = await sesmtRepo.getColaboradorDossie(input);
+    return {
+      colaboradorId: input.colaboradorId,
+      alertas: dossie.alertas,
+      pendencias: dossie.pendencias,
+    };
+  },
+
+  async getColaboradorDossieRelatorio(input: {
+    profile: string;
+    userId: string;
+    userName: string;
+    colaboradorId: string;
+  }) {
+    const dossie = await sesmtRepo.getColaboradorDossie(input);
+    return {
+      colaborador: dossie.colaborador,
+      resumo: {
+        totalExames: dossie.exames.length,
+        examesVencidos: dossie.exames.filter((item) => safeStatus(item.status, "") === "VENCIDO").length,
+        totalAsos: dossie.asos.length,
+        asosVencidos: dossie.asos.filter((item) => safeStatus(item.status, "") === "VENCIDO").length,
+        totalTreinamentos: dossie.treinamentos.length,
+        treinamentosPendentes: dossie.treinamentos.filter((item) => {
+          const status = safeStatus(item.status, "");
+          return status === "PENDENTE" || status === "VENCIDO";
+        }).length,
+        totalVacinas: dossie.vacinas.length,
+        vacinasPendentes: dossie.vacinas.filter((item) => {
+          const status = safeStatus(item.status, "");
+          return status === "PENDENTE" || status === "ATRASADA";
+        }).length,
+        totalAcidentes: dossie.acidentes.length,
+        totalAfastamentos: dossie.afastamentos.length,
+        totalDocumentos: dossie.documentos.length,
+        scoreAtencao: dossie.colaborador.scoreAtencao,
+      },
+      alertas: dossie.alertas,
+      pendencias: dossie.pendencias,
+      generatedAt: nowIso(),
+      generatedBy: input.userName,
+    };
+  },
+
+  async exportColaboradorDossie(input: {
+    profile: string;
+    userId: string;
+    userName: string;
+    colaboradorId: string;
+    payload?: Record<string, unknown>;
+  }) {
+    const relatorio = await sesmtRepo.getColaboradorDossieRelatorio(input);
+    await appendSesmtAuditEvent({
+      acao: "EXPORTAR_DOSSIE",
+      entidade: "SESMT_DOSSIE_COLABORADOR",
+      entidadeId: input.colaboradorId,
+      userId: input.userId,
+      userName: input.userName,
+      profile: input.profile,
+      detalhe: `Solicitacao de exportacao de dossie para ${input.colaboradorId}.`,
+      payload: input.payload,
+    });
+    return {
+      status: "QUEUED",
+      colaboradorId: input.colaboradorId,
+      exportId: `EXP-${Math.floor(Math.random() * 1_000_000)}`,
+      solicitadoPor: input.userName,
+      solicitadoEm: nowIso(),
+      relatorio,
     };
   },
 
